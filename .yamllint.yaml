@@ -1,0 +1,58 @@
+# yamllint configuration file - Flexible configuration for mixed projects
+extends: default
+
+rules:
+  # Allow longer lines for readability
+  line-length:
+    max: 120
+    level: warning
+
+  # Very flexible indentation - disable strict checking
+  indentation: disable  # Completely disable indentation checking
+
+  # Be very lenient with comments
+  comments:
+    min-spaces-from-content: 1
+    require-starting-space: false
+
+  # Allow empty values in YAML (common in CI/CD files)
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: false
+
+  # Allow truthy values like 'yes', 'no', 'on', 'off' (common in CI/CD)
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: false
+
+  # Allow duplicate keys (GitHub Actions and other tools use this)
+  key-duplicates: disable
+
+  # Be very lenient with brackets and braces
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 2
+    forbid-implicit-octal: false
+
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 2
+    forbid-implicit-octal: false
+
+  # Don't enforce document start markers
+  document-start: disable
+
+  # Allow trailing spaces (sometimes needed for formatting)
+  trailing-spaces: disable
+
+  # Be lenient with colons
+  colons:
+    max-spaces-before: 1
+    min-spaces-after: 1
+    max-spaces-after: 2
+
+  # Allow quoted strings (sometimes needed for special characters)
+  quoted-strings: disable
+
+  # Allow octal values (sometimes used in permissions)
+  octal-values: disable

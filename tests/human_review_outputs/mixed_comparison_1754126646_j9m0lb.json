@@ -1,0 +1,7 @@
+{
+  "input_file": "tests/human_review_outputs/mixed_input_1754126646_j9m0lb.pdf",
+  "output_file": "tests/human_review_outputs/mixed_output_1754126646_j9m0lb.pdf",
+  "ssim_score": 0.9801389555497908,
+  "test_elements": 6,
+  "timestamp": "1754126646_j9m0lb"
+}

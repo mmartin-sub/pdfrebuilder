@@ -1,0 +1,61 @@
+{
+    "version": "1.0",
+    "engine": "fitz",
+    "metadata": {
+        "title": "Test Document",
+        "creator": "Test Suite",
+        "creation_date": "2024-01-01"
+    },
+    "document_structure": [
+        {
+            "type": "page",
+            "page_number": 1,
+            "size": [
+                612.0,
+                792.0
+            ],
+            "page_background_color": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "layers": [
+                {
+                    "layer_id": "page_1_base_layer",
+                    "layer_name": "Page Content",
+                    "layer_type": "base",
+                    "bbox": [
+                        0,
+                        0,
+                        612.0,
+                        792.0
+                    ],
+                    "visibility": true,
+                    "opacity": 1.0,
+                    "blend_mode": "Normal",
+                    "children": [],
+                    "content": [
+                        {
+                            "type": "text",
+                            "id": "text_1",
+                            "bbox": [
+                                50,
+                                750,
+                                550,
+                                770
+                            ],
+                            "text": "This is a test document",
+                            "font_details": {
+                                "name": "helv",
+                                "size": 12,
+                                "color": 0,
+                                "is_bold": false,
+                                "is_italic": false
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

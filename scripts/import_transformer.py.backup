@@ -1,0 +1,234 @@
+#!/usr/bin/env python3
+"""
+Import Transformation Script
+
+Automatically updates import statements throughout the codebase to use the new
+src/pdfrebuilder/ package structure.
+"""
+
+import re
+import ast
+from pathlib import Path
+from typing import Dict, List
+import argparse
+import shutil
+
+
+class ImportTransformer:
+    """Transforms import statements to use new package structure."""
+
+    def __init__(self, project_root: str = ".", dry_run: bool = True):
+        self.project_root = Path(project_root)
+        self.dry_run = dry_run
+        self.transformations_made = 0
+        self.files_modified = 0
+
+        # Define transformation rules
+        self.import_rules = {
+            # Direct module imports
+            r'\bfrom src\.': 'from pdfrebuilder.',
+            r'\bimport src\.': 'import pdfrebuilder.',
+
+            # Specific common patterns
+            r'\bfrom src import': 'from pdfrebuilder import',
+            r'\bfrom \.settings import': 'from .settings import',  # Keep relative imports
+            r'\bfrom \.config import': 'from .config import',
+
+            # Handle CLI imports specifically
+            r'\bfrom src\.cli import': 'from pdfrebuilder.cli import',
+            r'\bfrom src\.engine import': 'from pdfrebuilder.engine import',
+            r'\bfrom src\.models import': 'from pdfrebuilder.models import',
+            r'\bfrom src\.tools import': 'from pdfrebuilder.tools import',
+            r'\bfrom src\.utils import': 'from pdfrebuilder.utils import',
+            r'\bfrom src\.config import': 'from pdfrebuilder.config import',
+            r'\bfrom src\.security import': 'from pdfrebuilder.security import',
+            r'\bfrom src\.font import': 'from pdfrebuilder.font import',
+
+            # Core module imports (these will move to core/)
+            r'\bfrom src\.compare_pdfs_visual import': 'from pdfrebuilder.core.compare_pdfs_visual import',
+            r'\bfrom src\.generate_debug_pdf_layers import': 'from pdfrebuilder.core.generate_debug_pdf_layers import',
+            r'\bfrom src\.pdf_engine import': 'from pdfrebuilder.core.pdf_engine import',
+            r'\bfrom src\.recreate_pdf_from_config import': 'from pdfrebuilder.core.recreate_pdf_from_config import',
+            r'\bfrom src\.render import': 'from pdfrebuilder.core.render import',
+
+            # Direct imports of core modules
+            r'\bimport src\.compare_pdfs_visual': 'import pdfrebuilder.core.compare_pdfs_visual',
+            r'\bimport src\.generate_debug_pdf_layers': 'import pdfrebuilder.core.generate_debug_pdf_layers',
+            r'\bimport src\.pdf_engine': 'import pdfrebuilder.core.pdf_engine',
+            r'\bimport src\.recreate_pdf_from_config': 'import pdfrebuilder.core.recreate_pdf_from_config',
+            r'\bimport src\.render': 'import pdfrebuilder.core.render',
+
+            # Utility imports that stay at package root
+            r'\bfrom src\.settings import': 'from pdfrebuilder.settings import',
+            r'\bfrom src\.fritz import': 'from pdfrebuilder.fritz import',
+            r'\bfrom src\.font_utils import': 'from pdfrebuilder.font_utils import',
+
+            r'\bimport src\.settings': 'import pdfrebuilder.settings',
+            r'\bimport src\.fritz': 'import pdfrebuilder.fritz',
+            r'\bimport src\.font_utils': 'import pdfrebuilder.font_utils',
+        }
+
+    def transform_file(self, file_path: Path) -> bool:
+        """Transform imports in a single file."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                original_content = f.read()
+
+            modified_content = original_content
+            file_transformations = 0
+
+            # Apply transformation rules
+            for pattern, replacement in self.import_rules.items():
+                new_content = re.sub(pattern, replacement, modified_content)
+                if new_content != modified_content:
+                    file_transformations += re.subn(pattern, replacement, modified_content)[1]
+                    modified_content = new_content
+
+            # If changes were made
+            if modified_content != original_content:
+                if not self.dry_run:
+                    # Create backup
+                    backup_path = file_path.with_suffix(file_path.suffix + '.backup')
+                    shutil.copy2(file_path, backup_path)
+
+                    # Write modified content
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(modified_content)
+
+                self.transformations_made += file_transformations
+                self.files_modified += 1
+
+                print(f"{'[DRY RUN] ' if self.dry_run else ''}Modified {file_path} ({file_transformations} changes)")
+                return True
+
+            return False
+
+        except Exception as e:
+            print(f"Error processing {file_path}: {e}")
+            return False
+
+    def transform_project(self, directories: List[str] = None) -> Dict:
+        """Transform imports in the entire project."""
+        if directories is None:
+            directories = ['src', 'tests', 'scripts', 'examples', 'docs']
+
+        results = {
+            'files_processed': 0,
+            'files_modified': 0,
+            'transformations_made': 0,
+            'modified_files': []
+        }
+
+        for directory in directories:
+            dir_path = self.project_root / directory
+            if not dir_path.exists():
+                continue
+
+            for py_file in dir_path.rglob('*.py'):
+                if '__pycache__' in str(py_file):
+                    continue
+
+                results['files_processed'] += 1
+
+                if self.transform_file(py_file):
+                    results['modified_files'].append(str(py_file))
+
+        results['files_modified'] = self.files_modified
+        results['transformations_made'] = self.transformations_made
+
+        return results
+
+    def validate_imports(self, file_path: Path) -> List[str]:
+        """Validate that imports in a file can be resolved."""
+        errors = []
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Try to parse the file
+            try:
+                ast.parse(content)
+            except SyntaxError as e:
+                errors.append(f"Syntax error: {e}")
+
+            # Check for obvious import issues
+            lines = content.split('\n')
+            for i, line in enumerate(lines, 1):
+                line = line.strip()
+                if line.startswith('from src.') or line.startswith('import src.'):
+                    errors.append(f"Line {i}: Untransformed src import: {line}")
+
+                # Check for potential issues with new imports
+                if 'from pdfrebuilder.' in line or 'import pdfrebuilder.' in line:
+                    # This is expected after transformation
+                    pass
+
+        except Exception as e:
+            errors.append(f"Error reading file: {e}")
+
+        return errors
+
+
+def main():
+    """Main function to run import transformation."""
+    parser = argparse.ArgumentParser(description='Transform imports for package restructure')
+    parser.add_argument('--dry-run', action='store_true', default=True,
+                       help='Show what would be changed without making changes')
+    parser.add_argument('--execute', action='store_true',
+                       help='Actually make the changes (overrides --dry-run)')
+    parser.add_argument('--directories', nargs='+',
+                       default=['src', 'tests', 'scripts', 'examples'],
+                       help='Directories to process')
+    parser.add_argument('--validate', action='store_true',
+                       help='Validate imports after transformation')
+
+    args = parser.parse_args()
+
+    # If --execute is specified, turn off dry-run
+    dry_run = args.dry_run and not args.execute
+
+    print(f"🔄 {'[DRY RUN] ' if dry_run else ''}Transforming imports...")
+    print(f"   Directories: {', '.join(args.directories)}")
+
+    transformer = ImportTransformer(dry_run=dry_run)
+    results = transformer.transform_project(args.directories)
+
+    print(f"\n📊 Transformation Results:")
+    print(f"  Files processed: {results['files_processed']}")
+    print(f"  Files modified: {results['files_modified']}")
+    print(f"  Total transformations: {results['transformations_made']}")
+
+    if results['modified_files']:
+        print(f"\n📝 Modified files:")
+        for file_path in results['modified_files'][:20]:  # Show first 20
+            print(f"  - {file_path}")
+
+        if len(results['modified_files']) > 20:
+            print(f"  ... and {len(results['modified_files']) - 20} more files")
+
+    # Validation
+    if args.validate and not dry_run:
+        print(f"\n🔍 Validating transformed imports...")
+        validation_errors = []
+
+        for file_path in results['modified_files']:
+            errors = transformer.validate_imports(Path(file_path))
+            if errors:
+                validation_errors.extend([f"{file_path}: {error}" for error in errors])
+
+        if validation_errors:
+            print(f"⚠️  Validation errors found:")
+            for error in validation_errors[:10]:
+                print(f"  - {error}")
+            if len(validation_errors) > 10:
+                print(f"  ... and {len(validation_errors) - 10} more errors")
+        else:
+            print(f"✅ All transformed imports validated successfully!")
+
+    if dry_run:
+        print(f"\n💡 To actually make these changes, run with --execute")
+
+
+if __name__ == "__main__":
+    main()

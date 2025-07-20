@@ -1,0 +1,8 @@
+{
+    "name": "pytest-validation-check",
+    "description": "Validate pytest configuration and fixture dependencies",
+    "trigger": "pre-commit",
+    "command": "hatch run pytest --setup-only -q tests/test_engine_logging.py::TestEngineLogger::test_log_engine_info_debug_level",
+    "timeout": 30,
+    "fail_on_error": true
+}

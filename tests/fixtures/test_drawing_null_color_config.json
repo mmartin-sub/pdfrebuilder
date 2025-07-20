@@ -1,0 +1,158 @@
+{
+    "version": "1.0",
+    "engine": "fitz",
+    "engine_version": "PyMuPDF 1.26.23",
+    "metadata": {
+        "format": "PDF 1.4",
+        "title": "Test Document",
+        "author": "Test Author",
+        "subject": "Test Subject",
+        "keywords": "test,null,color",
+        "creator": "Test Creator",
+        "producer": "Test Producer",
+        "creationDate": "D:20250717183732+00'00'",
+        "modDate": "D:20250717183732+00'00'",
+        "trapped": "",
+        "encryption": null
+    },
+    "document_structure": [
+        {
+            "type": "page",
+            "page_number": 0,
+            "size": [
+                612.0,
+                792.0
+            ],
+            "page_background_color": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "layers": [
+                {
+                    "layer_id": "page_0_base_layer",
+                    "layer_name": "Page Content",
+                    "layer_type": "base",
+                    "bbox": [
+                        0,
+                        0,
+                        612.0,
+                        792.0
+                    ],
+                    "visibility": true,
+                    "opacity": 1.0,
+                    "blend_mode": "Normal",
+                    "children": [],
+                    "content": [
+                        {
+                            "type": "drawing",
+                            "bbox": [
+                                100.0,
+                                100.0,
+                                200.0,
+                                200.0
+                            ],
+                            "color": null,
+                            "fill": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ],
+                            "width": 1.0,
+                            "drawing_commands": [
+                                {
+                                    "cmd": "M",
+                                    "pts": [
+                                        100.0,
+                                        100.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        200.0,
+                                        100.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        200.0,
+                                        200.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        100.0,
+                                        200.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "H"
+                                }
+                            ],
+                            "original_shape_type": "rectangle",
+                            "stroke_details": null,
+                            "fill_details": null,
+                            "id": "drawing_0"
+                        },
+                        {
+                            "type": "drawing",
+                            "bbox": [
+                                300.0,
+                                100.0,
+                                400.0,
+                                200.0
+                            ],
+                            "color": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ],
+                            "fill": null,
+                            "width": 1.0,
+                            "drawing_commands": [
+                                {
+                                    "cmd": "M",
+                                    "pts": [
+                                        300.0,
+                                        100.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        400.0,
+                                        100.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        400.0,
+                                        200.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        300.0,
+                                        200.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "H"
+                                }
+                            ],
+                            "original_shape_type": "rectangle",
+                            "stroke_details": null,
+                            "fill_details": null,
+                            "id": "drawing_1"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

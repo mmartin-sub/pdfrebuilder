@@ -1,0 +1,156 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.ruff_cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+venv_test/
+venv_pdf_debug/
+
+# IDE-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Personal configuration files
+*.ini
+*.cfg
+!mypy.ini
+
+# Project-specific ignores
+output/
+!output/.gitkeep
+output/debug/
+!output/debug/.gitkeep
+input/
+!input/.gitkeep
+manual_overrides.json
+tests/fixtures/manual_overrides.json.test
+layout_config.json
+visual_diff_page*.png
+book/
+test*.pdf
+.mypy_cache/
+
+# Prevent temporary files in main directory
+/*.log
+/*.pdf
+/debug_*.pdf
+/test_*.pdf
+/demo_*.py
+/*_SUMMARY.md
+/*_IMPLEMENTATION*.md
+/*_report.md
+/*_results.json
+/*_audit.json
+/fix_*.py
+
+# Prevent temporary development directories
+/custom_*/
+/dev_*/
+/test_docs/
+/test_results/
+
+# Allow organized files in proper directories
+!examples/
+!scripts/
+!docs/
+!output/logs/
+!output/debug/
+!output/reports/
+
+# Font files (for license restrictions)
+# Exclude font file contents but keep directory structure
+fonts/manual/*
+!fonts/manual/.gitkeep
+fonts/auto/*
+!fonts/auto/.gitkeep
+
+# Legacy font directory (for backward compatibility)
+downloaded_fonts/*.ttf
+downloaded_fonts/*.otf
+
+# Images directory
+images/
+!images/.gitkeep
+
+# Custom based on documentation
+custom_reports
+custom_images
+
+# Debugging files
+dev_output
+dev_reports
+
+# Note: All test files and directories should be under tests/
+# Test-related temporary directories are handled by tests/.gitignore
+
+tests/human_review_outputs
+tests/temp_e2e_output
+tests/sample

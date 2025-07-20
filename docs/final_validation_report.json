@@ -1,0 +1,191 @@
+{
+  "generated_at": "2025-08-01T09:26:58.871754",
+  "validation_summary": {
+    "overall_status": "success",
+    "issues_found": 0,
+    "warnings": 0
+  },
+  "documentation_stats": {
+    "total_files": 67,
+    "total_size": 389728,
+    "by_category": {
+      "other": {
+        "count": 6,
+        "size": 82372
+      },
+      "core": {
+        "count": 6,
+        "size": 68794
+      },
+      "guides": {
+        "count": 5,
+        "size": 97545
+      },
+      "examples": {
+        "count": 1,
+        "size": 3923
+      },
+      "api": {
+        "count": 46,
+        "size": 79107
+      },
+      "reference": {
+        "count": 3,
+        "size": 57987
+      }
+    },
+    "by_directory": {
+      "root": {
+        "count": 12,
+        "size": 151166
+      },
+      "guides": {
+        "count": 5,
+        "size": 97545
+      },
+      "examples": {
+        "count": 1,
+        "size": 3923
+      },
+      "api": {
+        "count": 11,
+        "size": 28884
+      },
+      "api/tools": {
+        "count": 3,
+        "size": 1424
+      },
+      "api/docs": {
+        "count": 4,
+        "size": 9575
+      },
+      "api/models": {
+        "count": 6,
+        "size": 11059
+      },
+      "api/engines": {
+        "count": 1,
+        "size": 102
+      },
+      "api/font": {
+        "count": 2,
+        "size": 2644
+      },
+      "api/engine": {
+        "count": 16,
+        "size": 23848
+      },
+      "api/core": {
+        "count": 1,
+        "size": 96
+      },
+      "api/cli": {
+        "count": 2,
+        "size": 1475
+      },
+      "reference": {
+        "count": 3,
+        "size": 57987
+      }
+    }
+  },
+  "examples_validation": {
+    "total_examples": 7,
+    "working_examples": 7,
+    "failed_examples": 0,
+    "example_details": [
+      {
+        "file": "batch_processing_examples.py",
+        "status": "working",
+        "exit_code": 0
+      },
+      {
+        "file": "extract_sample.py",
+        "status": "working",
+        "exit_code": 0
+      },
+      {
+        "file": "batch_modification_example.py",
+        "status": "working",
+        "exit_code": 0
+      },
+      {
+        "file": "psd_processing_examples.py",
+        "status": "working",
+        "exit_code": 0
+      },
+      {
+        "file": "validation.py",
+        "status": "working",
+        "exit_code": 0
+      },
+      {
+        "file": "pdf_processing_examples.py",
+        "status": "working",
+        "exit_code": 0
+      },
+      {
+        "file": "comprehensive_example.py",
+        "status": "working",
+        "exit_code": 0
+      }
+    ]
+  },
+  "api_coverage": {
+    "total_modules": 40,
+    "documented_modules": 40,
+    "coverage_percentage": 100.0,
+    "missing_docs": [],
+    "documented_modules_list": [
+      "settings",
+      "compare_pdfs_visual",
+      "render",
+      "generate_debug_pdf_layers",
+      "pdf_engine",
+      "font_utils",
+      "fritz",
+      "test_logging",
+      "recreate_pdf_from_config",
+      "cli.reportlab_test_cli",
+      "cli.batch_modifier_cli",
+      "font.font_validator",
+      "font.googlefonts",
+      "engine.tool_fritz",
+      "engine.reportlab_engine",
+      "engine.document_renderer",
+      "engine.validation_strategy",
+      "engine.psd_text_processor",
+      "engine.batch_modifier",
+      "engine.validation_manager",
+      "engine.extract_psd_content",
+      "engine.document_parser",
+      "engine.validation_report",
+      "engine.scikit_image_validator",
+      "engine.legacy_validator",
+      "engine.pdf_engine_selector",
+      "engine.generic",
+      "engine.visual_validator",
+      "engine.extract_pdf_content_fitz",
+      "docs.api_validator",
+      "docs.validation",
+      "docs.coverage_reporter",
+      "docs.api_generator",
+      "tools.schema_tools",
+      "tools.generic",
+      "models.schema_validator",
+      "models.psd_validator",
+      "models.psd_effects",
+      "models.schema_migration",
+      "models.universal_idm"
+    ]
+  },
+  "quality_metrics": {
+    "documentation_completeness": 100,
+    "example_success_rate": 100.0,
+    "api_documentation_coverage": 100.0,
+    "overall_quality_score": 100
+  },
+  "recommendations": [
+    "Documentation system is in excellent condition!"
+  ]
+}

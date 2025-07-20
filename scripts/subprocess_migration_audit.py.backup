@@ -1,0 +1,409 @@
+#!/usr/bin/env python3
+"""
+Subprocess Migration Audit Script
+
+This script audits all subprocess usage in the codebase and creates a prioritized
+migration plan for the subprocess security hardening initiative.
+"""
+
+import ast
+import json
+import re
+from pathlib import Path
+
+
+class SubprocessUsageAnalyzer:
+    """Analyzes subprocess usage patterns in Python files."""
+
+    def __init__(self, root_dir: str = "."):
+        self.root_dir = Path(root_dir)
+        self.findings = {
+            "high_risk": [],
+            "medium_risk": [],
+            "low_risk": [],
+            "already_secure": [],
+            "nosec_suppressions": [],
+        }
+
+    def analyze_file(self, file_path: Path) -> dict:
+        """Analyze a single Python file for subprocess usage."""
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                content = f.read()
+
+            # Parse AST for detailed analysis
+            try:
+                tree = ast.parse(content)
+                ast_findings = self._analyze_ast(tree, file_path)
+            except SyntaxError:
+                ast_findings = []
+
+            # Regex-based analysis for patterns AST might miss
+            regex_findings = self._analyze_regex(content, file_path)
+
+            return {
+                "file": str(file_path),
+                "ast_findings": ast_findings,
+                "regex_findings": regex_findings,
+                "nosec_suppressions": self._find_nosec_suppressions(content, file_path),
+            }
+
+        except Exception as e:
+            print(f"Error analyzing {file_path}: {e}")
+            return {"file": str(file_path), "error": str(e)}
+
+    def _analyze_ast(self, tree: ast.AST, file_path: Path) -> list[dict]:
+        """Analyze AST for subprocess usage patterns."""
+        findings = []
+
+        class SubprocessVisitor(ast.NodeVisitor):
+            def visit_Import(self, node):
+                for alias in node.names:
+                    if alias.name == "subprocess":
+                        findings.append(
+                            {
+                                "type": "import",
+                                "line": node.lineno,
+                                "pattern": f"import {alias.name}",
+                                "risk": "medium",
+                            }
+                        )
+
+            def visit_ImportFrom(self, node):
+                if node.module == "subprocess":
+                    for alias in node.names:
+                        findings.append(
+                            {
+                                "type": "from_import",
+                                "line": node.lineno,
+                                "pattern": f"from subprocess import {alias.name}",
+                                "risk": "medium",
+                            }
+                        )
+
+            def visit_Call(self, node):
+                # Check for subprocess.run, subprocess.call, etc.
+                if (
+                    isinstance(node.func, ast.Attribute)
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "subprocess"
+                ):
+                    risk_level = self._assess_call_risk(node)
+                    findings.append(
+                        {
+                            "type": "subprocess_call",
+                            "line": node.lineno,
+                            "function": node.func.attr,
+                            "pattern": f"subprocess.{node.func.attr}()",
+                            "risk": risk_level,
+                            "has_shell_true": self._has_shell_true(node),
+                            "has_timeout": self._has_timeout(node),
+                        }
+                    )
+
+                self.generic_visit(node)
+
+            def _assess_call_risk(self, node: ast.Call) -> str:
+                """Assess risk level of subprocess call."""
+                if self._has_shell_true(node):
+                    return "high"
+                elif not self._has_timeout(node):
+                    return "medium"
+                else:
+                    return "low"
+
+            def _has_shell_true(self, node: ast.Call) -> bool:
+                """Check if call has shell=True."""
+                for keyword in node.keywords:
+                    if (
+                        keyword.arg == "shell"
+                        and isinstance(keyword.value, ast.Constant)
+                        and keyword.value.value is True
+                    ):
+                        return True
+                return False
+
+            def _has_timeout(self, node: ast.Call) -> bool:
+                """Check if call has timeout parameter."""
+                for keyword in node.keywords:
+                    if keyword.arg == "timeout":
+                        return True
+                return False
+
+        visitor = SubprocessVisitor()
+        visitor.visit(tree)
+        return findings
+
+    def _analyze_regex(self, content: str, file_path: Path) -> list[dict]:
+        """Analyze content using regex patterns."""
+        findings = []
+        lines = content.split("\n")
+
+        patterns = [
+            (r"import subprocess", "import", "medium"),
+            (r"from subprocess import", "from_import", "medium"),
+            (
+                r"subprocess\.(run|call|check_output|check_call|Popen)",
+                "subprocess_call",
+                "medium",
+            ),
+            (r"shell=True", "shell_true", "high"),
+            (r"shell\s*=\s*True", "shell_true_spaced", "high"),
+        ]
+
+        for i, line in enumerate(lines, 1):
+            for pattern, finding_type, risk in patterns:
+                if re.search(pattern, line):
+                    findings.append(
+                        {
+                            "type": finding_type,
+                            "line": i,
+                            "pattern": pattern,
+                            "content": line.strip(),
+                            "risk": risk,
+                        }
+                    )
+
+        return findings
+
+    def _find_nosec_suppressions(self, content: str, file_path: Path) -> list[dict]:
+        """Find nosec suppressions for subprocess-related rules."""
+        findings = []
+        lines = content.split("\n")
+
+        subprocess_nosec_patterns = [
+            r"# nosec B404",  # subprocess import
+            r"# nosec B603",  # subprocess call
+            r"# nosec B602",  # subprocess with shell=True
+            r"# nosec B605",  # shell injection
+            r"# nosec B607",  # partial shell injection
+        ]
+
+        for i, line in enumerate(lines, 1):
+            for pattern in subprocess_nosec_patterns:
+                if re.search(pattern, line):
+                    findings.append(
+                        {
+                            "line": i,
+                            "pattern": pattern,
+                            "content": line.strip(),
+                            "file": str(file_path),
+                        }
+                    )
+
+        return findings
+
+    def scan_codebase(self) -> dict:
+        """Scan entire codebase for subprocess usage."""
+        python_files = list(self.root_dir.rglob("*.py"))
+
+        # Filter out certain directories
+        excluded_dirs = {
+            ".venv",
+            "__pycache__",
+            ".git",
+            "node_modules",
+            ".pytest_cache",
+        }
+        python_files = [
+            f
+            for f in python_files
+            if not any(part in excluded_dirs for part in f.parts)
+        ]
+
+        all_findings = []
+        all_nosec = []
+
+        for file_path in python_files:
+            result = self.analyze_file(file_path)
+            if "error" not in result:
+                all_findings.append(result)
+                all_nosec.extend(result.get("nosec_suppressions", []))
+
+        # Categorize findings by risk
+        self._categorize_findings(all_findings)
+
+        return {
+            "total_files_scanned": len(python_files),
+            "files_with_subprocess": len(
+                [
+                    f
+                    for f in all_findings
+                    if f.get("ast_findings") or f.get("regex_findings")
+                ]
+            ),
+            "findings_by_risk": self.findings,
+            "nosec_suppressions": all_nosec,
+            "migration_priority": self._create_migration_priority(),
+        }
+
+    def _categorize_findings(self, all_findings: list[dict]):
+        """Categorize findings by risk level."""
+        for file_result in all_findings:
+            file_path = file_result["file"]
+
+            # Check if file uses secure alternatives
+            if self._uses_secure_alternatives(file_result):
+                self.findings["already_secure"].append(
+                    {"file": file_path, "reason": "Uses secure subprocess alternatives"}
+                )
+                continue
+
+            # Categorize by highest risk found in file
+            highest_risk = "low"
+            risk_reasons = []
+
+            for finding in file_result.get("ast_findings", []) + file_result.get(
+                "regex_findings", []
+            ):
+                if finding.get("risk") == "high":
+                    highest_risk = "high"
+                    if finding.get("type") == "shell_true":
+                        risk_reasons.append("Uses shell=True")
+                elif finding.get("risk") == "medium" and highest_risk != "high":
+                    highest_risk = "medium"
+                    risk_reasons.append(f"Uses {finding.get('pattern', 'subprocess')}")
+
+            if highest_risk != "low":
+                self.findings[f"{highest_risk}_risk"].append(
+                    {
+                        "file": file_path,
+                        "risk_level": highest_risk,
+                        "reasons": risk_reasons,
+                        "findings": file_result.get("ast_findings", [])
+                        + file_result.get("regex_findings", []),
+                    }
+                )
+
+    def _uses_secure_alternatives(self, file_result: dict) -> bool:
+        """Check if file uses secure subprocess alternatives."""
+        file_path = file_result["file"]
+
+        # Check if it's in security module (likely already secure)
+        if "src/security/" in file_path:
+            return True
+
+        # Check for imports of secure alternatives
+        try:
+            with open(file_path) as f:
+                content = f.read()
+
+            secure_imports = [
+                "from src.security.secure_execution import",
+                "from src.security.subprocess_compatibility import",
+                "from plumbum import",
+                "import plumbum",
+            ]
+
+            return any(imp in content for imp in secure_imports)
+        except Exception:
+            return False
+
+    def _create_migration_priority(self) -> list[dict]:
+        """Create prioritized migration plan."""
+        priority_list = []
+
+        # Priority 1: High risk (shell=True usage)
+        for item in self.findings["high_risk"]:
+            priority_list.append(
+                {
+                    "priority": 1,
+                    "file": item["file"],
+                    "reason": "High risk - uses shell=True or other dangerous patterns",
+                    "migration_effort": "Medium",
+                    "security_impact": "High",
+                }
+            )
+
+        # Priority 2: Medium risk with many subprocess calls
+        for item in self.findings["medium_risk"]:
+            call_count = len(
+                [
+                    f
+                    for f in item.get("findings", [])
+                    if f.get("type") == "subprocess_call"
+                ]
+            )
+            if call_count > 3:
+                priority_list.append(
+                    {
+                        "priority": 2,
+                        "file": item["file"],
+                        "reason": f"Medium risk - {call_count} subprocess calls",
+                        "migration_effort": "High",
+                        "security_impact": "Medium",
+                    }
+                )
+
+        # Priority 3: Files with nosec suppressions
+        nosec_files = {
+            item["file"] for item in self.findings.get("nosec_suppressions", [])
+        }
+        for file_path in nosec_files:
+            if not any(p["file"] == file_path for p in priority_list):
+                priority_list.append(
+                    {
+                        "priority": 3,
+                        "file": file_path,
+                        "reason": "Has nosec suppressions that should be removed",
+                        "migration_effort": "Low",
+                        "security_impact": "Low",
+                    }
+                )
+
+        # Priority 4: Remaining medium risk files
+        for item in self.findings["medium_risk"]:
+            if not any(p["file"] == item["file"] for p in priority_list):
+                priority_list.append(
+                    {
+                        "priority": 4,
+                        "file": item["file"],
+                        "reason": "Medium risk - standard subprocess usage",
+                        "migration_effort": "Medium",
+                        "security_impact": "Medium",
+                    }
+                )
+
+        return sorted(priority_list, key=lambda x: (x["priority"], x["file"]))
+
+
+def main():
+    """Main function to run the audit."""
+    print("🔍 Starting subprocess usage audit...")
+
+    analyzer = SubprocessUsageAnalyzer()
+    results = analyzer.scan_codebase()
+
+    # Save detailed results
+    output_file = "subprocess_migration_audit.json"
+    with open(output_file, "w") as f:
+        json.dump(results, f, indent=2)
+
+    # Print summary
+    print("\n📊 Audit Results Summary:")
+    print(f"   Total files scanned: {results['total_files_scanned']}")
+    print(f"   Files with subprocess usage: {results['files_with_subprocess']}")
+    print(f"   High risk files: {len(results['findings_by_risk']['high_risk'])}")
+    print(f"   Medium risk files: {len(results['findings_by_risk']['medium_risk'])}")
+    print(f"   Low risk files: {len(results['findings_by_risk']['low_risk'])}")
+    print(
+        f"   Already secure files: {len(results['findings_by_risk']['already_secure'])}"
+    )
+    print(f"   Files with nosec suppressions: {len(results['nosec_suppressions'])}")
+
+    print("\n🎯 Migration Priority (Top 10):")
+    for i, item in enumerate(results["migration_priority"][:10], 1):
+        print(f"   {i}. {item['file']}")
+        print(f"      Priority: {item['priority']} | {item['reason']}")
+        print(
+            f"      Effort: {item['migration_effort']} | Impact: {item['security_impact']}"
+        )
+        print()
+
+    print(f"\n📄 Detailed results saved to: {output_file}")
+
+    return results
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,197 @@
+{
+  "version": "1.0",
+  "engine": "fitz",
+  "engine_version": "1.0",
+  "metadata": {
+    "format": "PDF",
+    "title": "",
+    "author": "",
+    "subject": "",
+    "keywords": "",
+    "creator": "",
+    "producer": "",
+    "creation_date": "",
+    "modification_date": "",
+    "custom_properties": {}
+  },
+  "document_structure": [
+    {
+      "size": [
+        612.0,
+        792.0
+      ],
+      "background_color": null,
+      "layers": [
+        {
+          "layer_id": "page_0_base_layer",
+          "layer_name": "Page Content",
+          "layer_type": "base",
+          "bbox": [
+            0,
+            0,
+            612.0,
+            792.0
+          ],
+          "visibility": true,
+          "opacity": 1.0,
+          "blend_mode": "Normal",
+          "children": [],
+          "content": [
+            {
+              "type": "drawing",
+              "id": "drawing_0",
+              "bbox": [
+                50.0,
+                640.0,
+                200.0,
+                660.0
+              ],
+              "z_index": 0,
+              "color": [
+                0.5967624187469482,
+                0.18880261480808258,
+                0.6923178434371948,
+                1.0
+              ],
+              "fill": [
+                0.20603641867637634,
+                0.08517379313707352,
+                0.579943835735321,
+                1.0
+              ],
+              "width": 1.5305429697036743,
+              "drawing_commands": [
+                {
+                  "cmd": "rect",
+                  "pts": [],
+                  "bbox": [
+                    50.0,
+                    640.0,
+                    200.0,
+                    660.0
+                  ]
+                }
+              ],
+              "original_shape_type": null
+            },
+            {
+              "type": "drawing",
+              "id": "drawing_1",
+              "bbox": [
+                50.0,
+                680.0,
+                200.0,
+                700.0
+              ],
+              "z_index": 1,
+              "color": [
+                0.1339685320854187,
+                0.34533026814460754,
+                0.031087601557374,
+                1.0
+              ],
+              "fill": [
+                0.5562918186187744,
+                0.9873627424240112,
+                0.9965108633041382,
+                1.0
+              ],
+              "width": 1.6558643579483032,
+              "drawing_commands": [
+                {
+                  "cmd": "rect",
+                  "pts": [],
+                  "bbox": [
+                    50.0,
+                    680.0,
+                    200.0,
+                    700.0
+                  ]
+                }
+              ],
+              "original_shape_type": null
+            },
+            {
+              "type": "drawing",
+              "id": "drawing_2",
+              "bbox": [
+                50.0,
+                720.0,
+                200.0,
+                740.0
+              ],
+              "z_index": 2,
+              "color": [
+                0.4874899685382843,
+                0.10485608875751495,
+                0.9078593850135803,
+                1.0
+              ],
+              "fill": [
+                0.5698792338371277,
+                0.8893803954124451,
+                0.09303178638219833,
+                1.0
+              ],
+              "width": 1.765036702156067,
+              "drawing_commands": [
+                {
+                  "cmd": "rect",
+                  "pts": [],
+                  "bbox": [
+                    50.0,
+                    720.0,
+                    200.0,
+                    740.0
+                  ]
+                }
+              ],
+              "original_shape_type": null
+            },
+            {
+              "type": "drawing",
+              "id": "drawing_3",
+              "bbox": [
+                0.0,
+                0.0,
+                612.0,
+                792.0
+              ],
+              "z_index": 3,
+              "color": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "fill": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "width": 1.0,
+              "drawing_commands": [
+                {
+                  "cmd": "rect",
+                  "pts": [],
+                  "bbox": [
+                    0.0,
+                    0.0,
+                    612.0,
+                    792.0
+                  ]
+                }
+              ],
+              "original_shape_type": null
+            }
+          ],
+          "clipping_mask": false,
+          "layer_effects": null
+        }
+      ],
+      "type": "page",
+      "page_number": 0
+    }
+  ]
+}

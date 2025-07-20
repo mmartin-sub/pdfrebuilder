@@ -1,0 +1,56 @@
+{
+    "validation_settings": {
+        "code_examples": {
+            "enabled": true,
+            "timeout_seconds": 30,
+            "skip_patterns": [
+                "# Skip validation",
+                "# TODO:",
+                "# FIXME:"
+            ],
+            "required_imports": [
+                "sys",
+                "os",
+                "pathlib"
+            ]
+        },
+        "api_references": {
+            "enabled": true,
+            "ignore_external_modules": true,
+            "external_module_patterns": [
+                "numpy.*",
+                "pandas.*",
+                "matplotlib.*",
+                "requests.*"
+            ],
+            "project_modules": [
+                "src.*"
+            ]
+        },
+        "configuration_examples": {
+            "enabled": true,
+            "validate_json": true,
+            "validate_json5": true,
+            "schema_validation": false
+        }
+    },
+    "file_patterns": {
+        "include": [
+            "**/*.md",
+            "**/*.rst"
+        ],
+        "exclude": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/build/**",
+            "**/dist/**"
+        ]
+    },
+    "reporting": {
+        "format": "console",
+        "detailed_errors": true,
+        "show_warnings": true,
+        "export_json": false,
+        "export_html": false
+    }
+}

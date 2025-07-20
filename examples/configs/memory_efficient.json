@@ -1,0 +1,36 @@
+{
+  "engines": {
+    "input": {
+      "default": "fitz",
+      "wand": {
+        "density": 150,
+        "memory_limit_mb": 256,
+        "color_management": false,
+        "use_ocr": false
+      },
+      "fitz": {
+        "extract_text": true,
+        "extract_images": false,
+        "extract_drawings": true,
+        "extract_raw_backgrounds": false
+      }
+    },
+    "output": {
+      "default": "reportlab",
+      "reportlab": {
+        "compression": 9,
+        "output_dpi": 150,
+        "embed_fonts": false
+      }
+    }
+  },
+  "processing": {
+    "enable_parallel_processing": false,
+    "max_memory_mb": 512
+  },
+  "validation": {
+    "ssim_threshold": 0.9,
+    "rendering_dpi": 150,
+    "generate_diff_images": false
+  }
+}

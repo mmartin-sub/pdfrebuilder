@@ -1,0 +1,33 @@
+{
+  "deployment": {
+    "timestamp": "2025-07-31T11:45:03.495021",
+    "version": "1.0",
+    "status": "deployed"
+  },
+  "validation": {
+    "links_validated": true,
+    "examples_tested": true,
+    "api_references_checked": true
+  },
+  "structure": {
+    "total_files": 66,
+    "total_size": 386447,
+    "directories": [
+      "guides",
+      "examples",
+      "examples/basic",
+      "examples/integration",
+      "examples/advanced",
+      "api",
+      "api/tools",
+      "api/docs",
+      "api/models",
+      "api/engines",
+      "api/font",
+      "api/engine",
+      "api/core",
+      "api/cli",
+      "reference"
+    ]
+  }
+}

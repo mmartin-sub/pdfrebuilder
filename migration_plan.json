@@ -1,0 +1,54 @@
+{
+  "files_to_move": [
+    {
+      "from": "src/cli.py",
+      "to": "src/pdfrebuilder/cli.py"
+    },
+    {
+      "from": "src/cli",
+      "to": "src/pdfrebuilder/cli",
+      "type": "directory"
+    },
+    {
+      "from": "src/config",
+      "to": "src/pdfrebuilder/config",
+      "type": "directory"
+    },
+    {
+      "from": "src/engine",
+      "to": "src/pdfrebuilder/engine",
+      "type": "directory"
+    },
+    {
+      "from": "src/font",
+      "to": "src/pdfrebuilder/font",
+      "type": "directory"
+    },
+    {
+      "from": "src/models",
+      "to": "src/pdfrebuilder/models",
+      "type": "directory"
+    },
+    {
+      "from": "src/security",
+      "to": "src/pdfrebuilder/security",
+      "type": "directory"
+    },
+    {
+      "from": "src/tools",
+      "to": "src/pdfrebuilder/tools",
+      "type": "directory"
+    },
+    {
+      "from": "src/utils",
+      "to": "src/pdfrebuilder/utils",
+      "type": "directory"
+    }
+  ],
+  "import_transformations": {
+    "src.": "pdfrebuilder.",
+    "from src.": "from pdfrebuilder.",
+    "import src.": "import pdfrebuilder."
+  },
+  "validation_steps": []
+}

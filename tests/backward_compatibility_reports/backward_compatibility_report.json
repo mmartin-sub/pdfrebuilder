@@ -1,0 +1,51 @@
+{
+  "total_tests": 7,
+  "passed": 7,
+  "failed": 0,
+  "success_rate": 100.0,
+  "total_time": 0.007706403732299805,
+  "test_results": [
+    {
+      "name": "XML Structure Compatibility",
+      "status": "PASS",
+      "duration": 0.0011489391326904297,
+      "error": null
+    },
+    {
+      "name": "HTML Structure Compatibility",
+      "status": "PASS",
+      "duration": 0.00023031234741210938,
+      "error": null
+    },
+    {
+      "name": "JSON Structure Compatibility",
+      "status": "PASS",
+      "duration": 0.00030732154846191406,
+      "error": null
+    },
+    {
+      "name": "Function Signature Compatibility",
+      "status": "PASS",
+      "duration": 3.24249267578125e-05,
+      "error": null
+    },
+    {
+      "name": "XML Security Functions",
+      "status": "PASS",
+      "duration": 8.511543273925781e-05,
+      "error": null
+    },
+    {
+      "name": "Configuration Compatibility",
+      "status": "PASS",
+      "duration": 0.0008161067962646484,
+      "error": null
+    },
+    {
+      "name": "Performance Compatibility",
+      "status": "PASS",
+      "duration": 0.0028901100158691406,
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+name: Security Testing
+'on':
+  push:
+    branches:
+    - main
+    - develop
+  pull_request:
+    branches:
+    - main
+    - develop
+  schedule:
+  - cron: 0 2 * * 1
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    - name: Install dependencies
+      run: pip install hatch bandit
+    - name: Run bandit security scan
+      run: hatch run security-scan
+    - name: Run security validation tests
+      run: hatch run security-test
+    - name: Validate bandit configuration
+      run: hatch run security-config-validate
+    - name: Generate security report
+      run: hatch run security-scan-json
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-report
+        path: reports/bandit_results.json

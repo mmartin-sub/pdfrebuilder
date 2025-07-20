@@ -1,0 +1,157 @@
+# Vulture whitelist for PDF/PSD processing project
+# This file helps Vulture understand project-specific patterns and reduces false positives
+
+# Common patterns in PDF/PSD processing
+_.bbox  # Bounding box coordinates used in many places
+_.color  # Color values used throughout
+_.font_details  # Font information structures
+_.drawing_commands  # Vector drawing commands
+_.layer_id  # Layer identifiers
+_.page_number  # Page numbering
+_.engine_version  # Engine version info
+_.metadata  # Document metadata
+
+# Test-related patterns
+_.setUp  # Test setup methods
+_.tearDown  # Test cleanup methods
+_.setup_e2e_test  # Pytest fixture parameter
+_.fontfile  # Font file variables in tests
+_.directory  # Directory variables in tests
+_.mock_file  # Mock file objects
+_.w  # Width parameter in lambda functions
+_.h  # Height parameter in lambda functions
+_.exc_type  # Exception type in context managers
+_.exc_val  # Exception value in context managers
+_.exc_tb  # Exception traceback in context managers
+_.resource_type  # Resource type parameter
+_.usage  # Usage parameter
+_.test_text  # Test text variables in test files
+_.test_flags  # Test flag variables
+_.engine_instance  # Engine instances in tests
+_.file_type  # File type variables in tests
+_.baseline_results  # Baseline test results
+_.nextitem  # Pytest hook parameter (required by interface but often unused)
+
+# Configuration and settings patterns
+_.CONFIG  # Configuration dictionaries
+_.STANDARD_PDF_FONTS  # Font constants
+_.settings  # Settings modules
+_.config  # Configuration objects
+
+# CLI and main entry points
+_.main  # Main function entry points
+_.cli  # CLI interface functions
+_.args  # Argument parsing
+_.parser  # Command line parsers
+
+# Engine abstraction patterns
+_.extract  # Engine extraction methods
+_.render  # Engine rendering methods
+_.validate  # Engine validation methods
+_.process  # Engine processing methods
+_.generate  # Engine generation methods
+
+# Data model patterns
+_.to_dict  # Serialization methods
+_.from_dict  # Deserialization methods
+_.json_serializer  # JSON serialization
+_.to_hex  # Color hex conversion
+_.from_hex  # Color hex parsing
+_.expand_path  # Path expansion methods
+
+# Security patterns (from your security modules)
+_.validate_path  # Path validation
+_.get_execution_stats  # Security execution statistics
+_.reset_stats  # Security stats reset
+_.create_temp_file  # Secure temporary file creation
+
+# Documentation and examples
+_.config_dir  # Configuration directory properties
+_.data_dir  # Data directory properties
+_.supported_versions  # Schema supported versions
+
+# Hatch/build system patterns
+_.build  # Build system hooks
+_.install  # Installation hooks
+_.test  # Test runners
+
+# Pre-commit and tooling
+_.hook  # Pre-commit hooks
+_.check  # Validation checks
+
+# Common magic methods that might appear unused
+_.__str__
+_.__repr__
+_.__eq__
+_.__hash__
+_.__len__
+_.__iter__
+_.__next__
+_.__enter__
+_.__exit__
+
+# Common properties that might appear unused
+_.width
+_.height
+_.size
+_.name
+_.id
+_.type
+_.value
+_.data
+_.content
+_.text
+_.image
+_.path
+_.file
+_.url
+
+# PDF/PSD specific attributes
+_.pages
+_.layers
+_.elements
+_.fonts
+_.images
+_.drawings
+_.shapes
+_.effects
+_.blend_mode
+_.opacity
+_.visibility
+
+# Engine-specific attributes that may appear unused but are part of API
+_._current_doc  # Current document reference in engines
+_.overlay_mode  # PDF overlay mode
+_.annotation_mode  # PDF annotation mode
+_.image_quality  # Image quality settings
+_.text_rendering_mode  # Text rendering mode
+_.anti_aliasing  # Anti-aliasing settings
+_.page_mode  # Page display mode
+_.font_subsetting  # Font subsetting settings
+_.image_compression  # Image compression settings
+_.precision  # Rendering precision
+_._metadata  # Internal metadata storage
+_.interlace_scheme  # Image interlace scheme
+_._substitution_cache  # Font substitution cache
+_._modules_scanned  # API documentation modules scanned
+
+# Configuration model constants (may appear unused but are part of enum/constants)
+_.FITZ  # Engine type constant
+_.REPORTLAB  # Engine type constant
+_.PYMUPDF  # Engine type constant
+_.WAND  # Engine type constant
+_.PSD_TOOLS  # Engine type constant
+
+# Effect constants for PSD processing
+_.SATIN  # PSD effect type
+_.GRADIENT_OVERLAY  # PSD effect type
+_.PATTERN_OVERLAY  # PSD effect type
+
+# Error handling patterns
+_.error
+_.exception
+_.warning
+_.info
+_.debug
+_.log
+_.logger

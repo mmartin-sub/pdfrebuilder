@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+"""
+Tests for security utilities.
+
+This module tests the security utilities to ensure they properly prevent
+security vulnerabilities like command injection and path traversal.
+"""
+
+import sys
+from pathlib import Path
+
+import pytest
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from pdfrebuilder.security.path_utils import PathSecurityError, SecurePathManager
+from pdfrebuilder.security.subprocess_utils import SecureSubprocessRunner, SecurityError, SubprocessSecurityValidator
+
+
+class TestSubprocessSecurity:
+    """Test subprocess security utilities."""
+
+    def test_command_validation_success(self):
+        """Test that valid commands pass validation."""
+        valid_commands = [
+            ["python", "--version"],
+            ["hatch", "run", "test"],
+            ["git", "status"],
+        ]
+
+        for cmd in valid_commands:
+            # Should not raise exception
+            SubprocessSecurityValidator.validate_command(cmd)
+
+    def test_command_validation_dangerous_chars(self):
+        """Test that commands with dangerous characters are rejected."""
+        dangerous_commands = [
+            ["python", "--version", ";", "rm", "-rf", "/"],
+            ["echo", "test", "&", "malicious_command"],
+            ["cat", "/etc/passwd", "|", "grep", "root"],
+            ["ls", ">", "/tmp/output"],
+            ["echo", "`whoami`"],
+            ["cd", "..", "&&", "rm", "file"],
+        ]
+
+        for cmd in dangerous_commands:
+            with pytest.raises(SecurityError, match="dangerous character"):
+                SubprocessSecurityValidator.validate_command(cmd)
+
+    def test_command_validation_empty_components(self):
+        """Test that empty command components are rejected."""
+        invalid_commands = [
+            [],
+            [""],
+            ["python", ""],
+            ["", "test"],
+        ]
+
+        for cmd in invalid_commands:
+            with pytest.raises(SecurityError):
+                SubprocessSecurityValidator.validate_command(cmd)
+
+    def test_secure_subprocess_runner(self):
+        """Test secure subprocess execution."""
+        runner = SecureSubprocessRunner()
+
+        # Test successful command
+        result = runner.run(["python", "--version"], capture_output=True, text=True)
+        assert result.returncode == 0
+        assert "Python" in result.stdout
+
+    def test_secure_subprocess_runner_security_error(self):
+        """Test that dangerous commands are rejected by runner."""
+        runner = SecureSubprocessRunner()
+
+        with pytest.raises(SecurityError):
+            runner.run(["python", "--version", ";", "echo", "dangerous"])
+
+
+class TestPathSecurity:
+    """Test path security utilities."""
+
+    def test_path_validation_success(self):
+        """Test that valid paths pass validation."""
+        base_path = Path.cwd()
+        valid_paths = [
+            "test_file.txt",
+            "subdir/test_file.txt",
+            str(base_path / "test_file.txt"),
+        ]
+
+        for path in valid_paths:
+            # Should not raise exception
+            validated = SecurePathManager.validate_path(path, base_path, allow_creation=True)
+            assert isinstance(validated, Path)
+
+    def test_path_validation_traversal_attack(self):
+        """Test that path traversal attempts are rejected."""
+        base_path = Path.cwd()
+        dangerous_paths = [
+            "../../../etc/passwd",
+            "subdir/../../etc/passwd",
+            "/etc/passwd",
+            "test/../../../etc/passwd",
+        ]
+
+        for path in dangerous_paths:
+            with pytest.raises(PathSecurityError):
+                SecurePathManager.validate_path(path, base_path)
+
+    def test_path_validation_dangerous_chars(self):
+        """Test that paths with dangerous characters are rejected."""
+        base_path = Path.cwd()
+        dangerous_paths = [
+            "test;rm -rf /",
+            "test`whoami`",
+            "test$(whoami)",
+            "test|grep secret",
+        ]
+
+        for path in dangerous_paths:
+            with pytest.raises(PathSecurityError, match="dangerous"):
+                SecurePathManager.validate_path(path, base_path)
+
+    def test_secure_temp_directory_creation(self):
+        """Test secure temporary directory creation."""
+        temp_dir = SecurePathManager.create_secure_temp_directory()
+
+        assert temp_dir.exists()
+        assert temp_dir.is_dir()
+
+        # Check permissions (owner only)
+        stat_info = temp_dir.stat()
+        permissions = oct(stat_info.st_mode)[-3:]
+        assert permissions == "700"
+
+        # Cleanup
+        temp_dir.rmdir()
+
+    def test_secure_temp_file_creation(self):
+        """Test secure temporary file creation."""
+        fd, temp_file = SecurePathManager.create_secure_temp_file()
+
+        assert temp_file.exists()
+        assert temp_file.is_file()
+
+        # Check permissions (owner read/write only)
+        stat_info = temp_file.stat()
+        permissions = oct(stat_info.st_mode)[-3:]
+        assert permissions == "600"
+
+        # Cleanup
+        import os
+
+        os.close(fd)
+        temp_file.unlink()
+
+    def test_ensure_directory_exists(self):
+        """Test secure directory creation."""
+        # Use a directory within the project for testing
+        test_dir = Path.cwd() / "test_temp_dir"
+
+        try:
+            created_dir = SecurePathManager.ensure_directory_exists(test_dir)
+
+            assert created_dir.exists()
+            assert created_dir.is_dir()
+            assert created_dir == test_dir.resolve()
+        finally:
+            # Cleanup
+            if test_dir.exists():
+                test_dir.rmdir()
+
+    def test_safe_file_write(self):
+        """Test secure file writing."""
+        # Use a file within the project for testing
+        test_file = Path.cwd() / "test_temp_file.txt"
+        test_content = "This is test content"
+
+        try:
+            SecurePathManager.safe_file_write(test_file, test_content)
+
+            assert test_file.exists()
+            assert test_file.read_text() == test_content
+
+            # Check permissions
+            stat_info = test_file.stat()
+            permissions = oct(stat_info.st_mode)[-3:]
+            assert permissions == "644"
+        finally:
+            # Cleanup
+            if test_file.exists():
+                test_file.unlink()
+
+
+class TestSecurityIntegration:
+    """Test integration of security utilities."""
+
+    def test_secure_script_execution(self):
+        """Test secure execution of a Python script."""
+        # Create a script within the project directory
+        script_path = Path.cwd() / "test_temp_script.py"
+
+        try:
+            # Write the script
+            script_path.write_text('print("Hello, secure world!")')
+
+            # Validate the script path
+            validated_path = SecurePathManager.validate_path(script_path, base_path=Path.cwd(), must_exist=True)
+
+            # Execute the script securely
+            runner = SecureSubprocessRunner()
+            result = runner.run(
+                [sys.executable, str(validated_path)],
+                capture_output=True,
+                text=True,
+                allow_custom_executables=True,
+            )
+
+            assert result.returncode == 0
+            assert "Hello, secure world!" in result.stdout
+
+        finally:
+            # Cleanup
+            if script_path.exists():
+                script_path.unlink()
+
+    def test_security_error_handling(self):
+        """Test that security errors are properly handled."""
+        runner = SecureSubprocessRunner()
+
+        # Test command injection attempt
+        with pytest.raises(SecurityError):
+            runner.run(["echo", "test", ";", "rm", "-rf", "/"])
+
+        # Test path traversal attempt
+        with pytest.raises(PathSecurityError):
+            SecurePathManager.validate_path("../../../etc/passwd")
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

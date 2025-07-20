@@ -1,0 +1,34 @@
+{
+    "description": "Quality-optimized configuration for professional document generation",
+    "use_case": "Professional reports, publications, high-quality output",
+    "default_engine": "reportlab",
+    "reportlab": {
+        "compression": 0,
+        "page_mode": "portrait",
+        "embed_fonts": true,
+        "font_subsetting": false,
+        "image_compression": "none",
+        "color_space": "cmyk",
+        "precision": 2.0
+    },
+    "pymupdf": {
+        "overlay_mode": false,
+        "annotation_mode": "preserve",
+        "compression": "none",
+        "image_quality": 100,
+        "text_rendering_mode": "fill_stroke",
+        "anti_aliasing": true,
+        "optimize_for_web": false
+    },
+    "performance": {
+        "enable_caching": false,
+        "cache_size": 50,
+        "parallel_rendering": false,
+        "max_workers": 1
+    },
+    "debugging": {
+        "enable_metrics": true,
+        "log_rendering_details": true,
+        "save_intermediate_files": true
+    }
+}

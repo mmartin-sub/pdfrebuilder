@@ -1,0 +1,190 @@
+default_language_version:
+  python: python3.12
+repos:
+  - repo: local
+    hooks:
+      - id: python-version
+        name: Check Python version
+        entry: python --version
+        language: python
+        stages:
+          - pre-commit
+        pass_filenames: false
+      - id: hash-security-check
+        name: Hash Security Validation
+        entry: python scripts/validate_hash_usage.py
+        language: python
+        files: \.py$
+        exclude: ^(tests/|examples/|\.kiro/|projects/|templates/|\.history/)
+        pass_filenames: false
+        args: [src/]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(projects/|templates/|\.history/|downloaded_fonts/|\.kiro/)
+      - id: end-of-file-fixer
+        exclude: ^(projects/|templates/|\.history/|downloaded_fonts/|\.kiro/)
+      - id: check-yaml
+        exclude: ^(projects/|templates/|\.history/|\.kiro/)
+      - id: check-toml
+      - id: check-json
+        exclude: ^(projects/|templates/|\.history/|\.kiro/|tsconfig\.json$)
+      - id: check-added-large-files
+        args:
+          - --maxkb=1024
+        # exclude files that are excluded from .hitignore (not a default unfortunately)
+        exclude: ^(downloaded_fonts/|book/|custom_images/|tests/human_review_outputs/|tests/temp_e2e_output/|tests/sample/)
+      - id: check-merge-conflict
+      - id: check-docstring-first
+        exclude: ^(projects/|templates/|\.history/|\.kiro/)
+      - id: debug-statements
+        exclude: ^(projects/|templates/|\.history/|\.kiro/)
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+        files: \.(sh|bash|zsh|fish)$
+  - repo: https://github.com/whtsky/pre-commit-pretty-format-json5
+    rev: 1.0.0
+    hooks:
+      - id: pretty-format-json5
+        files: \.json5$
+        args:
+          - --indent
+          - "2"
+          - --no-sort-keys
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.7
+    hooks:
+      - id: ruff-format
+        name: Format with Ruff
+        exclude: ^(projects/|templates/|\.history/|\.kiro/|examples/|scripts/)
+      - id: ruff
+        name: Lint with Ruff
+        args:
+          - --fix
+          - --exit-non-zero-on-fix
+        exclude: ^(projects/|templates/|\.history/|\.kiro/|examples/|scripts/)
+
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        # The command that pre-commit will execute
+        entry: hatch run pyright
+        language: system
+        types: [python]
+        # Pass the files to the command
+        # This is important so pyright checks only the files staged for commit
+        files: ^src/
+        pass_filenames: false
+
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        language_version: python3.12
+        args:
+          - -c
+          - pyproject.toml
+        exclude: ^(tests/|examples/|\.kiro/|projects/|templates/|\.history/)
+        additional_dependencies:
+          - tomli
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args:
+          - --baseline
+          - .secrets.baseline
+        exclude: \.secrets\.baseline$
+
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: v2.14
+    hooks:
+      - id: vulture
+        language_version: python3.12
+        args:
+          - src
+          - tests
+          - scripts
+          - examples
+          - .vulture_whitelist
+          - --min-confidence
+          - "85"
+          - --sort-by-size
+          - --exclude
+          - "*/migrations/*,*/venv/*,*/__pycache__/*,*/.git/*,*/node_modules/*,*/.mypy_cache/*,*/.ruff_cache/*,*/.pytest_cache/*"
+          - --ignore-names
+          - _*,test_*,Test*,setUp*,tearDown*,Mock*,mock_*,fixture_*
+          - --ignore-decorators
+          - "@app.route,@pytest.fixture,@click.command,@typer.command,@contextmanager"
+        exclude: ^(\.venv/|\.git/|\.kiro/|projects/|templates/|\.history/|downloaded_fonts/|book/|fonts/|images/|input/|output/|custom_images/|custom_output/|dev_output/)
+        additional_dependencies: []
+
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        args:
+          - --fix
+        exclude: ^(\.kiro/|\.amazonq/|projects/|templates/|\.history/|book/)
+        language_version: 22.2.0
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        language_version: python3.12
+        args:
+          - --profile
+          - black
+          - --line-length
+          - "120"
+        exclude: ^(projects/|templates/|\.history/|\.kiro/)
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-no-log-warn
+      - id: python-no-eval
+        exclude: ^tests/security/test_enhanced_security\.py$
+      - id: python-check-blanket-noqa
+      - id: python-check-blanket-type-ignore
+      - id: python-use-type-annotations
+        exclude: ^(projects/|templates/|\.history/|\.kiro/)
+  - repo: https://github.com/AleksaC/hadolint-py
+    rev: v2.12.1b3
+    hooks:
+      - id: hadolint
+        files: Dockerfile.*
+        args:
+          - --ignore
+          - DL3025
+          - --ignore
+          - DL3018
+          - --ignore
+          - DL3008
+          - --ignore
+          - DL3009
+          - --ignore
+          - DL3015
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: \.(sh|bash)$
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args:
+          - -c=.yamllint.yaml
+        exclude: ^(\.kiro/|projects/|templates/|\.history/)
+        verbose: true
+        stages:
+          - manual

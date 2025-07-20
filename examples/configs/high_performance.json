@@ -1,0 +1,41 @@
+{
+  "engines": {
+    "input": {
+      "default": "wand",
+      "wand": {
+        "density": 300,
+        "memory_limit_mb": 2048,
+        "color_management": true,
+        "use_ocr": false
+      },
+      "fitz": {
+        "extract_text": true,
+        "extract_images": true,
+        "extract_drawings": true,
+        "extract_raw_backgrounds": false
+      }
+    },
+    "output": {
+      "default": "pymupdf",
+      "pymupdf": {
+        "overlay_mode": false,
+        "compression": "flate",
+        "embed_fonts": true
+      },
+      "reportlab": {
+        "compression": 1,
+        "output_dpi": 300,
+        "embed_fonts": true
+      }
+    }
+  },
+  "processing": {
+    "enable_parallel_processing": true,
+    "max_memory_mb": 4096
+  },
+  "validation": {
+    "ssim_threshold": 0.95,
+    "rendering_dpi": 300,
+    "generate_diff_images": false
+  }
+}

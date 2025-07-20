@@ -1,0 +1,344 @@
+{
+    "version": "1.0",
+    "engine": "fitz",
+    "engine_version": "PyMuPDF 1.26.23",
+    "metadata": {
+        "format": "PDF 1.4",
+        "title": "Null Color Test Document",
+        "author": "Test Author",
+        "subject": "Null Color Test",
+        "keywords": "test,null,color,combinations",
+        "creator": "Test Creator",
+        "producer": "Test Producer",
+        "creationDate": "D:20250717183732+00'00'",
+        "modDate": "D:20250717183732+00'00'",
+        "trapped": "",
+        "encryption": null
+    },
+    "document_structure": [
+        {
+            "type": "page",
+            "page_number": 0,
+            "size": [
+                612.0,
+                792.0
+            ],
+            "page_background_color": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "layers": [
+                {
+                    "layer_id": "page_0_base_layer",
+                    "layer_name": "Page Content",
+                    "layer_type": "base",
+                    "bbox": [
+                        0,
+                        0,
+                        612.0,
+                        792.0
+                    ],
+                    "visibility": true,
+                    "opacity": 1.0,
+                    "blend_mode": "Normal",
+                    "children": [],
+                    "content": [
+                        {
+                            "type": "text",
+                            "bbox": [
+                                100.0,
+                                700.0,
+                                500.0,
+                                720.0
+                            ],
+                            "text": "Case 1: Fill only (null stroke)",
+                            "font_details": {
+                                "name": "Helvetica-Bold",
+                                "size": 12.0,
+                                "color": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ]
+                            },
+                            "id": "text_1"
+                        },
+                        {
+                            "type": "drawing",
+                            "bbox": [
+                                100.0,
+                                600.0,
+                                200.0,
+                                680.0
+                            ],
+                            "color": null,
+                            "fill": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ],
+                            "width": 1.0,
+                            "drawing_commands": [
+                                {
+                                    "cmd": "M",
+                                    "pts": [
+                                        100.0,
+                                        600.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        200.0,
+                                        600.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        200.0,
+                                        680.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        100.0,
+                                        680.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "H"
+                                }
+                            ],
+                            "original_shape_type": "rectangle",
+                            "stroke_details": null,
+                            "fill_details": null,
+                            "id": "drawing_1"
+                        },
+                        {
+                            "type": "text",
+                            "bbox": [
+                                300.0,
+                                700.0,
+                                500.0,
+                                720.0
+                            ],
+                            "text": "Case 2: Stroke only (null fill)",
+                            "font_details": {
+                                "name": "Helvetica-Bold",
+                                "size": 12.0,
+                                "color": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ]
+                            },
+                            "id": "text_2"
+                        },
+                        {
+                            "type": "drawing",
+                            "bbox": [
+                                300.0,
+                                600.0,
+                                400.0,
+                                680.0
+                            ],
+                            "color": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ],
+                            "fill": null,
+                            "width": 2.0,
+                            "drawing_commands": [
+                                {
+                                    "cmd": "M",
+                                    "pts": [
+                                        300.0,
+                                        600.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        400.0,
+                                        600.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        400.0,
+                                        680.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        300.0,
+                                        680.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "H"
+                                }
+                            ],
+                            "original_shape_type": "rectangle",
+                            "stroke_details": null,
+                            "fill_details": null,
+                            "id": "drawing_2"
+                        },
+                        {
+                            "type": "text",
+                            "bbox": [
+                                100.0,
+                                550.0,
+                                500.0,
+                                570.0
+                            ],
+                            "text": "Case 3: Both stroke and fill",
+                            "font_details": {
+                                "name": "Helvetica-Bold",
+                                "size": 12.0,
+                                "color": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ]
+                            },
+                            "id": "text_3"
+                        },
+                        {
+                            "type": "drawing",
+                            "bbox": [
+                                100.0,
+                                450.0,
+                                200.0,
+                                530.0
+                            ],
+                            "color": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ],
+                            "fill": [
+                                0.8,
+                                0.8,
+                                0.8
+                            ],
+                            "width": 2.0,
+                            "drawing_commands": [
+                                {
+                                    "cmd": "M",
+                                    "pts": [
+                                        100.0,
+                                        450.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        200.0,
+                                        450.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        200.0,
+                                        530.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        100.0,
+                                        530.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "H"
+                                }
+                            ],
+                            "original_shape_type": "rectangle",
+                            "stroke_details": null,
+                            "fill_details": null,
+                            "id": "drawing_3"
+                        },
+                        {
+                            "type": "text",
+                            "bbox": [
+                                300.0,
+                                550.0,
+                                500.0,
+                                570.0
+                            ],
+                            "text": "Case 4: Both null (invisible)",
+                            "font_details": {
+                                "name": "Helvetica-Bold",
+                                "size": 12.0,
+                                "color": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ]
+                            },
+                            "id": "text_4"
+                        },
+                        {
+                            "type": "drawing",
+                            "bbox": [
+                                300.0,
+                                450.0,
+                                400.0,
+                                530.0
+                            ],
+                            "color": null,
+                            "fill": null,
+                            "width": 1.0,
+                            "drawing_commands": [
+                                {
+                                    "cmd": "M",
+                                    "pts": [
+                                        300.0,
+                                        450.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        400.0,
+                                        450.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        400.0,
+                                        530.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        300.0,
+                                        530.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "H"
+                                }
+                            ],
+                            "original_shape_type": "rectangle",
+                            "stroke_details": null,
+                            "fill_details": null,
+                            "id": "drawing_4"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

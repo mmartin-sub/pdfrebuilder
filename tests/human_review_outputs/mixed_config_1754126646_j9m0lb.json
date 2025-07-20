@@ -1,0 +1,336 @@
+{
+  "version": "1.0",
+  "engine": "fitz",
+  "engine_version": "1.0",
+  "metadata": {
+    "format": "PDF",
+    "title": "",
+    "author": "",
+    "subject": "",
+    "keywords": "",
+    "creator": "",
+    "producer": "",
+    "creation_date": "",
+    "modification_date": "",
+    "custom_properties": {}
+  },
+  "document_structure": [
+    {
+      "size": [
+        612.0,
+        792.0
+      ],
+      "background_color": null,
+      "layers": [
+        {
+          "layer_id": "page_0_base_layer",
+          "layer_name": "Page Content",
+          "layer_type": "base",
+          "bbox": [
+            0,
+            0,
+            612.0,
+            792.0
+          ],
+          "visibility": true,
+          "opacity": 1.0,
+          "blend_mode": "Normal",
+          "children": [],
+          "content": [
+            {
+              "type": "drawing",
+              "id": "drawing_0",
+              "bbox": [
+                50.0,
+                560.0,
+                200.0,
+                580.0
+              ],
+              "z_index": 0,
+              "color": [
+                0.3229416608810425,
+                0.9270560145378113,
+                0.3367321491241455,
+                1.0
+              ],
+              "fill": [
+                0.9954496622085571,
+                0.5744462013244629,
+                0.7743127346038818,
+                1.0
+              ],
+              "width": 1.1537532806396484,
+              "drawing_commands": [
+                {
+                  "cmd": "rect",
+                  "pts": [],
+                  "bbox": [
+                    50.0,
+                    560.0,
+                    200.0,
+                    580.0
+                  ]
+                }
+              ],
+              "original_shape_type": null
+            },
+            {
+              "type": "drawing",
+              "id": "drawing_1",
+              "bbox": [
+                50.0,
+                680.0,
+                200.0,
+                700.0
+              ],
+              "z_index": 1,
+              "color": [
+                0.9248340725898743,
+                0.31715095043182373,
+                0.14006096124649048,
+                1.0
+              ],
+              "fill": [
+                0.8166170716285706,
+                0.11898412555456161,
+                0.6788970232009888,
+                1.0
+              ],
+              "width": 2.7521541118621826,
+              "drawing_commands": [
+                {
+                  "cmd": "rect",
+                  "pts": [],
+                  "bbox": [
+                    50.0,
+                    680.0,
+                    200.0,
+                    700.0
+                  ]
+                }
+              ],
+              "original_shape_type": null
+            },
+            {
+              "type": "drawing",
+              "id": "drawing_2",
+              "bbox": [
+                0.0,
+                0.0,
+                612.0,
+                792.0
+              ],
+              "z_index": 2,
+              "color": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "fill": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "width": 1.0,
+              "drawing_commands": [
+                {
+                  "cmd": "rect",
+                  "pts": [],
+                  "bbox": [
+                    0.0,
+                    0.0,
+                    612.0,
+                    792.0
+                  ]
+                }
+              ],
+              "original_shape_type": null
+            },
+            {
+              "type": "text",
+              "id": "text_0",
+              "bbox": [
+                50.0,
+                735.1245727539062,
+                236.8766326904297,
+                754.137451171875
+              ],
+              "z_index": 0,
+              "raw_text": "Mixed Content Test Document",
+              "text": "Mixed Content Test Document",
+              "font_details": {
+                "name": "Helvetica",
+                "size": 13.837592124938965,
+                "color": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ascender": 1.0750000476837158,
+                "descender": -0.29899999499320984,
+                "is_superscript": false,
+                "is_italic": false,
+                "is_serif": false,
+                "is_monospaced": false,
+                "is_bold": false,
+                "original_flags": 0,
+                "kerning": null,
+                "leading": null,
+                "tracking": null,
+                "baseline_shift": null,
+                "font_caps": null
+              },
+              "writing_mode": 0,
+              "writing_direction": [
+                1.0,
+                0.0
+              ],
+              "align": 0,
+              "adjust_spacing": false,
+              "background_color": null
+            },
+            {
+              "type": "text",
+              "id": "text_1",
+              "bbox": [
+                50.0,
+                658.5604248046875,
+                230.76220703125,
+                673.052734375
+              ],
+              "z_index": 0,
+              "raw_text": "This is body text with various formatting.",
+              "text": "This is body text with various formatting.",
+              "font_details": {
+                "name": "Times-Roman",
+                "size": 10.863765716552734,
+                "color": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ascender": 1.0529999732971191,
+                "descender": -0.2809999883174896,
+                "is_superscript": false,
+                "is_italic": false,
+                "is_serif": true,
+                "is_monospaced": false,
+                "is_bold": false,
+                "original_flags": 4,
+                "kerning": null,
+                "leading": null,
+                "tracking": null,
+                "baseline_shift": null,
+                "font_caps": null
+              },
+              "writing_mode": 0,
+              "writing_direction": [
+                1.0,
+                0.0
+              ],
+              "align": 0,
+              "adjust_spacing": false,
+              "background_color": null
+            },
+            {
+              "type": "text",
+              "id": "text_2",
+              "bbox": [
+                50.0,
+                615.8438110351562,
+                378.08355712890625,
+                634.81494140625
+              ],
+              "z_index": 0,
+              "raw_text": "Second paragraph for layout testing.",
+              "text": "Second paragraph for layout testing.",
+              "font_details": {
+                "name": "Courier",
+                "size": 15.189044952392578,
+                "color": [
+                  0.0,
+                  0.0,
+                  1.0,
+                  1.0
+                ],
+                "ascender": 0.9319999814033508,
+                "descender": -0.31700000166893005,
+                "is_superscript": false,
+                "is_italic": false,
+                "is_serif": false,
+                "is_monospaced": true,
+                "is_bold": false,
+                "original_flags": 8,
+                "kerning": null,
+                "leading": null,
+                "tracking": null,
+                "baseline_shift": null,
+                "font_caps": null
+              },
+              "writing_mode": 0,
+              "writing_direction": [
+                1.0,
+                0.0
+              ],
+              "align": 0,
+              "adjust_spacing": false,
+              "background_color": null
+            },
+            {
+              "type": "text",
+              "id": "text_3",
+              "bbox": [
+                50.0,
+                537.2393798828125,
+                148.97512817382812,
+                553.5492553710938
+              ],
+              "z_index": 0,
+              "raw_text": "Footer text content",
+              "text": "Footer text content",
+              "font_details": {
+                "name": "Helvetica",
+                "size": 11.87036418914795,
+                "color": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ascender": 1.0750000476837158,
+                "descender": -0.29899999499320984,
+                "is_superscript": false,
+                "is_italic": false,
+                "is_serif": false,
+                "is_monospaced": false,
+                "is_bold": false,
+                "original_flags": 0,
+                "kerning": null,
+                "leading": null,
+                "tracking": null,
+                "baseline_shift": null,
+                "font_caps": null
+              },
+              "writing_mode": 0,
+              "writing_direction": [
+                1.0,
+                0.0
+              ],
+              "align": 0,
+              "adjust_spacing": false,
+              "background_color": null
+            }
+          ],
+          "clipping_mask": false,
+          "layer_effects": null
+        }
+      ],
+      "type": "page",
+      "page_number": 0
+    }
+  ]
+}

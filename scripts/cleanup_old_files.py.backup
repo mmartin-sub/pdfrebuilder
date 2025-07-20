@@ -1,0 +1,453 @@
+#!/usr/bin/env python3
+"""
+Cleanup script to remove old log and debug files.
+
+This script removes files that are older than 3 days based on specific file patterns
+to ensure safety and avoid accidentally deleting important files.
+
+Usage:
+    python scripts/cleanup_old_files.py [--dry-run] [--days N] [--verbose] [-y]
+"""
+
+import argparse
+import fnmatch
+import logging
+import os
+import re
+from datetime import datetime, timedelta
+from pathlib import Path
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
+
+# File patterns that are safe to delete (old logs and debug files)
+SAFE_PATTERNS = [
+    # Log files with timestamp patterns
+    r".*_\d{8}_\d{6}\.log$",  # e.g., run_tests_20250728_144416.log
+    r"test_.*_\d{8}_\d{6}\.log$",  # e.g., test_psd_extraction_20250724_130528.log
+    # Debug and test output files
+    r".*_debug\.log$",
+    r".*_test\.log$",
+    r"debug_.*\.pdf$",
+    r"test_.*\.pdf$",
+    r"output\d+\.pdf$",  # e.g., output1.pdf, output.pdf
+    # Temporary test files
+    r".*_test_.*\.png$",
+    r".*_test_.*\.jpg$",
+    r".*_test_.*\.jpeg$",
+    # Test result files
+    r"test_results\.json$",
+    r".sample*_config\.json$",  # Sample config files in debug
+    # Cache and temporary directories
+    r"__pycache__$",
+    r"\.pytest_cache$",
+    r"\.ruff_cache$",
+    r"\.mypy_cache$",
+]
+
+# Directories to scan for cleanup
+CLEANUP_DIRECTORIES = [
+    "output",
+    "output/debug",
+    "output/logs",
+    "output/tests",
+    "tests",
+    ".",
+]
+
+# Files/directories to NEVER delete (safety list with wildcard support)
+NEVER_DELETE = [
+    "pyproject.toml",
+    "README.md",
+    "LICENSE",
+    "requirements.txt",
+    "*.py",
+    "*.toml",
+    "*.md",
+    "src",
+    "tests",
+    ".git",
+    ".gitignore",
+    ".trunk",
+    ".vscode",
+    ".github",
+    ".editorconfig",
+    ".pre-commit-config.yaml",
+    ".cursorrules",
+    "CONTRIBUTING.md",
+    "Dockerfile",
+    "layout_config.json",
+    "manual_overrides.json5",
+    "GEMINI.md",
+    ".kiro",
+    "scripts",
+    "docs",
+    "examples",
+    "book",
+    "images",
+    "input",
+    "downloaded_fonts",
+    "fonts",
+    "uv.lock",
+    "*.json",
+    "*.yaml",
+    "*.yml",
+]
+
+
+class FileCleanup:
+    """Handles cleanup of old log and debug files."""
+
+    def __init__(
+        self,
+        days_old: int = 3,
+        dry_run: bool = False,
+        verbose: bool = False,
+        auto_confirm: bool = False,
+    ):
+        """
+        Initialize the cleanup utility.
+
+        Args:
+            days_old: Number of days after which files are considered old
+            dry_run: If True, only show what would be deleted without actually deleting
+            verbose: If True, show detailed information about each file
+            auto_confirm: If True, skip confirmation prompts and auto-accept deletions
+        """
+        self.days_old = days_old
+        self.dry_run = dry_run
+        self.verbose = verbose
+        self.auto_confirm = auto_confirm
+        self.cutoff_date = datetime.now() - timedelta(days=days_old)
+
+        # Compile regex patterns for efficiency
+        self.safe_patterns = [re.compile(pattern) for pattern in SAFE_PATTERNS]
+
+        # Get dynamic directories from settings
+        try:
+            from src.settings import get_config_value
+
+            font_validation_demo_reports_dir = get_config_value(
+                "font_validation_demo_reports_dir"
+            )
+            # Add the directory name to the never delete patterns
+            self.never_delete_patterns = list(NEVER_DELETE)
+            if font_validation_demo_reports_dir:
+                self.never_delete_patterns.append(
+                    os.path.basename(font_validation_demo_reports_dir)
+                )
+        except ImportError:
+            # Fallback if settings module is not available
+            self.never_delete_patterns = list(NEVER_DELETE)
+
+        if verbose:
+            logging.getLogger().setLevel(logging.DEBUG)
+
+    def is_safe_to_delete(self, file_path: Path) -> bool:
+        """
+        Check if a file is safe to delete based on patterns and safety rules.
+
+        Args:
+            file_path: Path to the file to check
+
+        Returns:
+            True if the file is safe to delete, False otherwise
+        """
+        file_name = file_path.name
+
+        # Never delete files matching patterns in the safety list (supports wildcards)
+        for pattern in self.never_delete_patterns:
+            if fnmatch.fnmatch(file_name, pattern):
+                return False
+
+        # Never delete directories (only files)
+        if file_path.is_dir():
+            return False
+
+        # Check if file matches any safe pattern
+        for pattern in self.safe_patterns:
+            if pattern.match(file_name):
+                return True
+
+        return False
+
+    def get_file_age(self, file_path: Path) -> datetime | None:
+        """
+        Get the modification time of a file.
+
+        Args:
+            file_path: Path to the file
+
+        Returns:
+            File modification time or None if file doesn't exist
+        """
+        try:
+            return datetime.fromtimestamp(file_path.stat().st_mtime)
+        except (OSError, FileNotFoundError):
+            return None
+
+    def is_old_enough(self, file_path: Path) -> bool:
+        """
+        Check if a file is old enough to be deleted.
+
+        Args:
+            file_path: Path to the file
+
+        Returns:
+            True if file is older than the cutoff date
+        """
+        file_age = self.get_file_age(file_path)
+        if file_age is None:
+            return False
+        return file_age < self.cutoff_date
+
+    def scan_directory(self, directory: Path) -> list[tuple[Path, datetime]]:
+        """
+        Scan a directory for files that can be safely deleted.
+
+        Args:
+            directory: Directory to scan
+
+        Returns:
+            List of tuples (file_path, modification_time) for files that can be deleted
+        """
+        candidates = []
+
+        if not directory.exists():
+            logger.debug(f"Directory {directory} does not exist, skipping")
+            return candidates
+
+        logger.debug(f"Scanning directory: {directory}")
+
+        try:
+            items = list(directory.iterdir())
+            logger.debug(f"Found {len(items)} items in {directory}")
+
+            for item in items:
+                if item.is_dir():
+                    logger.debug(f"File checked: {item} - SKIP (directory)")
+                    continue
+
+                if not item.is_file():
+                    logger.debug(f"File checked: {item} - SKIP (not a file)")
+                    continue
+
+                # Check if safe to delete
+                is_safe = self.is_safe_to_delete(item)
+                if not is_safe:
+                    logger.debug(
+                        f"File checked: {item} - Safe to delete: False, Protected by NEVER_DELETE patterns"
+                    )
+                    continue
+
+                # Check age
+                file_age = self.get_file_age(item)
+                if file_age is None:
+                    logger.debug(
+                        f"File checked: {item} - Safe to delete: False, No age information"
+                    )
+                    continue
+
+                is_old = self.is_old_enough(item)
+                age_days = (datetime.now() - file_age).days
+
+                if is_old:
+                    logger.debug(
+                        f"File checked: {item} - Safe to delete: True, Age: {age_days} days, CANDIDATE"
+                    )
+                    candidates.append((item, file_age))
+                else:
+                    logger.debug(
+                        f"File checked: {item} - Safe to delete: False, Age: {age_days} days, Too recent"
+                    )
+
+        except PermissionError:
+            logger.error(f"Permission denied accessing directory: {directory}")
+        except Exception as e:
+            logger.error(f"Error scanning directory {directory}: {e}")
+
+        logger.debug(f"Found {len(candidates)} candidates in {directory}")
+        return candidates
+
+    def confirm_deletion(self, file_path: Path) -> bool:
+        """
+        Ask user for confirmation before deleting a file.
+
+        Args:
+            file_path: Path to the file to be deleted
+
+        Returns:
+            True if user confirms deletion, False otherwise
+        """
+        if self.auto_confirm or self.dry_run:
+            return True
+
+        while True:
+            response = input(f"Delete {file_path}? [y/N/a/q]: ").strip().lower()
+            if response in ["y", "yes"]:
+                return True
+            elif response in ["n", "no", ""]:
+                return False
+            elif response in ["a", "all"]:
+                self.auto_confirm = True
+                return True
+            elif response in ["q", "quit"]:
+                print("Cleanup cancelled by user")
+                exit(0)
+            else:
+                print(
+                    "Please enter 'y' (yes), 'n' (no), 'a' (yes to all), or 'q' (quit)"
+                )
+
+    def cleanup_files(self) -> tuple[int, int]:
+        """
+        Clean up old files across all target directories.
+
+        Returns:
+            Tuple of (files_deleted, total_size_deleted)
+        """
+        files_deleted = 0
+        total_size = 0
+
+        if self.dry_run:
+            logger.info("DRY RUN MODE - No files will be actually deleted")
+
+        all_candidates = []
+
+        # Scan all directories
+        for dir_name in CLEANUP_DIRECTORIES:
+            dir_path = Path(dir_name)
+            candidates = self.scan_directory(dir_path)
+            all_candidates.extend(candidates)
+
+        # Sort by modification time (oldest first)
+        all_candidates.sort(key=lambda x: x[1])
+
+        if not all_candidates:
+            logger.info("No files found for cleanup")
+            return 0, 0
+
+        # Process each candidate
+        for file_path, mod_time in all_candidates:
+            try:
+                file_size = file_path.stat().st_size
+                age_days = (datetime.now() - mod_time).days
+
+                if self.dry_run:
+                    print(
+                        f"Would delete: {file_path} (age: {age_days} days, size: {file_size} bytes)"
+                    )
+                    files_deleted += 1
+                    total_size += file_size
+                elif self.confirm_deletion(file_path):
+                    file_path.unlink()
+                    files_deleted += 1
+                    total_size += file_size
+                    print(
+                        f"Deleted: {file_path} (age: {age_days} days, size: {file_size} bytes)"
+                    )
+                else:
+                    print(f"Skipped: {file_path}")
+
+            except PermissionError:
+                logger.error(f"Permission denied deleting file: {file_path}")
+            except FileNotFoundError:
+                pass  # File already deleted, ignore
+            except Exception as e:
+                logger.error(f"Error deleting file {file_path}: {e}")
+
+        return files_deleted, total_size
+
+
+def main():
+    """Main entry point for the cleanup script."""
+    parser = argparse.ArgumentParser(
+        description="Clean up old log and debug files",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python scripts/cleanup_old_files.py                    # Clean files older than 3 days (with confirmation)
+  python scripts/cleanup_old_files.py --dry-run          # Show what would be deleted
+  python scripts/cleanup_old_files.py --days 7           # Clean files older than 7 days
+  python scripts/cleanup_old_files.py --verbose          # Show detailed information
+  python scripts/cleanup_old_files.py -y                 # Auto-confirm all deletions
+  python scripts/cleanup_old_files.py --dry-run -y       # Dry run without prompts
+        """,
+    )
+
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be deleted without actually deleting",
+    )
+
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=3,
+        help="Number of days after which files are considered old (default: 3)",
+    )
+
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Show detailed information about each file",
+    )
+
+    parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Auto-confirm all deletions without prompting (use with caution)",
+    )
+
+    parser.add_argument(
+        "--not-safe",
+        action="store_true",
+        help="Allow potentially unsafe operations like --days 0 (use with extreme caution)",
+    )
+
+    args = parser.parse_args()
+
+    # Validate arguments
+    if args.days < 1 and not args.not_safe:
+        logger.error(f"Number of days must be at least 1, got: {args.days}")
+        return 1
+
+    # Create cleanup utility
+    cleanup = FileCleanup(
+        days_old=args.days,
+        dry_run=args.dry_run,
+        verbose=args.verbose,
+        auto_confirm=args.yes,
+    )
+
+    try:
+        files_deleted, total_size = cleanup.cleanup_files()
+
+        if args.dry_run:
+            print("\n✅ DRY RUN COMPLETED")
+            print(f"   Would delete: {files_deleted} files")
+            print(
+                f"   Total size: {total_size} bytes ({total_size / 1024 / 1024:.2f} MB)"
+            )
+        else:
+            print("\n✅ CLEANUP COMPLETED")
+            print(f"   Deleted: {files_deleted} files")
+            print(
+                f"   Total size: {total_size} bytes ({total_size / 1024 / 1024:.2f} MB)"
+            )
+
+        return 0
+
+    except KeyboardInterrupt:
+        logger.info("Cleanup interrupted by user")
+        return 1
+    except Exception as e:
+        logger.error(f"Cleanup failed: {e}")
+        return 1
+
+
+if __name__ == "__main__":
+    exit(main())

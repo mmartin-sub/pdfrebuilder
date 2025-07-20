@@ -1,0 +1,407 @@
+"""
+Tests for documentation builder functionality.
+"""
+
+import tempfile
+from pathlib import Path
+
+import pytest
+
+from src.docs.validation import DocumentationBuilder
+
+
+class TestDocumentationBuilder:
+    """Test cases for DocumentationBuilder."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.temp_dir = Path(tempfile.mkdtemp())
+        self.builder = DocumentationBuilder(self.temp_dir)
+
+        # Create basic project structure
+        (self.temp_dir / "src").mkdir()
+        (self.temp_dir / "docs").mkdir()
+        (self.temp_dir / "docs" / "api").mkdir()
+        (self.temp_dir / "docs" / "guides").mkdir()
+        (self.temp_dir / "docs" / "examples").mkdir()
+
+    def teardown_method(self):
+        """Clean up test fixtures."""
+        import shutil
+
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+
+    def test_extract_module_documentation(self):
+        """Test extraction of module documentation."""
+        # Create a test Python file with documentation
+        test_module = self.temp_dir / "src" / "test_module.py"
+        test_module.write_text(
+            '''
+"""
+Test module for documentation extraction.
+
+This module contains test classes and functions.
+"""
+
+class TestClass:
+    """A test class with documentation."""
+
+    def test_method(self, param1: str, param2: int) -> bool:
+        """
+        A test method with parameters.
+
+        Args:
+            param1: A string parameter
+            param2: An integer parameter
+
+        Returns:
+            Boolean result
+        """
+        return True
+
+def test_function(arg1: str) -> str:
+    """
+    A test function.
+
+    Args:
+        arg1: Input string
+
+    Returns:
+        Processed string
+    """
+    return arg1.upper()
+'''
+        )
+
+        # Extract documentation
+        module_doc = self.builder._extract_module_documentation(test_module)
+
+        # Verify extraction
+        assert module_doc is not None
+        assert module_doc["module_name"] == "test_module"
+        assert "Test module for documentation extraction" in module_doc["docstring"]
+
+        # Check class extraction
+        assert len(module_doc["classes"]) == 1
+        test_class = module_doc["classes"][0]
+        assert test_class["name"] == "TestClass"
+        assert "A test class with documentation" in test_class["docstring"]
+
+        # Check method extraction
+        assert len(test_class["methods"]) == 1
+        test_method = test_class["methods"][0]
+        assert test_method["name"] == "test_method"
+        assert "param1" in test_method["args"]
+        assert "param2" in test_method["args"]
+
+        # Check function extraction
+        assert len(module_doc["functions"]) == 1
+        test_function = module_doc["functions"][0]
+        assert test_function["name"] == "test_function"
+        assert "arg1" in test_function["args"]
+
+    def test_generate_api_markdown(self):
+        """Test generation of API markdown documentation."""
+        module_doc = {
+            "module_name": "test_module",
+            "file_path": "src/test_module.py",
+            "docstring": "Test module documentation.",
+            "classes": [
+                {
+                    "name": "TestClass",
+                    "docstring": "A test class.",
+                    "methods": [
+                        {
+                            "name": "test_method",
+                            "docstring": "A test method.",
+                            "args": ["self", "param1", "param2"],
+                        }
+                    ],
+                }
+            ],
+            "functions": [
+                {
+                    "name": "test_function",
+                    "docstring": "A test function.",
+                    "args": ["arg1"],
+                }
+            ],
+        }
+
+        markdown = self.builder._generate_api_markdown(module_doc)
+
+        # Verify markdown structure
+        assert "# test_module" in markdown
+        assert "Test module documentation." in markdown
+        assert "## Classes" in markdown
+        assert "### TestClass" in markdown
+        assert "A test class." in markdown
+        assert "#### Methods" in markdown
+        assert "##### test_method(self, param1, param2)" in markdown
+        assert "## Functions" in markdown
+        assert "### test_function(arg1)" in markdown
+
+    def test_build_api_docs(self):
+        """Test building API documentation."""
+        # Create a test module
+        test_module = self.temp_dir / "src" / "documented_module.py"
+        test_module.write_text(
+            '''
+"""A well-documented module."""
+
+class DocumentedClass:
+    """A documented class."""
+
+    def documented_method(self):
+        """A documented method."""
+        pass
+'''
+        )
+
+        # Build API docs
+        results = self.builder.build_api_docs()
+
+        # Should have processed the module
+        assert len(results) > 0
+
+        # Check that API doc was generated
+        api_doc_file = self.temp_dir / "docs" / "api" / "documented_module.md"
+        assert api_doc_file.exists()
+
+        # Verify content
+        content = api_doc_file.read_text()
+        assert "# documented_module" in content
+        assert "A well-documented module" in content
+        assert "DocumentedClass" in content
+
+    def test_build_user_guides(self):
+        """Test building and validating user guides."""
+        # Create a test guide with code examples
+        guide_file = self.temp_dir / "docs" / "guides" / "test_guide.md"
+        guide_file.write_text(
+            """
+# Test Guide
+
+Here's a simple example:
+
+```python
+print("Hello, World!")
+```
+
+And a more complex example:
+
+```python
+def example_function():
+    \"\"\"A simple example function.\"\"\"
+    return "example"
+```
+
+You can also validate documents with `validate_document()`.
+"""
+        )
+
+        # Build user guides
+        results = self.builder.build_user_guides()
+
+        # Should have validation results
+        assert len(results) > 0
+
+        # Should have validated the code examples (but not necessarily all passed)
+        code_results = [r for r in results if "code example" in r.message.lower()]
+        assert len(code_results) > 0
+
+    def test_build_examples(self):
+        """Test building code examples."""
+        # Build examples
+        results = self.builder.build_examples()
+
+        # Should have generated examples
+        assert len(results) > 0
+
+        # Check that example files were created
+        basic_dir = self.temp_dir / "docs" / "examples" / "basic"
+        assert basic_dir.exists()
+
+        # Check specific examples
+        basic_example = basic_dir / "basic_pdf_processing.py"
+        assert basic_example.exists()
+
+        config_example = basic_dir / "configuration_example.py"
+        assert config_example.exists()
+
+        # Verify example content
+        basic_content = basic_example.read_text()
+        assert "Multi-Format Document Engine" in basic_content
+        assert "def main():" in basic_content
+
+    def test_build_complete_docs(self):
+        """Test building complete documentation set."""
+        # Create test content
+        test_module = self.temp_dir / "src" / "complete_test.py"
+        test_module.write_text(
+            '''
+"""Complete test module."""
+
+def test_function():
+    """A test function."""
+    return True
+'''
+        )
+
+        guide_file = self.temp_dir / "docs" / "guides" / "complete_guide.md"
+        guide_file.write_text(
+            """
+# Complete Guide
+
+```python
+result = True
+assert result
+```
+"""
+        )
+
+        # Build complete documentation
+        results = self.builder.build_complete_docs()
+
+        # Should have results for all categories
+        assert "api_docs" in results
+        assert "user_guides" in results
+        assert "examples" in results
+
+        # Each category should have results
+        assert len(results["api_docs"]) > 0
+        assert len(results["user_guides"]) > 0
+        assert len(results["examples"]) > 0
+
+    def test_generate_basic_examples(self):
+        """Test generation of basic code examples."""
+        examples = self.builder._generate_basic_examples()
+
+        # Should generate expected examples
+        assert "basic_pdf_processing.py" in examples
+        assert "configuration_example.py" in examples
+
+        # Examples should be valid Python code
+        basic_example = examples["basic_pdf_processing.py"]
+        assert "def main():" in basic_example
+        assert 'if __name__ == "__main__":' in basic_example
+
+        config_example = examples["configuration_example.py"]
+        assert "import json" in config_example
+        assert "config = {" in config_example
+
+
+class TestDocumentationIntegration:
+    """Integration tests for documentation system."""
+
+    def setup_method(self):
+        """Set up integration test fixtures."""
+        self.temp_dir = Path(tempfile.mkdtemp())
+        self.builder = DocumentationBuilder(self.temp_dir)
+
+        # Create realistic project structure
+        (self.temp_dir / "src").mkdir()
+        (self.temp_dir / "src" / "engine").mkdir()
+        (self.temp_dir / "src" / "models").mkdir()
+        (self.temp_dir / "src" / "tools").mkdir()
+        (self.temp_dir / "docs").mkdir()
+        (self.temp_dir / "docs" / "api").mkdir()
+        (self.temp_dir / "docs" / "guides").mkdir()
+        (self.temp_dir / "docs" / "examples").mkdir()
+
+    def teardown_method(self):
+        """Clean up integration test fixtures."""
+        import shutil
+
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+
+    def test_full_documentation_pipeline(self):
+        """Test the complete documentation generation pipeline."""
+        # Create modules in different directories
+        engine_module = self.temp_dir / "src" / "engine" / "parser.py"
+        engine_module.write_text(
+            '''
+"""Document parser engine."""
+
+class DocumentParser:
+    """Parses documents into universal format."""
+
+    def parse(self, file_path: str):
+        """Parse a document file."""
+        return {"parsed": True}
+'''
+        )
+
+        models_module = self.temp_dir / "src" / "models" / "document.py"
+        models_module.write_text(
+            '''
+"""Document models."""
+
+class Document:
+    """Represents a document."""
+
+    def __init__(self, content: str):
+        """Initialize document with content."""
+        self.content = content
+'''
+        )
+
+        tools_module = self.temp_dir / "src" / "tools" / "validator.py"
+        tools_module.write_text(
+            '''
+"""Validation tools."""
+
+def validate_document(doc):
+    """Validate a document."""
+    return doc is not None
+'''
+        )
+
+        # Create a guide that references the API
+        guide_file = self.temp_dir / "docs" / "guides" / "api_guide.md"
+        guide_file.write_text(
+            '''
+# API Usage Guide
+
+Here's a simple example:
+
+```python
+print("Hello, World!")
+```
+
+And a more complex example:
+
+```python
+def example_function():
+    """A simple example function."""
+    return "example"
+```
+
+You can also validate documents with `validate_document()`.
+'''
+        )
+
+        # Run complete documentation build
+        results = self.builder.build_complete_docs()
+
+        # Verify API docs were generated in correct subdirectories
+        engine_api = self.temp_dir / "docs" / "api" / "engine" / "parser.md"
+        assert engine_api.exists()
+
+        models_api = self.temp_dir / "docs" / "api" / "models" / "document.md"
+        assert models_api.exists()
+
+        tools_api = self.temp_dir / "docs" / "api" / "tools" / "validator.md"
+        assert tools_api.exists()
+
+        # Verify guide validation worked - should have some results
+        guide_results = results["user_guides"]
+        assert len(guide_results) > 0
+
+        # Verify examples were generated - should have some results
+        examples_results = results["examples"]
+        assert len(examples_results) > 0
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

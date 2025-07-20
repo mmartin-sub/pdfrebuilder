@@ -1,0 +1,80 @@
+import os
+
+import pytest
+from PIL import Image, ImageDraw
+
+from pdfrebuilder.engine.validation_manager import ValidationManager
+from pdfrebuilder.settings import get_config_value
+
+# Import optional dependencies with pytest.importorskip
+skimage = pytest.importorskip(
+    "skimage",
+    reason="scikit-image not available. Install with: pip install 'pdfrebuilder[validation]'",
+)
+
+# Define a temporary directory for test images
+TEST_IMAGE_DIR = get_config_value("test_temp_dir")
+
+
+@pytest.fixture(scope="module")
+def setup_test_images():
+    """Create a temporary directory and generate test images."""
+    os.makedirs(TEST_IMAGE_DIR, exist_ok=True)
+
+    # Create a simple base image
+    base_image_path = os.path.join(TEST_IMAGE_DIR, "base.png")
+    img = Image.new("RGB", (100, 100), color="red")
+    img.save(base_image_path)
+
+    # Create an identical image
+    identical_image_path = os.path.join(TEST_IMAGE_DIR, "identical.png")
+    img.save(identical_image_path)
+
+    # Create a different image with text
+    different_image_path = os.path.join(TEST_IMAGE_DIR, "different.png")
+    draw = ImageDraw.Draw(img)
+    draw.text((10, 10), "Hello", fill="white")
+    img.save(different_image_path)
+
+    yield {
+        "base": base_image_path,
+        "identical": identical_image_path,
+        "different": different_image_path,
+    }
+
+    # Teardown: remove the images and directory
+    import shutil
+
+    for path in [base_image_path, identical_image_path, different_image_path]:
+        try:
+            os.remove(path)
+        except OSError:
+            pass  # File might already be removed
+    try:
+        shutil.rmtree(TEST_IMAGE_DIR)
+    except OSError:
+        pass  # Directory might already be removed or not empty
+
+
+@pytest.mark.validation
+@pytest.mark.optional_deps
+def test_identical_images_pass(setup_test_images):
+    """Tests that two identical images pass the validation with a perfect score."""
+    manager = ValidationManager()
+    result = manager.validate_with_failover(setup_test_images["base"], setup_test_images["identical"], threshold=0.99)
+
+    assert result.passed
+    assert result.score == 1.0
+    assert result.engine_used == "scikit-image"
+
+
+@pytest.mark.validation
+@pytest.mark.optional_deps
+def test_different_images_fail(setup_test_images):
+    """Tests that two different images fail the validation with a score less than 1.0."""
+    manager = ValidationManager()
+    result = manager.validate_with_failover(setup_test_images["base"], setup_test_images["different"], threshold=0.99)
+
+    assert not result.passed
+    assert result.score < 1.0
+    assert result.engine_used == "scikit-image"

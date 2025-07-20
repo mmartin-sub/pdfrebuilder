@@ -1,0 +1,16 @@
+{
+    "name": "font-system-maintenance",
+    "description": "Maintain font management system when related files change",
+    "trigger": {
+        "event": "file_saved",
+        "paths": [
+            "src/font*.py",
+            "src/*font*.py",
+            "downloaded_fonts/**/*",
+            "layout_config.json",
+            "manual_overrides.json5",
+            "font_config.json"
+        ]
+    },
+    "prompt": "Font-related files have been modified at {file_path}. Based on the font management system requirements and design:\n\n1. **Analyze the change**: Determine what aspect of the font system was affected (discovery, substitution, caching, configuration, etc.)\n\n2. **Update dependencies**: \n   - Refresh font cache if font files or directories changed\n   - Update font registrations if new fonts were added\n   - Validate configuration changes\n\n3. **Test integration**: \n   - Verify FontManager still works with document processing pipeline\n   - Check that font discovery and fallback selection function properly\n   - Ensure PDF rendering integrates correctly\n\n4. **Maintain consistency**:\n   - Update any related documentation or comments\n   - Run relevant tests to ensure nothing broke\n   - Check error handling and logging still work\n\nRefer to the font management system spec in .kiro/specs/font-management-system/ for requirements and design guidance. Focus on maintaining the pragmatic approach outlined in the design document."
+}

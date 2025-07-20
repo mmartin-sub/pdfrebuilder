@@ -1,0 +1,485 @@
+"""
+End-to-End PDF Regeneration Test
+
+This test suite validates the entire PDF processing pipeline: extracting content
+from a PDF into a structured configuration, and then rebuilding a new PDF from
+that configuration. It also generates debug PDFs to help visualize the extracted
+layers and verify the fidelity of the regeneration process.
+
+Usage:
+------
+To run this test, use the `hatch run test` command with optional arguments:
+
+`hatch run test -s -v tests/test_e2e_pdf_regeneration.py [--range=<start>-<end>|--range=<index>] [--draw_type=<type1>,<type2>...]`
+
+Arguments:
+- `--range`: Filters the elements to be drawn. Can be a range (e.g., `1-5`) or
+             a single index (e.g., `3`). If omitted, all elements are used.
+- `--draw_type`: Filters elements by type (e.g., `text`, `rectangle`).
+                 Comma-separated for multiple types. If omitted, all types are used.
+
+Example:
+`hatch run test -s -v tests/test_e2e_pdf_regeneration.py --range=1-5 --draw_type=text,rectangle`
+
+Generated Files and Expected Content:
+-------------------------------------
+All generated files are placed in the `output/tests/` directory and include a
+unique ID in their filename (e.g., `_XXXX.pdf`).
+
+1.  **`test_input_XXXX.pdf` (Generated in `create_pdf_with_elements`):**
+    *   **Purpose:** The initial PDF document used as the source for extraction.
+    *   **Content:** Contains one page for each filtered element (text or rectangle).
+        *   **Text Elements:** Each text element will have a debug line (black, standard font)
+            describing its expected properties (font, size, color, render mode, rotation).
+            The actual text will then appear with randomly chosen font, size, color,
+            render mode (fill, stroke, fill+stroke), and rotation. If a font fails to load,
+            an error message will appear in red, and the text will fall back to a standard font.
+        *   **Rectangle Elements:** Each rectangle will have a debug line (black, standard font)
+            describing its expected properties (fill status, color, stroke width).
+            The actual rectangle will be drawn with randomly chosen fill status, color, and stroke width.
+
+2.  **`layout1_XXXX.json` (Generated after first extraction):**
+    *   **Purpose:** A JSON configuration file representing the extracted layout
+                 information from `test_input_XXXX.pdf`.
+    *   **Content:** Contains structured data about text content, fonts, colors,
+                 positions, and drawing properties of elements in `test_input_XXXX.pdf`.
+                 This file should accurately reflect the visual properties of `test_input_XXXX.pdf`.
+    *   **Statistics:** The test output will print the number of pages and layers found in this JSON.
+
+3.  **`e2e_output1_XXXX.pdf` (Generated after regeneration):**
+    *   **Purpose:** The PDF document rebuilt from `layout1_XXXX.json`.
+    *   **Content:** Should be visually identical to `test_input_XXXX.pdf`.
+                 This file is the primary output for visual comparison and validation.
+
+4.  **`layout2_XXXX.json` (Generated after second extraction):**
+    *   **Purpose:** A JSON configuration file representing the extracted layout
+                 information from `e2e_output1_XXXX.pdf`.
+    *   **Content:** Should be very similar, if not identical, to `layout1_XXXX.json`.
+                 Significant differences indicate issues in the regeneration process.
+    *   **Statistics:** The test output will print the number of pages and layers found in this JSON.
+
+5.  **`output1_debug_XXXX.pdf` and `output2_debug_XXXX.pdf` (Generated for manual inspection):**
+    *   **Purpose:** These PDFs provide a visual breakdown of the internal layers
+                 extracted from the JSON configurations (`layout1_XXXX.json` and
+                 `layout2_XXXX.json` respectively).
+    *   **Content:** Each page typically corresponds to a specific type of element
+                 (e.g., text, images, drawings) or a specific layer within the PDF.
+                 Useful for debugging and verifying that elements were correctly identified
+                 and categorized during extraction.
+
+Validation:
+-----------
+The test performs a Structural Similarity Index (SSIM) comparison between
+`test_input_XXXX.pdf` and `e2e_output1_XXXX.pdf`. A high SSIM score (close to 1.0)
+indicates visual fidelity. A warning is issued if the score falls below 0.99.
+
+Potential Issues & Debugging:
+-----------------------------
+-   **Font Loading Warnings:** If you see warnings like "Could not load font...",
+    it means PyMuPDF could not process a specific font file. The test will fall back
+    to a standard font, but this indicates an issue with the font file itself or
+    PyMuPDF's ability to handle it.
+-   **Low SSIM Score:** A low SSIM score suggests visual discrepancies between the
+    original and regenerated PDFs. This could be due to subtle rendering differences,
+    issues in the extraction process, or problems during regeneration.
+-   **`NameError` or `AttributeError`:** These typically indicate a programming error
+    within the test script itself, often due to incorrect variable names or API usage.
+
+"""
+
+import argparse
+import json
+import logging
+import os
+
+# import shutil  # Uncomment if shutil is actually used
+import fitz
+import pytest
+from main import run_pipeline
+
+from pdfrebuilder.engine.visual_validator import validate_documents
+from pdfrebuilder.generate_debug_pdf_layers import generate_debug_pdf_layers
+
+# Configure logging
+from pdfrebuilder.settings import configure_logging, get_config_value
+
+# from pdfrebuilder.pdf_engine import FitzPDFEngine # This import is no longer needed
+from tests.config import get_test_output_path, get_unique_id
+
+configure_logging(log_level=logging.DEBUG)
+logger = logging.getLogger("test_e2e_pdf_regeneration")
+
+# Add TRACE level if not already defined
+if not hasattr(logging, "TRACE"):
+    logging.TRACE = 5
+    logging.addLevelName(logging.TRACE, "TRACE")
+
+    def trace(self, message, *args, **kwargs):
+        if self.isEnabledFor(logging.TRACE):
+            self._log(logging.TRACE, message, args, **kwargs)
+
+    logging.Logger.trace = trace
+
+TEST_OUTPUT_DIR = get_config_value("test_output_dir")
+
+# Module-level unique ID for all steps in this test run
+UNIQUE_ID = get_unique_id()
+
+
+def get_filtered_elements(elements, range_str, draw_types):
+    # Parse types first
+    if draw_types:
+        types = set(draw_types.split(","))
+        elements = [el for el in elements if el.get("type") in types]
+    # Parse range
+    if range_str:
+        if "-" in range_str:
+            start, end = map(int, range_str.split("-"))
+            elements = elements[(start - 1) : end]
+        else:
+            idx = int(range_str) - 1
+            elements = [elements[idx]]
+    return elements
+
+
+@pytest.fixture(scope="module")
+def setup_e2e_test():
+    """Create a temporary directory for E2E test files."""
+    os.makedirs(TEST_OUTPUT_DIR, exist_ok=True)
+    yield
+    # shutil.rmtree(TEST_OUTPUT_DIR) # This line was commented out in the original file
+
+
+def create_pdf_with_elements(elements, output_path, elements_per_page=None):
+    """
+    Create a PDF with test elements using FitzPDFEngine.generate().
+
+    Args:
+        elements: List of element dictionaries with 'type', 'id', and 'content'
+        output_path: Path where the PDF should be saved
+        elements_per_page: Number of elements per page (None = all on one page)
+
+    Returns:
+        Number of pages created
+    """
+    import random
+
+    from pdfrebuilder.pdf_engine import FitzPDFEngine
+
+    # If elements_per_page is None, put all elements on one page
+    if elements_per_page is None:
+        elements_per_page = len(elements)
+
+    # Calculate number of pages needed
+    num_pages = (len(elements) + elements_per_page - 1) // elements_per_page
+
+    # Create config structure for FitzPDFEngine
+    config = {
+        "version": "1.0",
+        "engine": "fitz",
+        "engine_version": "test",
+        "metadata": {"title": "Test PDF with Elements", "creator": "E2E Test Suite"},
+        "document_structure": [],
+    }
+
+    # Create pages with elements
+    for page_idx in range(num_pages):
+        start_idx = page_idx * elements_per_page
+        end_idx = min(start_idx + elements_per_page, len(elements))
+        page_elements = elements[start_idx:end_idx]
+
+        # Create page structure
+        page_data = {
+            "type": "page",
+            "page_number": page_idx,
+            "size": [612.0, 792.0],  # Standard letter size
+            "page_background_color": [1.0, 1.0, 1.0],  # White background
+            "layers": [
+                {
+                    "layer_id": f"page_{page_idx}_base_layer",
+                    "layer_name": "Page Content",
+                    "layer_type": "base",
+                    "bbox": [0, 0, 612.0, 792.0],
+                    "visibility": True,
+                    "opacity": 1.0,
+                    "blend_mode": "Normal",
+                    "children": [],
+                    "content": [],
+                }
+            ],
+        }
+
+        # Add elements to the page
+        y_position = 750  # Start near top of page
+        for _i, element in enumerate(page_elements):
+            if element["type"] == "text":
+                # Create text element
+                text_element = {
+                    "type": "text",
+                    "id": element["id"],
+                    "bbox": [50, y_position - 20, 550, y_position],
+                    "text": element["content"],
+                    "font_details": {
+                        "name": random.choice(["helv", "cour", "tiro"]),
+                        "size": random.uniform(10, 16),
+                        "color": random.choice([0, 0xFF0000, 0x00FF00, 0x0000FF]),  # Black, red, green, blue
+                        "is_bold": random.choice([True, False]),
+                        "is_italic": random.choice([True, False]),
+                    },
+                }
+                page_data["layers"][0]["content"].append(text_element)
+
+            elif element["type"] == "rectangle":
+                # Create rectangle element
+                rect_element = {
+                    "type": "drawing",
+                    "id": element["id"],
+                    "bbox": [50, y_position - 30, 200, y_position - 10],
+                    "color": [
+                        random.random(),
+                        random.random(),
+                        random.random(),
+                    ],  # Random stroke color
+                    "fill": [
+                        random.random(),
+                        random.random(),
+                        random.random(),
+                    ],  # Random fill color
+                    "width": random.uniform(1.0, 3.0),
+                    "drawing_commands": [
+                        {
+                            "cmd": "rect",
+                            "bbox": [50, y_position - 30, 200, y_position - 10],
+                        }
+                    ],
+                }
+                page_data["layers"][0]["content"].append(rect_element)
+
+            y_position -= 40  # Move down for next element
+
+            # If we're running out of space, break (shouldn't happen with proper pagination)
+            if y_position < 50:
+                break
+
+        config["document_structure"].append(page_data)
+
+    # Generate the PDF using FitzPDFEngine
+    engine = FitzPDFEngine()
+    engine.generate(config, output_path)
+
+    return num_pages
+
+
+def test_full_pdf_regeneration_pipeline(setup_e2e_test, request):
+    """An end-to-end test for the full PDF processing pipeline, one page per filtered element."""
+    unique = UNIQUE_ID
+    # Generate a test input PDF with the filtered elements
+    test_input_pdf_path = get_test_output_path("test_input", unique)
+    output1_pdf_path = get_test_output_path("e2e_output1", unique)
+    layout1_json = get_test_output_path("layout1", unique, ext=".json")
+
+    all_elements = [{"type": "text", "id": f"text_{i}", "content": f"Text {i}"} for i in range(1, 51)] + [
+        {"type": "rectangle", "id": f"rect_{i}", "content": f"Rectangle {i}"} for i in range(1, 51)
+    ]
+    range_str = request.config.getoption("--range")
+    draw_types = request.config.getoption("--draw_type")
+    filtered_elements = get_filtered_elements(all_elements, range_str, draw_types)
+    print(f"[DEBUG] Filtered elements: {filtered_elements}")
+
+    # --- Compute expected number of pages using internal counter ---
+    elements_per_page = None  # Set to N if you want N elements per page
+    expected_pages = create_pdf_with_elements(filtered_elements, test_input_pdf_path, elements_per_page)
+    print(
+        f"[DEBUG] Created test input PDF at {test_input_pdf_path} with {len(filtered_elements)} elements, expected {expected_pages} page(s)."
+    )
+    with fitz.open(test_input_pdf_path) as check_doc:
+        input_pdf_pages = check_doc.page_count
+        print(f"[DEBUG] Number of pages in generated input PDF: {input_pdf_pages}")
+        assert input_pdf_pages == expected_pages, (
+            f"Expected {expected_pages} page(s) in input PDF, but found {input_pdf_pages}!"
+        )
+    assert os.path.exists(test_input_pdf_path) and os.path.getsize(test_input_pdf_path) > 0, (
+        f"Test input PDF was not created: {test_input_pdf_path}"
+    )
+
+    # Step B: Extract config from the test input PDF
+    args_extract = argparse.Namespace(
+        log_level="DEBUG",
+        mode="extract",
+        input=test_input_pdf_path,
+        output=None,
+        config=layout1_json,
+        config_file=layout1_json,
+        debugoutput=None,
+        extract_text=True,
+        extract_images=True,
+        extract_drawings=True,
+        extract_raw_backgrounds=False,
+        output_dir="./output",
+        test_output_dir="./output/tests",
+        reports_output_dir="./output/reports",
+        temp_dir=None,  # Add missing temp_dir
+        input_engine="fitz",  # Add missing input_engine
+        log_file=None,  # Add missing log_file
+    )
+
+    # Capture any errors from the pipeline
+    import sys
+    from io import StringIO
+
+    # Redirect stdout to capture pipeline output
+    old_stdout = sys.stdout
+    captured_output = StringIO()
+    sys.stdout = captured_output
+
+    try:
+        run_pipeline(args_extract)
+        # Check if the pipeline reported any errors
+        output = captured_output.getvalue()
+        if "❌" in output:
+            raise AssertionError(f"Pipeline extraction failed:\n{output}")
+    finally:
+        sys.stdout = old_stdout
+    print(f"[DEBUG] Extracted config to {layout1_json}")
+    with open(layout1_json) as f:
+        config1 = json.load(f)
+    actual_pages = len(config1.get("document_structure", []))
+    print(f"[DEBUG] Number of pages in extracted config: {actual_pages}")
+    assert actual_pages == expected_pages, (
+        f"Expected {expected_pages} page(s), but found {actual_pages} in extracted config!"
+    )
+    print(
+        f"[E2E] layout1_json: {len(config1['document_structure'])} layers (document_structure): {[i + 1 for i in range(len(config1['document_structure']))]}"
+    )
+
+    # Step C: Regenerate PDF from config
+    args_generate = argparse.Namespace(
+        log_level="DEBUG",
+        mode="generate",
+        input=None,
+        output=output1_pdf_path,
+        config=layout1_json,
+        config_file=None,  # Don't load PDFRebuilderConfig in generate mode
+        debugoutput=None,
+        extract_text=True,
+        extract_images=True,
+        extract_drawings=True,
+        extract_raw_backgrounds=False,
+        output_dir="./output",
+        test_output_dir="./output/tests",
+        reports_output_dir="./output/reports",
+        temp_dir=None,  # Add missing temp_dir
+        output_engine="fitz",  # Add missing output_engine
+        log_file=None,  # Add missing log_file
+    )
+
+    # Capture any errors from the pipeline
+    old_stdout = sys.stdout
+    captured_output = StringIO()
+    sys.stdout = captured_output
+
+    try:
+        run_pipeline(args_generate)
+        # Check if the pipeline reported any errors
+        output = captured_output.getvalue()
+        if "❌" in output:
+            raise AssertionError(f"Pipeline generation failed:\n{output}")
+    finally:
+        sys.stdout = old_stdout
+    print(f"[DEBUG] Regenerated PDF at {output1_pdf_path}")
+    with fitz.open(output1_pdf_path) as check_doc:
+        regen_pdf_pages = check_doc.page_count
+        print(f"[DEBUG] Number of pages in regenerated PDF: {regen_pdf_pages}")
+        assert regen_pdf_pages == expected_pages, (
+            f"Expected {expected_pages} page(s) in regenerated PDF, but found {regen_pdf_pages}!"
+        )
+    assert os.path.exists(output1_pdf_path) and os.path.getsize(output1_pdf_path) > 0, (
+        f"Regenerated PDF was not created: {output1_pdf_path}"
+    )
+
+    # Step C2: Extract config from regenerated PDF to layout2_json
+    layout2_json = get_test_output_path("layout2", unique, ext=".json")
+    args_extract2 = argparse.Namespace(
+        log_level="DEBUG",
+        mode="extract",
+        input=output1_pdf_path,
+        output=None,
+        config=layout2_json,
+        config_file=layout2_json,
+        debugoutput=None,
+        extract_text=True,
+        extract_images=True,
+        extract_drawings=True,
+        extract_raw_backgrounds=False,
+        output_dir="./output",
+        test_output_dir="./output/tests",
+        reports_output_dir="./output/reports",
+        temp_dir=None,  # Add missing temp_dir
+        input_engine="fitz",  # Add missing input_engine
+        log_file=None,  # Add missing log_file
+    )
+
+    # Capture any errors from the pipeline
+    old_stdout = sys.stdout
+    captured_output = StringIO()
+    sys.stdout = captured_output
+
+    try:
+        run_pipeline(args_extract2)
+        # Check if the pipeline reported any errors
+        output = captured_output.getvalue()
+        if "❌" in output:
+            raise AssertionError(f"Pipeline extraction2 failed:\n{output}")
+    finally:
+        sys.stdout = old_stdout
+    print(f"[DEBUG] Extracted config to {layout2_json}")
+    # Report number of layers in layout2_json
+    with open(layout2_json) as f:
+        config2 = json.load(f)
+    print(
+        f"[E2E] layout2_json: {len(config2['document_structure'])} layers (document_structure): {[i + 1 for i in range(len(config2['document_structure']))]}"
+    )
+
+    # Step D: Validate regenerated PDF against the test input PDF
+    print("[E2E] Step D: Validating regenerated output against test input PDF...")
+    try:
+        result1 = validate_documents(test_input_pdf_path, output1_pdf_path)
+        ssim_digits = get_config_value("ssim_score_display_digits") or 4
+        print(f"[E2E] Step D: Regeneration SSIM score: {result1.ssim_score:.{ssim_digits}f}")
+        if result1.ssim_score < 0.99:
+            print(f"[E2E][WARNING] SSIM score is lower than expected: {result1.ssim_score:.{ssim_digits}f}")
+        # Do not assert on score, just print for visibility
+    except Exception as e:
+        raise AssertionError(f"Document validation failed: {e!s}")
+
+
+def test_generate_debug_pdfs_for_outputs():
+    """Generate debug PDFs for both outputs and print filenames for human inspection."""
+    unique = UNIQUE_ID
+    layout2_json = get_test_output_path("layout2", unique, ext=".json")
+    debug_pdf1 = get_test_output_path("output1_debug", unique)
+    debug_pdf2 = get_test_output_path("output2_debug", unique)
+
+    # Check that the config file exists and is non-empty
+    import os
+
+    if not (os.path.exists(layout2_json) and os.path.getsize(layout2_json) > 0):
+        print(f"[E2E][WARNING] Config file for debug PDF does not exist or is empty: {layout2_json}")
+        return
+
+    # Generate debug PDFs
+    generate_debug_pdf_layers(layout2_json, debug_pdf1)
+    generate_debug_pdf_layers(layout2_json, debug_pdf2)
+
+    # Assert debug PDFs exist and are non-empty
+    print()  # Ensure the following output starts on a new line after pytest's dots
+    for debug_pdf in [debug_pdf1, debug_pdf2]:
+        if not (os.path.exists(debug_pdf) and os.path.getsize(debug_pdf) > 0):
+            print(f"[E2E][WARNING] Debug PDF not created or empty: {debug_pdf}")
+        else:
+            print(f"[E2E] Debug PDF created: {debug_pdf}")
+
+    # Print filenames for human inspection
+    print("\nDebug PDFs generated for manual inspection:")
+    print(f"- {debug_pdf1}")
+    print(f"- {debug_pdf2}")

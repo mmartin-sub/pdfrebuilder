@@ -1,0 +1,22 @@
+{
+  "monitoring": {
+    "enabled": true,
+    "check_interval": "daily",
+    "alerts": {
+      "broken_links": true,
+      "failed_examples": true,
+      "outdated_content": true
+    }
+  },
+  "maintenance": {
+    "auto_update_api_docs": true,
+    "validate_examples": true,
+    "check_external_links": false,
+    "generate_reports": true
+  },
+  "thresholds": {
+    "max_broken_links": 0,
+    "max_failed_examples": 0,
+    "content_age_warning_days": 90
+  }
+}

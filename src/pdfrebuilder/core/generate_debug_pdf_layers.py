@@ -1,0 +1,206 @@
+import json
+import logging
+import os
+import textwrap
+from typing import Any
+
+import fitz
+import json5
+
+from pdfrebuilder.core.render import _render_element, json_serializer
+from pdfrebuilder.settings import CONFIG
+
+UNFINDABLE_FONT_NAMES = {"Unnamed-T3"}
+
+
+### FIX: Modified to produce compact, single-line JSON as you suggested ###
+def _create_summarized_json(data_dict):
+    """Creates a summarized, compact, single-line JSON string."""
+    if not isinstance(data_dict, dict):
+        return str(data_dict)
+    summary_dict = {}
+    for key, value in data_dict.items():
+        if key == "items" and isinstance(value, list) and len(value) > 10:
+            summary_dict[key] = f"[... long list of {len(value)} vector coordinates ...]"
+        else:
+            summary_dict[key] = value
+    # indent=None creates the compact string
+    return json.dumps(summary_dict, indent=None, default=json_serializer)
+
+
+def _wrap_text(text_block, width):
+    """Manually wraps a block of text to a specified character width."""
+    wrapped_lines = []
+    for line in text_block.split("\n"):
+        # This handles both pre-existing newlines and wraps very long lines
+        wrapped_lines.extend(textwrap.wrap(line, width=width, replace_whitespace=False, drop_whitespace=False))
+    return "\n".join(wrapped_lines)
+
+
+# Add logger setup
+logger = logging.getLogger(__name__)
+
+
+def _create_debug_page(doc, page_config, page_number):
+    """Create a debug page with the specified configuration"""
+    page_size = page_config.get("size", [612, 792])
+    return doc.new_page(width=page_size[0], height=page_size[1])
+
+
+def _render_debug_element(page, element, layer_id, element_index):
+    """Render debug information for a single element"""
+    bbox = element.get("bbox", [0, 0, 100, 100])
+    element_type = element.get("type", "unknown")
+    _element_id = element.get("id", f"{element_type}_{element_index}")  # Available for future use
+
+    # Draw bounding box
+    rect = fitz.Rect(bbox[0], bbox[1], bbox[2], bbox[3])
+    page.draw_rect(rect, color=(1, 0, 0), width=1)
+
+    # Add element info text
+    info_text = _get_element_info_text(element, layer_id, element_index)
+    _text_rect = fitz.Rect(bbox[0], bbox[1] - 50, bbox[2], bbox[1])  # Available for future text positioning
+    page.insert_text((bbox[0], bbox[1] - 5), info_text, fontsize=8, color=(0, 0, 1))
+
+
+def _get_element_info_text(element, layer_id, element_index):
+    """Get debug information text for an element"""
+    element_type = element.get("type", "unknown")
+    element_id = element.get("id", f"{element_type}_{element_index}")
+
+    info_parts = [f"ID: {element_id}", f"Type: {element_type}"]
+
+    if element_type == "text":
+        text = element.get("text", "")
+        font_details = element.get("font_details", {})
+        font_name = font_details.get("name", "unknown")
+        font_size = font_details.get("size", "unknown")
+        info_parts.extend([f"Text: {text[:20]}...", f"Font: {font_name}", f"Size: {font_size}"])
+    elif element_type == "drawing":
+        commands = element.get("drawing_commands", [])
+        info_parts.append(f"Commands: {len(commands)} commands")
+    elif element_type == "image":
+        image_file = element.get("image_file", "")
+        filename = os.path.basename(image_file) if image_file else "unknown"
+        info_parts.append(f"File: {filename}")
+
+    return " | ".join(info_parts)
+
+
+def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
+    """
+    Creates a debug PDF using a fixed-size box and manually wrapped text for maximum compatibility.
+    Now supports both 'pages' and 'document_structure' as the root key.
+    Logs statistics and errors for unrecognized structures.
+    """
+    logger.info("--- Running Layer-by-Layer Debugging Tool ---")
+    try:
+        with open(config_path) as f:
+            config_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logger.error(f"ERROR: Could not read or parse config file '{config_path}': {e}")
+        return False
+
+    # --- Support both 'pages' and 'document_structure' as root keys ---
+    if "pages" in config_data:
+        pages = config_data["pages"]
+        logger.info(f"Config uses 'pages' key. Number of pages: {len(pages)}")
+    elif "document_structure" in config_data:
+        pages = config_data["document_structure"]
+        logger.info(f"Config uses 'document_structure' key. Number of pages: {len(pages)}")
+    else:
+        logger.error(f"Unrecognized config structure. Top-level keys: {list(config_data.keys())}")
+        return False
+
+    # --- Log statistics: number of pages, layers, elements ---
+    total_layers = 0
+    total_elements = 0
+    for page in pages:
+        page_layers = page.get("layers", [])
+        total_layers += len(page_layers)
+        for layer in page_layers:
+            total_elements += len(layer.get("content", []))
+    logger.info(f"Config statistics: pages={len(pages)}, layers={total_layers}, elements={total_elements}")
+
+    overrides: dict[str, Any] = {}
+    override_path_obj = CONFIG.get("override_config_path")
+    if isinstance(override_path_obj, str) and os.path.exists(override_path_obj):
+        try:
+            with open(override_path_obj) as f_override:
+                overrides = json5.load(f_override)
+        except Exception as e:
+            logger.error(f"Error decoding overrides file '{override_path_obj}': {e}")
+            return False
+    elif not isinstance(override_path_obj, str):
+        logger.error("CONFIG['override_config_path'] must be a string path")
+        return False
+
+    debug_doc = fitz.open()
+
+    for source_page_idx, page_data in enumerate(pages):
+        logger.info(f"Generating debug pages for source page {source_page_idx} ...")
+        page_overrides = overrides.get("text_block_overrides", {}).get(str(source_page_idx), {})
+        page_size = page_data.get("size", (595, 842))
+        # For each layer in the page
+        for layer in page_data.get("layers", []):
+            for element_idx, element in enumerate(layer.get("content", [])):
+                debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])
+                effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, CONFIG)
+                debug_font_name = CONFIG.get("debug_font_name", "cour")
+                debug_fontsize = CONFIG.get("debug_fontsize", 8)
+                debug_line_height = CONFIG.get("debug_line_height", 1.2)
+                wrap_width = CONFIG.get("debug_text_wrap_width", 100)
+                debug_text_unwrapped = (
+                    f"Source Page {source_page_idx} / Element Index {element_idx} (ID: {element.get('id', 'N/A')})\n"
+                    f"Type: {element.get('type', 'N/A')}\n\n"
+                    "--- JSON Source (compact) ---\n"
+                    f"{_create_summarized_json(element)}\n\n"
+                    "--- PyMuPDF Effective Call (compact) ---\n"
+                    f"{_create_summarized_json(effective_params)}"
+                )
+                final_text_to_render = _wrap_text(debug_text_unwrapped, width=wrap_width)
+                debug_text_margin = 10
+                page_width, page_height = debug_page.rect.width, debug_page.rect.height
+
+                rect_height = page_height / 3  # Use exactly 1/3 of the page height
+                rect_y_start = page_height - rect_height - debug_text_margin
+
+                text_rect = fitz.Rect(
+                    debug_text_margin,
+                    rect_y_start,
+                    page_width - debug_text_margin,
+                    page_height - debug_text_margin,
+                )
+
+                # --- Step 3: Draw the background and insert the pre-wrapped text ---
+                debug_page.draw_rect(
+                    text_rect,
+                    fill=(0.1, 0.1, 0.1),
+                    fill_opacity=0.8,
+                    overlay=True,
+                    width=0,
+                )
+
+                debug_page.insert_textbox(
+                    text_rect,
+                    final_text_to_render,
+                    fontsize=debug_fontsize,
+                    fontname=debug_font_name,
+                    lineheight=debug_line_height,
+                    color=(0.95, 0.95, 0.95),
+                    align=fitz.TEXT_ALIGN_LEFT,
+                    overlay=True,
+                )
+
+                logger.debug(f"Debug page added for Element {element_idx}.")
+
+    try:
+        debug_doc.save(output_debug_pdf_base, garbage=4, deflate=True)
+        logger.info(f"Consolidated debug PDF saved to: {output_debug_pdf_base}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save the final PDF. Reason: {e}")
+        return False
+    finally:
+        if debug_doc:
+            debug_doc.close()

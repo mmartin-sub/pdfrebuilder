@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+"""
+Migration Analysis Script
+
+Analyzes the current project structure and identifies all files that need
+import updates during the migration to src/pdfrebuilder/ structure.
+"""
+
+import ast
+from pathlib import Path
+from typing import Dict, List
+import json
+
+
+class ImportAnalyzer:
+    """Analyzes Python files for import statements that need updating."""
+
+    def __init__(self, project_root: str = "."):
+        self.project_root = Path(project_root)
+        self.src_imports = set()
+        self.file_imports = {}
+        self.dependency_map = {}
+
+    def analyze_file(self, file_path: Path) -> Dict:
+        """Analyze a single Python file for imports."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            tree = ast.parse(content)
+            imports = []
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        imports.append({
+                            'type': 'import',
+                            'module': alias.name,
+                            'alias': alias.asname,
+                            'line': node.lineno
+                        })
+                elif isinstance(node, ast.ImportFrom):
+                    imports.append({
+                        'type': 'from_import',
+                        'module': node.module,
+                        'names': [alias.name for alias in node.names],
+                        'level': node.level,
+                        'line': node.lineno
+                    })
+
+            return {
+                'file': str(file_path),
+                'imports': imports,
+                'needs_update': self._needs_update(imports)
+            }
+
+        except Exception as e:
+            print(f"Error analyzing {file_path}: {e}")
+            return {'file': str(file_path), 'imports': [], 'needs_update': False}
+
+    def _needs_update(self, imports: List[Dict]) -> bool:
+        """Check if any imports need updating for the new structure."""
+        for imp in imports:
+            if imp['type'] == 'import':
+                if imp['module'].startswith('src.'):
+                    return True
+            elif imp['type'] == 'from_import':
+                if imp['module'] and imp['module'].startswith('src.'):
+                    return True
+                # Check for relative imports that might need updating
+                if imp['level'] > 0:
+                    return True
+        return False
+
+    def analyze_project(self) -> Dict:
+        """Analyze the entire project for import dependencies."""
+        results = {
+            'files_analyzed': 0,
+            'files_needing_update': 0,
+            'file_details': [],
+            'src_imports_found': set(),
+            'dependency_summary': {}
+        }
+
+        # Analyze Python files in key directories
+        directories_to_scan = [
+            'src',
+            'tests',
+            'scripts',
+            'examples',
+            'docs'
+        ]
+
+        for directory in directories_to_scan:
+            dir_path = self.project_root / directory
+            if dir_path.exists():
+                for py_file in dir_path.rglob('*.py'):
+                    if '__pycache__' in str(py_file):
+                        continue
+
+                    analysis = self.analyze_file(py_file)
+                    results['files_analyzed'] += 1
+
+                    if analysis['needs_update']:
+                        results['files_needing_update'] += 1
+                        results['file_details'].append(analysis)
+
+                        # Track src imports
+                        for imp in analysis['imports']:
+                            if imp['type'] == 'import' and imp['module'].startswith('src.'):
+                                results['src_imports_found'].add(imp['module'])
+                            elif imp['type'] == 'from_import' and imp['module'] and imp['module'].startswith('src.'):
+                                results['src_imports_found'].add(imp['module'])
+
+        # Convert set to list for JSON serialization
+        results['src_imports_found'] = list(results['src_imports_found'])
+
+        return results
+
+    def generate_migration_plan(self, analysis_results: Dict) -> Dict:
+        """Generate a migration plan based on analysis results."""
+        plan = {
+            'files_to_move': [],
+            'import_transformations': {},
+            'validation_steps': []
+        }
+
+        # Define file movements based on current structure
+        current_src_files = [
+            'src/cli.py',
+            'src/settings.py',
+            'src/fritz.py',
+            'src/font_utils.py',
+            'src/compare_pdfs_visual.py',
+            'src/generate_debug_pdf_layers.py',
+            'src/pdf_engine.py',
+            'src/recreate_pdf_from_config.py',
+            'src/render.py'
+        ]
+
+        for file_path in current_src_files:
+            if Path(file_path).exists():
+                if file_path in ['src/compare_pdfs_visual.py', 'src/generate_debug_pdf_layers.py',
+                               'src/pdf_engine.py', 'src/recreate_pdf_from_config.py', 'src/render.py']:
+                    new_path = file_path.replace('src/', 'src/pdfrebuilder/core/')
+                else:
+                    new_path = file_path.replace('src/', 'src/pdfrebuilder/')
+
+                plan['files_to_move'].append({
+                    'from': file_path,
+                    'to': new_path
+                })
+
+        # Define directory movements
+        src_directories = [
+            'src/cli',
+            'src/config',
+            'src/engine',
+            'src/font',
+            'src/models',
+            'src/security',
+            'src/tools',
+            'src/utils'
+        ]
+
+        for dir_path in src_directories:
+            if Path(dir_path).exists():
+                new_path = dir_path.replace('src/', 'src/pdfrebuilder/')
+                plan['files_to_move'].append({
+                    'from': dir_path,
+                    'to': new_path,
+                    'type': 'directory'
+                })
+
+        # Define import transformations
+        plan['import_transformations'] = {
+            'src.': 'pdfrebuilder.',
+            'from src.': 'from pdfrebuilder.',
+            'import src.': 'import pdfrebuilder.'
+        }
+
+        return plan
+
+
+def main():
+    """Main function to run the migration analysis."""
+    print("🔍 Analyzing project structure for migration...")
+
+    analyzer = ImportAnalyzer()
+    results = analyzer.analyze_project()
+
+    print(f"\n📊 Analysis Results:")
+    print(f"  Files analyzed: {results['files_analyzed']}")
+    print(f"  Files needing updates: {results['files_needing_update']}")
+    print(f"  Unique src imports found: {len(results['src_imports_found'])}")
+
+    # Save detailed results
+    output_file = Path("migration_analysis_results.json")
+    with open(output_file, 'w') as f:
+        json.dump(results, f, indent=2)
+    print(f"  Detailed results saved to: {output_file}")
+
+    # Generate migration plan
+    plan = analyzer.generate_migration_plan(results)
+    plan_file = Path("migration_plan.json")
+    with open(plan_file, 'w') as f:
+        json.dump(plan, f, indent=2)
+    print(f"  Migration plan saved to: {plan_file}")
+
+    print(f"\n🔧 Files that need import updates:")
+    for file_detail in results['file_details'][:10]:  # Show first 10
+        print(f"  - {file_detail['file']}")
+
+    if len(results['file_details']) > 10:
+        print(f"  ... and {len(results['file_details']) - 10} more files")
+
+    print(f"\n📦 Common src imports found:")
+    for imp in sorted(results['src_imports_found'])[:10]:
+        print(f"  - {imp}")
+
+    if len(results['src_imports_found']) > 10:
+        print(f"  ... and {len(results['src_imports_found']) - 10} more imports")
+
+
+if __name__ == "__main__":
+    main()

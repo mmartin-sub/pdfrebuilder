@@ -1,0 +1,141 @@
+{
+    "version": "1.0",
+    "engine": "fitz",
+    "engine_version": "PyMuPDF 1.26.23",
+    "metadata": {
+        "format": "PDF 1.4",
+        "title": "Both Null Edge Case Test",
+        "author": "Test Author",
+        "subject": "Both Null Edge Case",
+        "keywords": "test,null,color,edge,case",
+        "creator": "Test Creator",
+        "producer": "Test Producer",
+        "creationDate": "D:20250717183732+00'00'",
+        "modDate": "D:20250717183732+00'00'",
+        "trapped": "",
+        "encryption": null
+    },
+    "document_structure": [
+        {
+            "type": "page",
+            "page_number": 0,
+            "size": [
+                612.0,
+                792.0
+            ],
+            "page_background_color": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "layers": [
+                {
+                    "layer_id": "page_0_base_layer",
+                    "layer_name": "Page Content",
+                    "layer_type": "base",
+                    "bbox": [
+                        0,
+                        0,
+                        612.0,
+                        792.0
+                    ],
+                    "visibility": true,
+                    "opacity": 1.0,
+                    "blend_mode": "Normal",
+                    "children": [],
+                    "content": [
+                        {
+                            "type": "text",
+                            "bbox": [
+                                100.0,
+                                700.0,
+                                500.0,
+                                720.0
+                            ],
+                            "text": "Edge Case: Both stroke and fill are null",
+                            "font_details": {
+                                "name": "Helvetica-Bold",
+                                "size": 14.0,
+                                "color": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ]
+                            },
+                            "id": "text_1"
+                        },
+                        {
+                            "type": "drawing",
+                            "bbox": [
+                                100.0,
+                                600.0,
+                                200.0,
+                                680.0
+                            ],
+                            "color": null,
+                            "fill": null,
+                            "width": 1.0,
+                            "drawing_commands": [
+                                {
+                                    "cmd": "M",
+                                    "pts": [
+                                        100.0,
+                                        600.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        200.0,
+                                        600.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        200.0,
+                                        680.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "L",
+                                    "pts": [
+                                        100.0,
+                                        680.0
+                                    ]
+                                },
+                                {
+                                    "cmd": "H"
+                                }
+                            ],
+                            "original_shape_type": "rectangle",
+                            "stroke_details": null,
+                            "fill_details": null,
+                            "id": "drawing_both_null"
+                        },
+                        {
+                            "type": "text",
+                            "bbox": [
+                                100.0,
+                                550.0,
+                                500.0,
+                                570.0
+                            ],
+                            "text": "This shape should be invisible but not cause errors",
+                            "font_details": {
+                                "name": "Helvetica",
+                                "size": 12.0,
+                                "color": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ]
+                            },
+                            "id": "text_2"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

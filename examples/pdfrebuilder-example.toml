@@ -1,0 +1,113 @@
+# Example pdfrebuilder configuration file
+# This demonstrates all available configuration options
+
+# Runtime environment: development, testing, production, ci-cd
+environment = "development"
+
+# Enable debug mode (verbose logging, detailed error messages)
+debug = true
+
+[paths]
+# Base output directory for all generated files
+output_dir = "./output"
+
+# Temporary directory for processing files
+temp_dir = "/tmp/pdfrebuilder"
+
+# Cache directory for storing reusable data
+cache_dir = "~/.cache/pdfrebuilder"
+
+# Directory for extracted images
+image_dir = "./output/images"
+
+# Directory for font files
+fonts_dir = "./fonts"
+
+# Directory for log files
+logs_dir = "./output/logs"
+
+[logging]
+# Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+level = "INFO"
+
+# Log format: standard, json
+format_type = "standard"
+
+# Path to log file (null for console only)
+log_file = "./output/logs/pdfrebuilder.log"
+
+# Enable console logging
+enable_console = true
+
+# Enable log file rotation
+enable_file_rotation = true
+
+# Maximum log file size in MB before rotation
+max_file_size_mb = 10
+
+# Number of backup log files to keep
+backup_count = 5
+
+# Filter sensitive information from logs
+filter_sensitive = true
+
+[extraction]
+# Include text blocks in extraction
+include_text = true
+
+# Include image blocks in extraction
+include_images = true
+
+# Include vector drawings in extraction
+include_drawings = true
+
+# Include raw background drawings (for debugging)
+include_raw_backgrounds = false
+
+# Input processing engine: auto, fitz, wand, psd-tools
+engine = "auto"
+
+[rebuild]
+# Output rendering engine: auto, reportlab, pymupdf, fitz
+engine = "auto"
+
+# Enable PDF compression
+compression = true
+
+# Embed fonts in output PDF
+embed_fonts = true
+
+# Output DPI for rendering (72-600)
+output_dpi = 300
+
+# Preserve original PDF metadata
+preserve_metadata = true
+
+[security]
+# Validate and sanitize file paths
+validate_paths = true
+
+# Create temporary files with secure permissions
+secure_temp_files = true
+
+# Maximum input file size in MB
+max_file_size_mb = 100
+
+# Allowed input file extensions
+allowed_extensions = [".pdf", ".psd", ".png", ".jpg", ".jpeg"]
+
+# Enable sandboxed processing (if available)
+sandbox_processing = false
+
+[performance]
+# Maximum memory usage in MB
+max_memory_mb = 2048
+
+# Enable parallel processing where possible
+enable_parallel_processing = true
+
+# Number of worker threads (omit for auto)
+# worker_threads = 4
+
+# Enable caching of processed data
+cache_enabled = true

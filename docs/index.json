@@ -1,0 +1,474 @@
+{
+  "generated_at": "2025-07-31T11:45:03.481093",
+  "version": "1.0",
+  "structure": {
+    "API.md": {
+      "type": "file",
+      "path": "API.md",
+      "size": 13634,
+      "modified": "2025-07-25T13:47:52.960743"
+    },
+    "ARCHITECTURE.md": {
+      "type": "file",
+      "path": "ARCHITECTURE.md",
+      "size": 11068,
+      "modified": "2025-07-29T14:45:36.861167"
+    },
+    "CONTRIBUTING.md": {
+      "type": "file",
+      "path": "CONTRIBUTING.md",
+      "size": 25840,
+      "modified": "2025-07-30T11:29:36.249515"
+    },
+    "EXAMPLES.md": {
+      "type": "file",
+      "path": "EXAMPLES.md",
+      "size": 33780,
+      "modified": "2025-07-26T14:50:03.970776"
+    },
+    "INSTALLATION.md": {
+      "type": "file",
+      "path": "INSTALLATION.md",
+      "size": 6550,
+      "modified": "2025-07-29T14:45:37.085172"
+    },
+    "MAINTENANCE.md": {
+      "type": "file",
+      "path": "MAINTENANCE.md",
+      "size": 13667,
+      "modified": "2025-07-30T11:32:00.012739"
+    },
+    "MAKEFILE_GUIDE.md": {
+      "type": "file",
+      "path": "MAKEFILE_GUIDE.md",
+      "size": 7782,
+      "modified": "2025-07-29T20:23:30.995723"
+    },
+    "MIGRATION.md": {
+      "type": "file",
+      "path": "MIGRATION.md",
+      "size": 10118,
+      "modified": "2025-07-31T11:40:09.463370"
+    },
+    "README.md": {
+      "type": "file",
+      "path": "README.md",
+      "size": 2844,
+      "modified": "2025-07-29T20:24:16.368751"
+    },
+    "REPORTLAB_ENGINE.md": {
+      "type": "file",
+      "path": "REPORTLAB_ENGINE.md",
+      "size": 8356,
+      "modified": "2025-07-28T14:38:42.339690"
+    },
+    "SECURITY.md": {
+      "type": "file",
+      "path": "SECURITY.md",
+      "size": 12466,
+      "modified": "2025-07-30T08:44:15.019762"
+    },
+    "api": {
+      "type": "directory",
+      "contents": {
+        "COMPREHENSIVE_GUIDE.md": {
+          "type": "file",
+          "path": "api/COMPREHENSIVE_GUIDE.md",
+          "size": 14695,
+          "modified": "2025-07-30T09:00:44.245498"
+        },
+        "README.md": {
+          "type": "file",
+          "path": "api/README.md",
+          "size": 4436,
+          "modified": "2025-07-30T09:00:55.981756"
+        },
+        "cli": {
+          "type": "directory",
+          "contents": {
+            "batch_modifier_cli.md": {
+              "type": "file",
+              "path": "api/cli/batch_modifier_cli.md",
+              "size": 912,
+              "modified": "2025-07-31T10:36:53.433512"
+            },
+            "reportlab_test_cli.md": {
+              "type": "file",
+              "path": "api/cli/reportlab_test_cli.md",
+              "size": 563,
+              "modified": "2025-07-31T10:36:53.425512"
+            }
+          }
+        },
+        "compare_pdfs_visual.md": {
+          "type": "file",
+          "path": "api/compare_pdfs_visual.md",
+          "size": 597,
+          "modified": "2025-07-31T10:36:53.397511"
+        },
+        "core": {
+          "type": "directory",
+          "contents": {
+            "README.md": {
+              "type": "file",
+              "path": "api/core/README.md",
+              "size": 96,
+              "modified": "2025-07-30T08:53:36.780103"
+            }
+          }
+        },
+        "docs": {
+          "type": "directory",
+          "contents": {
+            "api_generator.md": {
+              "type": "file",
+              "path": "api/docs/api_generator.md",
+              "size": 2669,
+              "modified": "2025-07-31T10:36:53.537515"
+            },
+            "api_validator.md": {
+              "type": "file",
+              "path": "api/docs/api_validator.md",
+              "size": 2134,
+              "modified": "2025-07-31T10:36:53.513514"
+            },
+            "coverage_reporter.md": {
+              "type": "file",
+              "path": "api/docs/coverage_reporter.md",
+              "size": 1830,
+              "modified": "2025-07-31T10:36:53.529515"
+            },
+            "validation.md": {
+              "type": "file",
+              "path": "api/docs/validation.md",
+              "size": 2942,
+              "modified": "2025-07-31T10:36:53.525514"
+            }
+          }
+        },
+        "engine": {
+          "type": "directory",
+          "contents": {
+            "batch_modifier.md": {
+              "type": "file",
+              "path": "api/engine/batch_modifier.md",
+              "size": 2370,
+              "modified": "2025-07-31T10:36:53.461513"
+            },
+            "document_parser.md": {
+              "type": "file",
+              "path": "api/engine/document_parser.md",
+              "size": 2007,
+              "modified": "2025-07-31T10:36:53.469513"
+            },
+            "document_renderer.md": {
+              "type": "file",
+              "path": "api/engine/document_renderer.md",
+              "size": 2207,
+              "modified": "2025-07-31T10:36:53.449513"
+            },
+            "extract_pdf_content_fitz.md": {
+              "type": "file",
+              "path": "api/engine/extract_pdf_content_fitz.md",
+              "size": 811,
+              "modified": "2025-07-31T10:36:53.505514"
+            },
+            "extract_psd_content.md": {
+              "type": "file",
+              "path": "api/engine/extract_psd_content.md",
+              "size": 1305,
+              "modified": "2025-07-31T10:36:53.465513"
+            },
+            "generic.md": {
+              "type": "file",
+              "path": "api/engine/generic.md",
+              "size": 137,
+              "modified": "2025-07-30T08:53:36.684101"
+            },
+            "legacy_validator.md": {
+              "type": "file",
+              "path": "api/engine/legacy_validator.md",
+              "size": 119,
+              "modified": "2025-07-31T10:36:53.493514"
+            },
+            "pdf_engine_selector.md": {
+              "type": "file",
+              "path": "api/engine/pdf_engine_selector.md",
+              "size": 1079,
+              "modified": "2025-07-31T10:36:53.497514"
+            },
+            "psd_text_processor.md": {
+              "type": "file",
+              "path": "api/engine/psd_text_processor.md",
+              "size": 1159,
+              "modified": "2025-07-31T10:36:53.457513"
+            },
+            "reportlab_engine.md": {
+              "type": "file",
+              "path": "api/engine/reportlab_engine.md",
+              "size": 1561,
+              "modified": "2025-07-31T10:36:53.445513"
+            },
+            "scikit_image_validator.md": {
+              "type": "file",
+              "path": "api/engine/scikit_image_validator.md",
+              "size": 130,
+              "modified": "2025-07-31T10:36:53.489514"
+            },
+            "tool_fritz.md": {
+              "type": "file",
+              "path": "api/engine/tool_fritz.md",
+              "size": 484,
+              "modified": "2025-07-31T10:36:53.441513"
+            },
+            "validation_manager.md": {
+              "type": "file",
+              "path": "api/engine/validation_manager.md",
+              "size": 159,
+              "modified": "2025-07-31T10:36:53.461513"
+            },
+            "validation_report.md": {
+              "type": "file",
+              "path": "api/engine/validation_report.md",
+              "size": 6852,
+              "modified": "2025-07-31T10:36:53.485513"
+            },
+            "validation_strategy.md": {
+              "type": "file",
+              "path": "api/engine/validation_strategy.md",
+              "size": 216,
+              "modified": "2025-07-31T10:36:53.453513"
+            },
+            "visual_validator.md": {
+              "type": "file",
+              "path": "api/engine/visual_validator.md",
+              "size": 3250,
+              "modified": "2025-07-31T10:36:53.501514"
+            }
+          }
+        },
+        "engines": {
+          "type": "directory",
+          "contents": {
+            "README.md": {
+              "type": "file",
+              "path": "api/engines/README.md",
+              "size": 102,
+              "modified": "2025-07-30T08:53:36.780103"
+            }
+          }
+        },
+        "font": {
+          "type": "directory",
+          "contents": {
+            "font_validator.md": {
+              "type": "file",
+              "path": "api/font/font_validator.md",
+              "size": 2507,
+              "modified": "2025-07-31T10:36:53.437512"
+            },
+            "googlefonts.md": {
+              "type": "file",
+              "path": "api/font/googlefonts.md",
+              "size": 137,
+              "modified": "2025-07-31T10:36:53.441513"
+            }
+          }
+        },
+        "font_utils.md": {
+          "type": "file",
+          "path": "api/font_utils.md",
+          "size": 1180,
+          "modified": "2025-07-31T10:36:53.413512"
+        },
+        "fritz.md": {
+          "type": "file",
+          "path": "api/fritz.md",
+          "size": 597,
+          "modified": "2025-07-31T10:36:53.417512"
+        },
+        "generate_debug_pdf_layers.md": {
+          "type": "file",
+          "path": "api/generate_debug_pdf_layers.md",
+          "size": 526,
+          "modified": "2025-07-31T10:36:53.405512"
+        },
+        "models": {
+          "type": "directory",
+          "contents": {
+            "README.md": {
+              "type": "file",
+              "path": "api/models/README.md",
+              "size": 288,
+              "modified": "2025-07-30T08:53:36.784104"
+            },
+            "psd_effects.md": {
+              "type": "file",
+              "path": "api/models/psd_effects.md",
+              "size": 2197,
+              "modified": "2025-07-31T10:36:53.597516"
+            },
+            "psd_validator.md": {
+              "type": "file",
+              "path": "api/models/psd_validator.md",
+              "size": 1232,
+              "modified": "2025-07-31T10:36:53.589516"
+            },
+            "schema_migration.md": {
+              "type": "file",
+              "path": "api/models/schema_migration.md",
+              "size": 1746,
+              "modified": "2025-07-31T10:36:53.597516"
+            },
+            "schema_validator.md": {
+              "type": "file",
+              "path": "api/models/schema_validator.md",
+              "size": 1817,
+              "modified": "2025-07-31T10:36:53.585516"
+            },
+            "universal_idm.md": {
+              "type": "file",
+              "path": "api/models/universal_idm.md",
+              "size": 3778,
+              "modified": "2025-07-31T10:36:53.605516"
+            }
+          }
+        },
+        "pdf_engine.md": {
+          "type": "file",
+          "path": "api/pdf_engine.md",
+          "size": 925,
+          "modified": "2025-07-31T10:36:53.409512"
+        },
+        "recreate_pdf_from_config.md": {
+          "type": "file",
+          "path": "api/recreate_pdf_from_config.md",
+          "size": 426,
+          "modified": "2025-07-31T10:36:53.421512"
+        },
+        "render.md": {
+          "type": "file",
+          "path": "api/render.md",
+          "size": 2521,
+          "modified": "2025-07-31T10:36:53.405512"
+        },
+        "settings.md": {
+          "type": "file",
+          "path": "api/settings.md",
+          "size": 2333,
+          "modified": "2025-07-31T10:36:53.393512"
+        },
+        "test_logging.md": {
+          "type": "file",
+          "path": "api/test_logging.md",
+          "size": 800,
+          "modified": "2025-07-31T10:36:53.421512"
+        },
+        "tools": {
+          "type": "directory",
+          "contents": {
+            "README.md": {
+              "type": "file",
+              "path": "api/tools/README.md",
+              "size": 156,
+              "modified": "2025-07-30T08:53:36.784104"
+            },
+            "generic.md": {
+              "type": "file",
+              "path": "api/tools/generic.md",
+              "size": 910,
+              "modified": "2025-07-31T10:36:53.581516"
+            },
+            "schema_tools.md": {
+              "type": "file",
+              "path": "api/tools/schema_tools.md",
+              "size": 357,
+              "modified": "2025-07-31T10:36:53.541515"
+            }
+          }
+        }
+      }
+    },
+    "examples": {
+      "type": "directory",
+      "contents": {
+        "README.md": {
+          "type": "file",
+          "path": "examples/README.md",
+          "size": 3923,
+          "modified": "2025-07-29T14:44:57.080266"
+        },
+        "advanced": {
+          "type": "directory",
+          "contents": {}
+        },
+        "basic": {
+          "type": "directory",
+          "contents": {}
+        },
+        "integration": {
+          "type": "directory",
+          "contents": {}
+        }
+      }
+    },
+    "guides": {
+      "type": "directory",
+      "contents": {
+        "advanced-usage.md": {
+          "type": "file",
+          "path": "guides/advanced-usage.md",
+          "size": 23809,
+          "modified": "2025-07-30T09:20:17.395300"
+        },
+        "batch-processing.md": {
+          "type": "file",
+          "path": "guides/batch-processing.md",
+          "size": 21120,
+          "modified": "2025-07-30T09:27:19.836637"
+        },
+        "getting-started.md": {
+          "type": "file",
+          "path": "guides/getting-started.md",
+          "size": 11596,
+          "modified": "2025-07-31T11:41:29.549168"
+        },
+        "troubleshooting.md": {
+          "type": "file",
+          "path": "guides/troubleshooting.md",
+          "size": 25682,
+          "modified": "2025-07-30T09:24:55.897455"
+        },
+        "visual-validation.md": {
+          "type": "file",
+          "path": "guides/visual-validation.md",
+          "size": 17261,
+          "modified": "2025-07-30T09:22:23.886096"
+        }
+      }
+    },
+    "reference": {
+      "type": "directory",
+      "contents": {
+        "cli.md": {
+          "type": "file",
+          "path": "reference/cli.md",
+          "size": 17294,
+          "modified": "2025-07-30T10:14:46.731002"
+        },
+        "configuration.md": {
+          "type": "file",
+          "path": "reference/configuration.md",
+          "size": 31873,
+          "modified": "2025-07-30T17:28:18.429910"
+        },
+        "error-codes.md": {
+          "type": "file",
+          "path": "reference/error-codes.md",
+          "size": 8529,
+          "modified": "2025-07-31T11:41:14.540831"
+        }
+      }
+    }
+  }
+}

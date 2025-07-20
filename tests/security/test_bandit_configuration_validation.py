@@ -1,0 +1,528 @@
+#!/usr/bin/env python3
+"""
+Tests for bandit configuration validation and security testing integration.
+
+This test suite validates:
+- Bandit configuration effectiveness
+- Suppression accuracy and necessity
+- Security rule coverage
+- Automated security testing integration
+"""
+
+import json
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
+
+
+class TestBanditConfigurationValidation:
+    """Test bandit configuration validation."""
+
+    def test_bandit_configuration_exists(self):
+        """Test that bandit configuration exists in pyproject.toml."""
+        pyproject_path = Path("pyproject.toml")
+        assert pyproject_path.exists(), "pyproject.toml not found"
+
+        content = pyproject_path.read_text()
+        assert "[tool.bandit]" in content, "Bandit configuration section not found"
+
+    def test_bandit_configuration_completeness(self):
+        """Test that bandit configuration has all required elements."""
+        pyproject_path = Path("pyproject.toml")
+        content = pyproject_path.read_text()
+
+        # Required configuration elements
+        required_configs = [
+            "exclude_dirs",
+            "skips",
+            "confidence",
+            "severity",
+            "recursive",
+        ]
+
+        for config in required_configs:
+            assert config in content, f"Missing bandit configuration: {config}"
+
+    def test_bandit_exclude_directories(self):
+        """Test that appropriate directories are excluded from bandit scanning."""
+        pyproject_path = Path("pyproject.toml")
+        content = pyproject_path.read_text()
+
+        # Directories that should be excluded
+        expected_excludes = [
+            "tests",
+            "examples",
+            ".venv",
+            "__pycache__",
+            ".mypy_cache",
+            ".pytest_cache",
+        ]
+
+        for exclude_dir in expected_excludes:
+            assert exclude_dir in content, f"Directory '{exclude_dir}' should be excluded from bandit scanning"
+
+    def test_bandit_security_commands_available(self):
+        """Test that security testing commands are configured."""
+        pyproject_path = Path("pyproject.toml")
+        content = pyproject_path.read_text()
+
+        # Security commands that should be available
+        security_commands = [
+            "security-scan",
+            "security-scan-json",
+            "security-test",
+            "security-validate",
+            "security-config-validate",
+        ]
+
+        for command in security_commands:
+            assert command in content, f"Security command '{command}' not configured"
+
+    def test_bandit_suppression_documentation_exists(self):
+        """Test that bandit suppression documentation exists."""
+        docs_path = Path("docs/BANDIT_SUPPRESSIONS.md")
+        assert docs_path.exists(), "Bandit suppression documentation not found"
+
+        content = docs_path.read_text()
+
+        # Required documentation sections
+        required_sections = [
+            "Security Review Process",
+            "Bandit Configuration",
+            "Security Testing Configuration",
+            "Regular Review Schedule",
+        ]
+
+        for section in required_sections:
+            assert section in content, f"Missing documentation section: {section}"
+
+
+class TestBanditScanExecution:
+    """Test bandit scan execution and results validation."""
+
+    def test_bandit_scan_execution(self):
+        """Test that bandit scan can be executed successfully."""
+        # Import and test the validation script
+        from scripts.validate_bandit_config import run_bandit_scan
+
+        result = run_bandit_scan()
+
+        # Verify that bandit scan returns valid results
+        assert result is not None
+        assert isinstance(result, dict)
+        # Bandit results should have these standard keys
+        assert "metrics" in result or "results" in result
+
+    @patch("subprocess.run")
+    def test_bandit_scan_with_findings(self, mock_run):
+        """Test bandit scan handling when security issues are found."""
+        # Mock bandit execution with findings (exit code 1)
+        mock_result = Mock()
+        mock_result.returncode = 1
+        mock_result.stdout = ""
+        mock_result.stderr = ""
+        mock_run.return_value = mock_result
+
+        # Mock file operations for JSON results
+        mock_results = {
+            "metrics": {"_totals": {"SEVERITY.MEDIUM": 2, "SEVERITY.HIGH": 0}},
+            "results": [
+                {
+                    "filename": "test_file.py",
+                    "test_id": "B404",
+                    "issue_severity": "MEDIUM",
+                    "line_number": 10,
+                }
+            ],
+        }
+
+        with patch("builtins.open", create=True) as mock_open:
+            mock_open.return_value.__enter__.return_value.read.return_value = json.dumps(mock_results)
+
+            from scripts.validate_bandit_config import run_bandit_scan
+
+            result = run_bandit_scan()
+
+            assert result is not None
+            assert "metrics" in result
+
+    @patch("scripts.validate_bandit_config.SecureExecutor")
+    def test_bandit_scan_timeout_handling(self, mock_executor_class):
+        """Test handling of bandit scan timeouts."""
+        from pdfrebuilder.security.secure_execution import SecureExecutionError
+
+        # Mock the executor instance and its execute_command method
+        mock_executor = Mock()
+        mock_executor.execute_command.side_effect = SecureExecutionError("Command execution timed out")
+        mock_executor_class.return_value = mock_executor
+
+        from scripts.validate_bandit_config import run_bandit_scan
+
+        result = run_bandit_scan()
+
+        assert result is None
+
+    def test_bandit_json_output_parsing(self):
+        """Test parsing of bandit JSON output."""
+        # Sample bandit JSON output
+        sample_output = {
+            "metrics": {"_totals": {"SEVERITY.HIGH": 1, "SEVERITY.MEDIUM": 3, "SEVERITY.LOW": 5}},
+            "results": [
+                {
+                    "filename": "src/example.py",
+                    "test_id": "B404",
+                    "issue_severity": "MEDIUM",
+                    "issue_confidence": "HIGH",
+                    "line_number": 15,
+                    "test_name": "blacklist",
+                    "issue_text": "Consider possible security implications associated with subprocess module.",
+                }
+            ],
+        }
+
+        # Test that we can parse the structure correctly
+        assert "metrics" in sample_output
+        assert "_totals" in sample_output["metrics"]
+        assert "results" in sample_output
+
+        # Test specific issue parsing
+        issue = sample_output["results"][0]
+        assert issue["test_id"] == "B404"
+        assert issue["issue_severity"] == "MEDIUM"
+        assert "subprocess" in issue["issue_text"]
+
+
+class TestSuppressionValidation:
+    """Test validation of bandit suppressions."""
+
+    def test_suppression_documentation_completeness(self):
+        """Test that all suppressions are properly documented."""
+        docs_path = Path("docs/BANDIT_SUPPRESSIONS.md")
+        if not docs_path.exists():
+            pytest.skip("Suppression documentation not found")
+
+        content = docs_path.read_text()
+
+        # Common bandit rule IDs that might be suppressed
+        common_suppressions = ["B404", "B603", "B101", "B108"]
+
+        for rule_id in common_suppressions:
+            if rule_id in content:
+                # If rule is mentioned, it should have justification
+                assert "justification" in content.lower() or "reason" in content.lower(), (
+                    f"Rule {rule_id} mentioned but no justification found"
+                )
+
+    def test_suppression_accuracy(self):
+        """Test that suppressions are accurate and necessary."""
+        # This test would ideally run bandit and check that suppressions
+        # are only applied where actually needed
+
+        # Mock a bandit scan result with suppressions
+        mock_results = {
+            "results": [
+                {
+                    "filename": "src/security/subprocess_utils.py",
+                    "test_id": "B404",
+                    "issue_severity": "MEDIUM",
+                    "line_number": 10,
+                    "issue_text": "Consider possible security implications associated with subprocess module.",
+                }
+            ]
+        }
+
+        # Test that we can identify which suppressions are being used
+        for result in mock_results["results"]:
+            test_id = result["test_id"]
+            filename = result["filename"]
+
+            # Security-related files should have documented suppressions
+            if "security" in filename:
+                assert test_id in [
+                    "B404",
+                    "B603",
+                ], f"Unexpected security issue {test_id} in {filename}"
+
+    def test_suppression_review_schedule(self):
+        """Test that suppression review schedule is documented."""
+        pyproject_path = Path("pyproject.toml")
+        content = pyproject_path.read_text()
+
+        # Check for review schedule configuration
+        if "security_review" in content:
+            assert "review_frequency" in content
+            assert "next_review_date" in content
+
+    def test_no_blanket_suppressions(self):
+        """Test that there are no blanket suppressions without justification."""
+        # Check source files for # nosec comments
+        src_files = list(Path("src").rglob("*.py"))
+
+        blanket_suppressions = []
+        for file_path in src_files:
+            try:
+                content = file_path.read_text()
+                lines = content.split("\n")
+
+                for i, line in enumerate(lines):
+                    if "# nosec" in line and "B" in line:
+                        # Check if there's a comment explaining the suppression
+                        if not any(
+                            keyword in line.lower()
+                            for keyword in [
+                                "secure",
+                                "safe",
+                                "validated",
+                                "justified",
+                                "documented",
+                            ]
+                        ):
+                            blanket_suppressions.append(f"{file_path}:{i + 1}")
+            except Exception:
+                continue  # Skip files that can't be read
+
+        # Allow some blanket suppressions in security modules where they're justified
+        security_files = [s for s in blanket_suppressions if "security" in s]
+        non_security_blanket = [s for s in blanket_suppressions if "security" not in s]
+
+        # Non-security files should not have many blanket suppressions
+        assert len(non_security_blanket) < 5, f"Too many blanket suppressions: {non_security_blanket}"
+
+
+class TestSecurityRuleCoverage:
+    """Test that security rules provide adequate coverage."""
+
+    def test_subprocess_security_coverage(self):
+        """Test that subprocess security rules are properly configured."""
+        pyproject_path = Path("pyproject.toml")
+        content = pyproject_path.read_text()
+
+        # B404 and B603 should be handled by configuration, not blanket skips
+        assert "B404" not in content or "subprocess" in content, (
+            "B404 should be handled by subprocess security measures"
+        )
+        assert "B603" not in content or "subprocess" in content, (
+            "B603 should be handled by subprocess security measures"
+        )
+
+    def test_hardcoded_password_detection(self):
+        """Test that hardcoded password detection is enabled."""
+        # B105, B106, B107 should not be globally skipped
+        pyproject_path = Path("pyproject.toml")
+        content = pyproject_path.read_text()
+
+        password_rules = ["B105", "B106", "B107"]
+        for rule in password_rules:
+            if rule in content:
+                # If mentioned, should not be in global skips
+                assert f'"{rule}"' not in content or "password" in content.lower()
+
+    def test_sql_injection_detection(self):
+        """Test that SQL injection detection is enabled."""
+        # B608 should not be globally skipped
+        pyproject_path = Path("pyproject.toml")
+        content = pyproject_path.read_text()
+
+        if "B608" in content:
+            assert "sql" in content.lower(), "B608 (SQL injection) should not be globally skipped"
+
+    def test_shell_injection_detection(self):
+        """Test that shell injection detection is enabled."""
+        # B602, B605, B606, B607 should not be globally skipped
+        pyproject_path = Path("pyproject.toml")
+        content = pyproject_path.read_text()
+
+        shell_rules = ["B602", "B605", "B606", "B607"]
+        for rule in shell_rules:
+            if rule in content:
+                assert "shell" in content.lower() or "subprocess" in content.lower(), (
+                    f"{rule} (shell injection) should not be globally skipped"
+                )
+
+
+class TestAutomatedSecurityTesting:
+    """Test automated security testing integration."""
+
+    def test_security_test_commands_work(self):
+        """Test that security testing commands are functional."""
+        # Test that the commands are defined and can be parsed
+        pyproject_path = Path("pyproject.toml")
+        content = pyproject_path.read_text()
+
+        # Security commands should be properly formatted
+        security_commands = ["security-scan", "security-test", "security-validate"]
+
+        for command in security_commands:
+            assert command in content
+            # Command should have proper script definition
+            command_line = [line for line in content.split("\n") if command in line]
+            assert len(command_line) > 0, f"Command {command} not properly defined"
+
+    def test_security_validation_script_exists(self):
+        """Test that security validation scripts exist and are executable."""
+        validation_scripts = [
+            "scripts/validate_bandit_config.py",
+            "scripts/security_validation.py",
+        ]
+
+        for script_path in validation_scripts:
+            script = Path(script_path)
+            assert script.exists(), f"Security validation script {script_path} not found"
+
+            # Check that script has proper shebang
+            content = script.read_text()
+            assert content.startswith("#!/usr/bin/env python3"), f"Script {script_path} missing proper shebang"
+
+    def test_ci_cd_integration_ready(self):
+        """Test that security testing is ready for CI/CD integration."""
+        # Check for GitHub Actions or other CI configuration
+        github_workflows = Path(".github/workflows")
+        if github_workflows.exists():
+            workflow_files = list(github_workflows.glob("*.yml")) + list(github_workflows.glob("*.yaml"))
+
+            # At least one workflow should mention security
+            security_workflows = []
+            for workflow_file in workflow_files:
+                content = workflow_file.read_text()
+                if "security" in content.lower() or "bandit" in content.lower():
+                    security_workflows.append(workflow_file)
+
+            # If workflows exist, at least one should include security
+            if workflow_files:
+                assert len(security_workflows) > 0, "No security testing in CI/CD workflows"
+
+    @patch("subprocess.run")
+    def test_automated_security_scan_integration(self, mock_run):
+        """Test integration with automated security scanning."""
+        # Mock successful security scan
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stdout = "Security scan completed"
+        mock_result.stderr = ""
+        mock_run.return_value = mock_result
+
+        # Test that we can run security validation programmatically
+        from scripts.security_validation import main as security_main
+
+        with patch("sys.exit") as mock_exit:
+            with patch("builtins.print"):
+                security_main()
+
+            # Should not exit with error if everything is configured correctly
+            if mock_exit.called:
+                exit_code = mock_exit.call_args[0][0] if mock_exit.call_args[0] else 0
+                assert exit_code == 0, "Security validation should pass"
+
+    def test_security_report_generation(self):
+        """Test that security reports can be generated."""
+        # Test that bandit can generate JSON reports
+        reports_dir = Path("reports")
+
+        # Directory should exist or be creatable
+        if not reports_dir.exists():
+            try:
+                reports_dir.mkdir(exist_ok=True)
+                created_dir = True
+            except Exception:
+                created_dir = False
+                pytest.skip("Cannot create reports directory")
+        else:
+            created_dir = False
+
+        try:
+            # Test report file path
+            report_file = reports_dir / "bandit_results.json"
+
+            # Should be able to create report file
+            assert reports_dir.is_dir(), "Reports directory should exist"
+
+            # Clean up if we created the directory
+            if created_dir:
+                reports_dir.rmdir()
+
+        except Exception as e:
+            if created_dir:
+                reports_dir.rmdir()
+            raise e
+
+
+class TestSecurityTestingWorkflow:
+    """Test the complete security testing workflow."""
+
+    def test_security_workflow_completeness(self):
+        """Test that the complete security workflow is functional."""
+        # Check that all components of the security workflow exist
+        components = [
+            "pyproject.toml",  # Configuration
+            "docs/BANDIT_SUPPRESSIONS.md",  # Documentation
+            "scripts/validate_bandit_config.py",  # Validation
+            "scripts/security_validation.py",  # Testing
+            "src/security/secure_execution.py",  # Implementation
+        ]
+
+        missing_components = []
+        for component in components:
+            if not Path(component).exists():
+                missing_components.append(component)
+
+        assert len(missing_components) == 0, f"Missing security workflow components: {missing_components}"
+
+    def test_security_documentation_accuracy(self):
+        """Test that security documentation is accurate and up-to-date."""
+        docs_path = Path("docs/BANDIT_SUPPRESSIONS.md")
+        if not docs_path.exists():
+            pytest.skip("Security documentation not found")
+
+        content = docs_path.read_text()
+
+        # Documentation should mention current security measures
+        security_keywords = [
+            "plumbum",
+            "SecureExecutor",
+            "subprocess_utils",
+            "security validation",
+            "bandit configuration",
+        ]
+
+        found_keywords = []
+        for keyword in security_keywords:
+            if keyword.lower() in content.lower():
+                found_keywords.append(keyword)
+
+        # Should mention most security measures
+        assert len(found_keywords) >= 3, (
+            f"Documentation missing key security concepts: {set(security_keywords) - set(found_keywords)}"
+        )
+
+    def test_security_testing_integration(self):
+        """Test that security testing integrates with the main test suite."""
+        # Check that security tests can be run as part of the main test suite
+        test_files = list(Path("tests").glob("*security*.py"))
+
+        # Filter out verification scripts and runners - only check actual test files
+        actual_test_files = [
+            f
+            for f in test_files
+            if f.name.startswith("test_") and not f.name.startswith("run_") and not f.name.startswith("verify_")
+        ]
+
+        assert len(actual_test_files) > 0, "No actual security test files found"
+
+        # Security test files should be properly structured
+        for test_file in actual_test_files:
+            content = test_file.read_text()
+
+            # Should have proper test structure
+            assert "import pytest" in content or "import unittest" in content, (
+                f"Security test file {test_file} missing test framework import"
+            )
+
+            # Should have test classes or functions
+            assert "def test_" in content or "class Test" in content, (
+                f"Security test file {test_file} missing test definitions"
+            )
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

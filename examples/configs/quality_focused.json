@@ -1,0 +1,38 @@
+{
+  "engines": {
+    "input": {
+      "default": "psd-tools",
+      "psd_tools": {
+        "extract_text_layers": true,
+        "extract_image_layers": true,
+        "extract_shape_layers": true,
+        "preserve_layer_effects": true
+      },
+      "fitz": {
+        "extract_text": true,
+        "extract_images": true,
+        "extract_drawings": true,
+        "extract_raw_backgrounds": true
+      }
+    },
+    "output": {
+      "default": "reportlab",
+      "reportlab": {
+        "compression": 0,
+        "output_dpi": 600,
+        "embed_fonts": true,
+        "color_space": "RGB"
+      }
+    }
+  },
+  "processing": {
+    "enable_parallel_processing": false,
+    "max_memory_mb": 2048
+  },
+  "validation": {
+    "ssim_threshold": 0.99,
+    "rendering_dpi": 600,
+    "generate_diff_images": true,
+    "fail_on_font_substitution": true
+  }
+}

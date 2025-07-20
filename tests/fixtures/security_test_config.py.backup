@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+"""
+Test configuration for security tests to prevent system kills.
+"""
+
+import psutil
+
+
+def get_safe_test_config():
+    """Get safe configuration for security tests based on system resources."""
+
+    # Get system information
+    memory = psutil.virtual_memory()
+    available_memory_mb = memory.available / (1024 * 1024)
+
+    # Calculate safe limits (use at most 25% of available memory)
+    safe_memory_limit = min(1024, int(available_memory_mb * 0.25))
+
+    # Ensure minimum viable limits
+    safe_memory_limit = max(safe_memory_limit, 256)  # At least 256MB
+
+    config = {
+        "max_memory_mb": safe_memory_limit,
+        "max_cpu_percent": 50.0,  # Conservative CPU limit
+        "timeout": 30,  # Shorter timeout for tests
+        "enable_sandboxing": False,  # Disable sandboxing in tests
+        "enable_resource_monitoring": available_memory_mb > 1024,  # Only if we have enough memory
+    }
+
+    return config
+
+
+def create_safe_runner():
+    """Create a SecureSubprocessRunner with safe test configuration."""
+    from src.security.subprocess_utils import SecureSubprocessRunner
+
+    config = get_safe_test_config()
+
+    return SecureSubprocessRunner(
+        max_memory_mb=config["max_memory_mb"],
+        max_cpu_percent=config["max_cpu_percent"],
+        timeout=config["timeout"],
+        enable_sandboxing=config["enable_sandboxing"],
+    )

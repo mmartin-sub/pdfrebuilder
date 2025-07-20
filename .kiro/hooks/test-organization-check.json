@@ -1,0 +1,9 @@
+{
+    "name": "Test File Organization Check",
+    "description": "Prevents test files from being added to the root directory and ensures proper test organization",
+    "trigger": "pre-commit",
+    "enabled": true,
+    "script": "#!/bin/bash\n\n# Check for test files in root directory\necho \"🔍 Checking for test files in root directory...\"\n\n# Check for test_*.py files in root\nif ls test_*.py 2>/dev/null; then\n    echo \"❌ ERROR: Test files found in root directory!\"\n    echo \"   Test files should be in the tests/ directory.\"\n    echo \"   Please move these files to tests/ directory:\"\n    ls test_*.py 2>/dev/null | sed 's/^/   - /'\n    exit 1\nfi\n\n# Check for test directories in root (excluding tests/)\ntest_dirs=(\"test_*\" \"*_test\" \"*_tests\")\nfound_dirs=()\n\nfor pattern in \"${test_dirs[@]}\"; do\n    for dir in $pattern; do\n        if [[ -d \"$dir\" && \"$dir\" != \"tests\" ]]; then\n            found_dirs+=(\"$dir\")\n        fi\n    done\ndone\n\nif [[ ${#found_dirs[@]} -gt 0 ]]; then\n    echo \"❌ ERROR: Test directories found in root!\"\n    echo \"   Test directories should be under tests/ directory.\"\n    echo \"   Please move or remove these directories:\"\n    printf '   - %s\\n' \"${found_dirs[@]}\"\n    exit 1\nfi\n\n# Check for test runner scripts in wrong location\nif [[ -f \"scripts/run_tests.py\" ]]; then\n    echo \"❌ ERROR: Test runner script found in scripts/ directory!\"\n    echo \"   Test runner should be in tests/ directory.\"\n    echo \"   Please move scripts/run_tests.py to tests/run_tests.py\"\n    exit 1\nfi\n\necho \"✅ Test file organization check passed!\"\nexit 0",
+    "auto_approve": false,
+    "timeout": 30
+}

@@ -1,0 +1,19 @@
+---
+# .markdownlint.yaml
+#
+# Turn off the line length rule (MD013) for all markdown files.
+MD013: false
+# Modify rule MD013 (line-length).
+# MD013:
+#  line_length: 120  # Set a more reasonable limit than 80
+#  code_blocks: false  # Disable line length checks for code blocks
+#  tables: false       # Disable line length checks for tables
+
+# fenced-code-language Fenced code blocks should have a language specified [Context: "```"]
+MD040: false
+
+# no-duplicate-heading Multiple headings with the same content [Context: "Acceptance Criteria"]
+MD024: false
+
+# link-fragments Link fragments should be valid
+MD051: false

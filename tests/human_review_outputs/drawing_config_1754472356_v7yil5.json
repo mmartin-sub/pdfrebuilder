@@ -1,0 +1,590 @@
+{
+  "version": "1.0",
+  "engine": "fitz",
+  "engine_version": "PyMuPDF 1.26.23",
+  "metadata": {
+    "format": "PDF 1.4",
+    "title": "E2E Drawing Test Document",
+    "author": "E2E Test Suite",
+    "subject": "Comprehensive Drawing Commands Test",
+    "keywords": "test,drawing,path,shape,rectangle,ellipse,bezier",
+    "creator": "E2E Test Creator",
+    "producer": "E2E Test Producer",
+    "creationDate": "D:20250127000000+00'00'",
+    "modDate": "D:20250127000000+00'00'",
+    "trapped": "",
+    "encryption": null
+  },
+  "document_structure": [
+    {
+      "type": "page",
+      "page_number": 0,
+      "size": [
+        612.0,
+        792.0
+      ],
+      "page_background_color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "layers": [
+        {
+          "layer_id": "page_0_base_layer",
+          "layer_name": "Page Content",
+          "layer_type": "base",
+          "bbox": [
+            0,
+            0,
+            612.0,
+            792.0
+          ],
+          "visibility": true,
+          "opacity": 1.0,
+          "blend_mode": "Normal",
+          "children": [],
+          "content": [
+            {
+              "type": "text",
+              "bbox": [
+                50,
+                700,
+                550,
+                750
+              ],
+              "text": "E2E Drawing Commands Test - All Supported Types",
+              "font_details": {
+                "name": "Arial-Bold",
+                "size": 16,
+                "color": 0,
+                "is_bold": true
+              },
+              "id": "title_text"
+            },
+            {
+              "type": "drawing",
+              "bbox": [
+                50,
+                600,
+                150,
+                650
+              ],
+              "color": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "fill": [
+                0.8,
+                0.8,
+                0.8
+              ],
+              "width": 2.0,
+              "drawing_commands": [
+                {
+                  "cmd": "rect",
+                  "bbox": [
+                    50,
+                    600,
+                    150,
+                    650
+                  ]
+                }
+              ],
+              "original_shape_type": "rectangle",
+              "id": "rect_primitive"
+            },
+            {
+              "type": "drawing",
+              "bbox": [
+                200,
+                600,
+                300,
+                650
+              ],
+              "color": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "fill": null,
+              "width": 1.5,
+              "drawing_commands": [
+                {
+                  "cmd": "M",
+                  "pts": [
+                    200,
+                    600
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    300,
+                    600
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    300,
+                    650
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    200,
+                    650
+                  ]
+                },
+                {
+                  "cmd": "H"
+                }
+              ],
+              "original_shape_type": "rectangle",
+              "id": "rect_path"
+            },
+            {
+              "type": "drawing",
+              "bbox": [
+                350,
+                600,
+                450,
+                650
+              ],
+              "color": null,
+              "fill": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "width": 1.0,
+              "drawing_commands": [
+                {
+                  "cmd": "ellipse",
+                  "bbox": [
+                    350,
+                    600,
+                    450,
+                    650
+                  ]
+                }
+              ],
+              "original_shape_type": "ellipse",
+              "id": "ellipse_primitive"
+            },
+            {
+              "type": "drawing",
+              "bbox": [
+                50,
+                500,
+                200,
+                580
+              ],
+              "color": [
+                0.0,
+                0.5,
+                0.0
+              ],
+              "fill": [
+                0.9,
+                0.9,
+                0.7
+              ],
+              "width": 2.5,
+              "drawing_commands": [
+                {
+                  "cmd": "M",
+                  "pts": [
+                    50,
+                    540
+                  ]
+                },
+                {
+                  "cmd": "C",
+                  "pts": [
+                    50,
+                    540,
+                    50,
+                    580,
+                    100,
+                    580,
+                    125,
+                    540
+                  ]
+                },
+                {
+                  "cmd": "C",
+                  "pts": [
+                    125,
+                    540,
+                    150,
+                    500,
+                    200,
+                    500,
+                    200,
+                    540
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    175,
+                    520
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    75,
+                    520
+                  ]
+                },
+                {
+                  "cmd": "H"
+                }
+              ],
+              "original_shape_type": "path",
+              "id": "bezier_path"
+            },
+            {
+              "type": "drawing",
+              "bbox": [
+                250,
+                500,
+                400,
+                580
+              ],
+              "color": [
+                0.5,
+                0.0,
+                0.5
+              ],
+              "fill": null,
+              "width": 3.0,
+              "drawing_commands": [
+                {
+                  "cmd": "M",
+                  "pts": [
+                    250,
+                    540
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    400,
+                    540
+                  ]
+                },
+                {
+                  "cmd": "M",
+                  "pts": [
+                    325,
+                    500
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    325,
+                    580
+                  ]
+                }
+              ],
+              "original_shape_type": "path",
+              "id": "cross_lines"
+            },
+            {
+              "type": "drawing",
+              "bbox": [
+                450,
+                500,
+                550,
+                580
+              ],
+              "color": [
+                0.8,
+                0.4,
+                0.0
+              ],
+              "fill": [
+                1.0,
+                0.8,
+                0.6
+              ],
+              "width": 1.0,
+              "drawing_commands": [
+                {
+                  "cmd": "M",
+                  "pts": [
+                    500,
+                    580
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    450,
+                    500
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    550,
+                    500
+                  ]
+                },
+                {
+                  "cmd": "H"
+                }
+              ],
+              "original_shape_type": "polygon",
+              "id": "triangle_path"
+            },
+            {
+              "type": "drawing",
+              "bbox": [
+                50,
+                350,
+                200,
+                450
+              ],
+              "color": [
+                0.2,
+                0.2,
+                0.8
+              ],
+              "fill": [
+                0.7,
+                0.9,
+                1.0
+              ],
+              "width": 1.5,
+              "drawing_commands": [
+                {
+                  "cmd": "M",
+                  "pts": [
+                    125,
+                    450
+                  ]
+                },
+                {
+                  "cmd": "C",
+                  "pts": [
+                    125,
+                    450,
+                    175,
+                    450,
+                    200,
+                    425,
+                    200,
+                    400
+                  ]
+                },
+                {
+                  "cmd": "C",
+                  "pts": [
+                    200,
+                    400,
+                    200,
+                    375,
+                    175,
+                    350,
+                    125,
+                    350
+                  ]
+                },
+                {
+                  "cmd": "C",
+                  "pts": [
+                    125,
+                    350,
+                    75,
+                    350,
+                    50,
+                    375,
+                    50,
+                    400
+                  ]
+                },
+                {
+                  "cmd": "C",
+                  "pts": [
+                    50,
+                    400,
+                    50,
+                    425,
+                    75,
+                    450,
+                    125,
+                    450
+                  ]
+                },
+                {
+                  "cmd": "H"
+                }
+              ],
+              "original_shape_type": "path",
+              "id": "rounded_square"
+            },
+            {
+              "type": "drawing",
+              "bbox": [
+                250,
+                350,
+                350,
+                450
+              ],
+              "color": null,
+              "fill": null,
+              "width": 1.0,
+              "drawing_commands": [
+                {
+                  "cmd": "rect",
+                  "bbox": [
+                    250,
+                    350,
+                    350,
+                    450
+                  ]
+                }
+              ],
+              "original_shape_type": "rectangle",
+              "id": "invisible_rect"
+            },
+            {
+              "type": "drawing",
+              "bbox": [
+                400,
+                350,
+                550,
+                450
+              ],
+              "color": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "fill": null,
+              "width": 2.0,
+              "drawing_commands": [
+                {
+                  "cmd": "M",
+                  "pts": [
+                    450,
+                    400
+                  ]
+                },
+                {
+                  "cmd": "C",
+                  "pts": [
+                    450,
+                    400,
+                    450,
+                    420,
+                    430,
+                    430,
+                    425,
+                    400
+                  ]
+                },
+                {
+                  "cmd": "C",
+                  "pts": [
+                    425,
+                    400,
+                    430,
+                    380,
+                    450,
+                    370,
+                    450,
+                    400
+                  ]
+                },
+                {
+                  "cmd": "M",
+                  "pts": [
+                    480,
+                    400
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    520,
+                    400
+                  ]
+                },
+                {
+                  "cmd": "L",
+                  "pts": [
+                    500,
+                    380
+                  ]
+                },
+                {
+                  "cmd": "H"
+                }
+              ],
+              "original_shape_type": "path",
+              "id": "multi_path"
+            },
+            {
+              "type": "drawing",
+              "bbox": [
+                100,
+                200,
+                300,
+                300
+              ],
+              "color": [
+                0.6,
+                0.0,
+                0.6
+              ],
+              "fill": [
+                1.0,
+                0.9,
+                1.0
+              ],
+              "width": 4.0,
+              "drawing_commands": [
+                {
+                  "cmd": "ellipse",
+                  "bbox": [
+                    100,
+                    200,
+                    300,
+                    300
+                  ]
+                }
+              ],
+              "original_shape_type": "ellipse",
+              "stroke_details": {
+                "color": [
+                  0.6,
+                  0.0,
+                  0.6
+                ],
+                "width": 4.0,
+                "line_cap": "round",
+                "line_join": "round"
+              },
+              "fill_details": {
+                "color": [
+                  1.0,
+                  0.9,
+                  1.0
+                ]
+              },
+              "id": "styled_ellipse"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

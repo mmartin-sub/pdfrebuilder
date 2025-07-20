@@ -1,0 +1,34 @@
+{
+    "description": "Balanced configuration for general-purpose document processing",
+    "use_case": "General document processing, mixed content types, production use",
+    "default_engine": "reportlab",
+    "reportlab": {
+        "compression": 3,
+        "page_mode": "portrait",
+        "embed_fonts": true,
+        "font_subsetting": true,
+        "image_compression": "jpeg",
+        "color_space": "rgb",
+        "precision": 1.0
+    },
+    "pymupdf": {
+        "overlay_mode": false,
+        "annotation_mode": "ignore",
+        "compression": "flate",
+        "image_quality": 85,
+        "text_rendering_mode": "fill",
+        "anti_aliasing": true,
+        "optimize_for_web": false
+    },
+    "performance": {
+        "enable_caching": true,
+        "cache_size": 100,
+        "parallel_rendering": false,
+        "max_workers": 4
+    },
+    "debugging": {
+        "enable_metrics": true,
+        "log_rendering_details": false,
+        "save_intermediate_files": false
+    }
+}

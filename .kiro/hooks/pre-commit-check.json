@@ -1,0 +1,16 @@
+{
+    "name": "Pre-Commit Check",
+    "description": "Runs pre-commit checks before completing a task to ensure code quality",
+    "trigger": {
+        "type": "task_completion",
+        "specPattern": "*"
+    },
+    "action": {
+        "type": "script",
+        "script": "#!/bin/bash\n\necho \"Running pre-commit checks before completing task...\"\npre-commit run --all-files\n\nif [ $? -eq 0 ]; then\n  echo \"✅ Pre-commit checks passed. Task can be completed.\"\n  exit 0\nelse\n  echo \"❌ Pre-commit checks failed. Please fix the issues before completing the task.\"\n  exit 1\nfi"
+    },
+    "options": {
+        "runBefore": true,
+        "blockOnFailure": true
+    }
+}

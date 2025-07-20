@@ -1,0 +1,218 @@
+{
+  "version": "1.0",
+  "engine": "fitz",
+  "engine_version": "1.0",
+  "metadata": {
+    "format": "PDF",
+    "title": "",
+    "author": "",
+    "subject": "",
+    "keywords": "",
+    "creator": "",
+    "producer": "",
+    "creation_date": "",
+    "modification_date": "",
+    "custom_properties": {}
+  },
+  "document_structure": [
+    {
+      "size": [
+        612.0,
+        792.0
+      ],
+      "background_color": null,
+      "layers": [
+        {
+          "layer_id": "page_0_base_layer",
+          "layer_name": "Page Content",
+          "layer_type": "base",
+          "bbox": [
+            0,
+            0,
+            612.0,
+            792.0
+          ],
+          "visibility": true,
+          "opacity": 1.0,
+          "blend_mode": "Normal",
+          "children": [],
+          "content": [
+            {
+              "type": "drawing",
+              "id": "drawing_0",
+              "bbox": [
+                0.0,
+                0.0,
+                612.0,
+                792.0
+              ],
+              "z_index": 0,
+              "color": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "fill": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "width": 1.0,
+              "drawing_commands": [
+                {
+                  "cmd": "rect",
+                  "pts": [],
+                  "bbox": [
+                    0.0,
+                    0.0,
+                    612.0,
+                    792.0
+                  ]
+                }
+              ],
+              "original_shape_type": null
+            },
+            {
+              "type": "text",
+              "id": "text_0",
+              "bbox": [
+                50.0,
+                739.1669311523438,
+                113.43450927734375,
+                752.890869140625
+              ],
+              "z_index": 0,
+              "raw_text": "Text Element 1",
+              "text": "Text Element 1",
+              "font_details": {
+                "name": "Times-Roman",
+                "size": 10.287788391113281,
+                "color": [
+                  0.0,
+                  0.0,
+                  1.0,
+                  1.0
+                ],
+                "ascender": 1.0529999732971191,
+                "descender": -0.2809999883174896,
+                "is_superscript": false,
+                "is_italic": false,
+                "is_serif": true,
+                "is_monospaced": false,
+                "is_bold": false,
+                "original_flags": 4,
+                "kerning": null,
+                "leading": null,
+                "tracking": null,
+                "baseline_shift": null,
+                "font_caps": null
+              },
+              "writing_mode": 0,
+              "writing_direction": [
+                1.0,
+                0.0
+              ],
+              "align": 0,
+              "adjust_spacing": false,
+              "background_color": null
+            },
+            {
+              "type": "text",
+              "id": "text_1",
+              "bbox": [
+                50.0,
+                693.826904296875,
+                144.70408630371094,
+                714.31591796875
+              ],
+              "z_index": 0,
+              "raw_text": "Text Element 2",
+              "text": "Text Element 2",
+              "font_details": {
+                "name": "Times-Roman",
+                "size": 15.359081268310547,
+                "color": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ascender": 1.0529999732971191,
+                "descender": -0.2809999883174896,
+                "is_superscript": false,
+                "is_italic": false,
+                "is_serif": true,
+                "is_monospaced": false,
+                "is_bold": false,
+                "original_flags": 4,
+                "kerning": null,
+                "leading": null,
+                "tracking": null,
+                "baseline_shift": null,
+                "font_caps": null
+              },
+              "writing_mode": 0,
+              "writing_direction": [
+                1.0,
+                0.0
+              ],
+              "align": 0,
+              "adjust_spacing": false,
+              "background_color": null
+            },
+            {
+              "type": "text",
+              "id": "text_2",
+              "bbox": [
+                50.0,
+                659.1026000976562,
+                118.17195892333984,
+                673.031005859375
+              ],
+              "z_index": 0,
+              "raw_text": "Text Element 3",
+              "text": "Text Element 3",
+              "font_details": {
+                "name": "Helvetica",
+                "size": 10.137092590332031,
+                "color": [
+                  0.0,
+                  0.0,
+                  1.0,
+                  1.0
+                ],
+                "ascender": 1.0750000476837158,
+                "descender": -0.29899999499320984,
+                "is_superscript": false,
+                "is_italic": false,
+                "is_serif": false,
+                "is_monospaced": false,
+                "is_bold": false,
+                "original_flags": 0,
+                "kerning": null,
+                "leading": null,
+                "tracking": null,
+                "baseline_shift": null,
+                "font_caps": null
+              },
+              "writing_mode": 0,
+              "writing_direction": [
+                1.0,
+                0.0
+              ],
+              "align": 0,
+              "adjust_spacing": false,
+              "background_color": null
+            }
+          ],
+          "clipping_mask": false,
+          "layer_effects": null
+        }
+      ],
+      "type": "page",
+      "page_number": 0
+    }
+  ]
+}

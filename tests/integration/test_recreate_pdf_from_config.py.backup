@@ -1,0 +1,300 @@
+"""
+Tests for PDF recreation from configuration functionality.
+
+This module tests the recreate_pdf_from_config.py functionality including:
+- PDF generation from JSON configuration
+- Error handling for invalid configurations
+- File I/O operations
+- Integration with FitzPDFEngine
+"""
+
+import json
+import os
+import tempfile
+import unittest
+from unittest.mock import Mock, patch
+
+from src.recreate_pdf_from_config import recreate_pdf_from_config
+
+
+class TestRecreatePDFFromConfig(unittest.TestCase):
+    """Test cases for PDF recreation from configuration"""
+
+    def setUp(self):
+        """Set up test fixtures"""
+        self.temp_dir = tempfile.mkdtemp()
+        self.config_path = os.path.join(self.temp_dir, "test_config.json")
+        self.output_path = os.path.join(self.temp_dir, "output.pdf")
+
+        # Sample configuration
+        self.sample_config = {
+            "version": "1.0",
+            "engine": "fitz",
+            "metadata": {"title": "Test Document"},
+            "document_structure": [
+                {
+                    "type": "page",
+                    "page_number": 0,
+                    "size": [612, 792],
+                    "layers": [
+                        {
+                            "layer_id": "page_0_base_layer",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "Hello World",
+                                    "bbox": [100, 100, 200, 120],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+
+    def tearDown(self):
+        """Clean up test fixtures"""
+        import shutil
+
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+
+    def test_successful_pdf_generation(self):
+        """Test successful PDF generation from valid configuration"""
+        # Write config to file
+        with open(self.config_path, "w") as f:
+            json.dump(self.sample_config, f)
+
+        # Mock the FitzPDFEngine
+        with patch("src.recreate_pdf_from_config.FitzPDFEngine") as mock_engine_class:
+            mock_engine = Mock()
+            mock_engine_class.return_value = mock_engine
+
+            # Call the function
+            recreate_pdf_from_config(self.config_path, self.output_path)
+
+            # Verify engine was created and generate was called
+            mock_engine_class.assert_called_once()
+            mock_engine.generate.assert_called_once_with(self.sample_config, self.output_path)
+
+    def test_config_file_not_found(self):
+        """Test error handling when configuration file doesn't exist"""
+        non_existent_path = os.path.join(self.temp_dir, "nonexistent.json")
+
+        with self.assertRaises(FileNotFoundError):
+            recreate_pdf_from_config(non_existent_path, self.output_path)
+
+    def test_invalid_json_config(self):
+        """Test error handling for invalid JSON configuration"""
+        # Write invalid JSON to file
+        with open(self.config_path, "w") as f:
+            f.write("{ invalid json content")
+
+        with self.assertRaises(json.JSONDecodeError):
+            recreate_pdf_from_config(self.config_path, self.output_path)
+
+    def test_engine_generation_error(self):
+        """Test error handling when PDF engine fails to generate"""
+        # Write valid config to file
+        with open(self.config_path, "w") as f:
+            json.dump(self.sample_config, f)
+
+        # Mock the FitzPDFEngine to raise an exception
+        with patch("src.recreate_pdf_from_config.FitzPDFEngine") as mock_engine_class:
+            mock_engine = Mock()
+            mock_engine.generate.side_effect = Exception("Engine generation failed")
+            mock_engine_class.return_value = mock_engine
+
+            with self.assertRaises(Exception) as context:
+                recreate_pdf_from_config(self.config_path, self.output_path)
+
+            self.assertIn("Engine generation failed", str(context.exception))
+
+    def test_empty_config_file(self):
+        """Test handling of empty configuration file"""
+        # Write empty JSON to file
+        with open(self.config_path, "w") as f:
+            json.dump({}, f)
+
+        with patch("src.recreate_pdf_from_config.FitzPDFEngine") as mock_engine_class:
+            mock_engine = Mock()
+            mock_engine_class.return_value = mock_engine
+
+            recreate_pdf_from_config(self.config_path, self.output_path)
+
+            # Should still call generate with empty config
+            mock_engine.generate.assert_called_once_with({}, self.output_path)
+
+    def test_complex_config_structure(self):
+        """Test handling of complex configuration structure"""
+        complex_config = {
+            "version": "1.0",
+            "engine": "fitz",
+            "metadata": {
+                "title": "Complex Document",
+                "author": "Test Author",
+                "subject": "Test Subject",
+            },
+            "document_structure": [
+                {
+                    "type": "page",
+                    "page_number": 0,
+                    "size": [612, 792],
+                    "layers": [
+                        {
+                            "layer_id": "page_0_base_layer",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "Title Text",
+                                    "bbox": [100, 700, 500, 750],
+                                    "font_details": {
+                                        "name": "Arial-Bold",
+                                        "size": 24,
+                                        "color": 0,
+                                    },
+                                },
+                                {
+                                    "type": "image",
+                                    "image_file": "./images/test.jpg",
+                                    "bbox": [100, 400, 300, 600],
+                                },
+                                {
+                                    "type": "drawing",
+                                    "bbox": [100, 100, 500, 300],
+                                    "color": [1.0, 0.0, 0.0],
+                                    "drawing_commands": [
+                                        {"cmd": "M", "pts": [100, 100]},
+                                        {"cmd": "L", "pts": [500, 300]},
+                                        {"cmd": "H"},
+                                    ],
+                                },
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "type": "page",
+                    "page_number": 1,
+                    "size": [612, 792],
+                    "layers": [
+                        {
+                            "layer_id": "page_1_base_layer",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "Page 2 Content",
+                                    "bbox": [100, 400, 400, 450],
+                                }
+                            ],
+                        }
+                    ],
+                },
+            ],
+        }
+
+        # Write complex config to file
+        with open(self.config_path, "w") as f:
+            json.dump(complex_config, f)
+
+        with patch("src.recreate_pdf_from_config.FitzPDFEngine") as mock_engine_class:
+            mock_engine = Mock()
+            mock_engine_class.return_value = mock_engine
+
+            recreate_pdf_from_config(self.config_path, self.output_path)
+
+            # Verify the complex config was passed correctly
+            mock_engine.generate.assert_called_once_with(complex_config, self.output_path)
+
+    def test_unicode_content_handling(self):
+        """Test handling of Unicode content in configuration"""
+        unicode_config = {
+            "version": "1.0",
+            "engine": "fitz",
+            "metadata": {
+                "title": "Unicode Test Document 测试文档",
+                "author": "Test Author 作者",
+            },
+            "document_structure": [
+                {
+                    "type": "page",
+                    "page_number": 0,
+                    "size": [612, 792],
+                    "layers": [
+                        {
+                            "layer_id": "page_0_base_layer",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "Hello 世界 🌍",
+                                    "bbox": [100, 100, 300, 120],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+
+        # Write Unicode config to file
+        with open(self.config_path, "w", encoding="utf-8") as f:
+            json.dump(unicode_config, f, ensure_ascii=False)
+
+        with patch("src.recreate_pdf_from_config.FitzPDFEngine") as mock_engine_class:
+            mock_engine = Mock()
+            mock_engine_class.return_value = mock_engine
+
+            recreate_pdf_from_config(self.config_path, self.output_path)
+
+            # Verify Unicode content was handled correctly
+            mock_engine.generate.assert_called_once_with(unicode_config, self.output_path)
+
+    @patch("src.recreate_pdf_from_config.logger")
+    def test_logging_on_success(self, mock_logger):
+        """Test that success is logged appropriately"""
+        # Write config to file
+        with open(self.config_path, "w") as f:
+            json.dump(self.sample_config, f)
+
+        with patch("src.recreate_pdf_from_config.FitzPDFEngine") as mock_engine_class:
+            mock_engine = Mock()
+            mock_engine_class.return_value = mock_engine
+
+            recreate_pdf_from_config(self.config_path, self.output_path)
+
+            # Verify success was logged
+            mock_logger.info.assert_called_with(f"Successfully generated PDF: {self.output_path}")
+
+    @patch("src.recreate_pdf_from_config.logger")
+    def test_logging_on_error(self, mock_logger):
+        """Test that errors are logged appropriately"""
+        # Write config to file
+        with open(self.config_path, "w") as f:
+            json.dump(self.sample_config, f)
+
+        with patch("src.recreate_pdf_from_config.FitzPDFEngine") as mock_engine_class:
+            mock_engine = Mock()
+            mock_engine.generate.side_effect = Exception("Test error")
+            mock_engine_class.return_value = mock_engine
+
+            with self.assertRaises(Exception) as context:
+                recreate_pdf_from_config(self.config_path, self.output_path)
+
+            self.assertIn("Test error", str(context.exception))
+
+            # Verify error was logged
+            mock_logger.error.assert_called_with(f"Failed to generate PDF from config {self.config_path}: Test error")
+
+    def test_file_permissions_error(self):
+        """Test handling of file permission errors"""
+        # Write config to file
+        with open(self.config_path, "w") as f:
+            json.dump(self.sample_config, f)
+
+        # Mock open to raise PermissionError
+        with patch("builtins.open", side_effect=PermissionError("Permission denied")):
+            with self.assertRaises(PermissionError):
+                recreate_pdf_from_config(self.config_path, self.output_path)
+
+
+if __name__ == "__main__":
+    unittest.main()

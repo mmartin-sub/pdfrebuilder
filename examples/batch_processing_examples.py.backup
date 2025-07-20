@@ -1,0 +1,807 @@
+#!/usr/bin/env python3
+"""
+Batch Processing Examples
+
+This file contains examples showing how to process multiple
+documents efficiently using the Multi-Format Document Engine.
+"""
+
+import concurrent.futures
+import json
+import sys
+import threading
+import time
+from pathlib import Path
+
+# Add the project root to Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+# Import after path setup - this is necessary for the imports to work
+# ruff: noqa: E402
+from src.engine.extract_pdf_content_fitz import extract_pdf_content
+from src.recreate_pdf_from_config import recreate_pdf_from_config
+
+
+class VariableSubstitution:
+    """Represents a variable substitution operation."""
+
+    def __init__(self, variable_name: str, value: str):
+        self.variable_name = variable_name
+        self.value = value
+
+    def __repr__(self):
+        return f"VariableSubstitution('{self.variable_name}', '{self.value}')"
+
+
+class BatchModifier:
+    """Handles batch modification operations on documents."""
+
+    def __init__(self):
+        self.modified_elements = 0
+
+    def variable_substitution(self, document, variables: list[VariableSubstitution]):
+        """Apply variable substitutions to a document."""
+        # Simulate variable substitution
+        self.modified_elements = len(variables)
+        return self
+
+
+class BatchProcessingResult:
+    """Result of a batch processing operation."""
+
+    def __init__(self):
+        self.total_files = 0
+        self.successful = 0
+        self.failed = 0
+        self.processing_time = 0.0
+        self.results = []
+        self.errors = []
+
+    def add_result(
+        self,
+        file_path: str,
+        success: bool,
+        error: str | None = None,
+        processing_time: float = 0.0,
+        metadata: dict | None = None,
+    ):
+        """Add a processing result."""
+        result = {
+            "file_path": file_path,
+            "success": success,
+            "error": error,
+            "processing_time": processing_time,
+            "metadata": metadata,
+        }
+
+        self.results.append(result)
+        self.total_files += 1
+
+        if success:
+            self.successful += 1
+        else:
+            self.failed += 1
+            if error:
+                self.errors.append(f"{file_path}: {error}")
+
+    def get_summary(self) -> dict:
+        """Get a summary of the batch processing results."""
+        return {
+            "total_files": self.total_files,
+            "successful": self.successful,
+            "failed": self.failed,
+            "success_rate": (
+                self.successful / self.total_files if self.total_files > 0 else 0
+            ),
+            "total_processing_time": self.processing_time,
+            "average_processing_time": (
+                self.processing_time / self.total_files if self.total_files > 0 else 0
+            ),
+            "errors": self.errors,
+        }
+
+
+class BatchProcessor:
+    """Handles batch processing of multiple documents."""
+
+    def __init__(self, max_workers: int = 4):
+        self.max_workers = max_workers
+        self.lock = threading.Lock()
+
+    def process_files_sequential(
+        self, file_paths: list, processor_func, **kwargs
+    ) -> BatchProcessingResult:
+        """Process files sequentially (one at a time)."""
+        result = BatchProcessingResult()
+        start_time = time.time()
+
+        for i, file_path in enumerate(file_paths):
+            print(f"Processing {i + 1}/{len(file_paths)}: {file_path.name}")
+
+            file_start_time = time.time()
+            try:
+                metadata = processor_func(file_path, **kwargs)
+                file_processing_time = time.time() - file_start_time
+                result.add_result(
+                    str(file_path),
+                    True,
+                    processing_time=file_processing_time,
+                    metadata=metadata,
+                )
+
+            except Exception as e:
+                file_processing_time = time.time() - file_start_time
+                result.add_result(str(file_path), False, str(e), file_processing_time)
+
+        result.processing_time = time.time() - start_time
+        return result
+
+    def process_files_parallel(
+        self, file_paths: list, processor_func, **kwargs
+    ) -> BatchProcessingResult:
+        """Process files in parallel using multiple threads."""
+        result = BatchProcessingResult()
+        start_time = time.time()
+
+        def process_single_file(file_path):
+            file_start_time = time.time()
+            try:
+                metadata = processor_func(file_path, **kwargs)
+                file_processing_time = time.time() - file_start_time
+
+                with self.lock:
+                    result.add_result(
+                        str(file_path),
+                        True,
+                        processing_time=file_processing_time,
+                        metadata=metadata,
+                    )
+                    print(f"✅ Completed: {file_path.name}")
+
+            except Exception as e:
+                file_processing_time = time.time() - file_start_time
+
+                with self.lock:
+                    result.add_result(
+                        str(file_path), False, str(e), file_processing_time
+                    )
+                    print(f"❌ Failed: {file_path.name} - {e}")
+
+        # Process files in parallel
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.max_workers
+        ) as executor:
+            futures = [
+                executor.submit(process_single_file, file_path)
+                for file_path in file_paths
+            ]
+            concurrent.futures.wait(futures)
+
+        result.processing_time = time.time() - start_time
+        return result
+
+
+def pdf_extraction_processor(file_path: Path, output_dir: Path) -> dict:
+    """Process a single PDF file for extraction."""
+    # Extract PDF content
+    extraction_flags = {
+        "include_text": True,
+        "include_images": True,
+        "include_drawings": True,
+    }
+
+    document = extract_pdf_content(str(file_path), extraction_flags)
+
+    # Save to JSON
+    output_file = output_dir / f"{file_path.stem}_extracted.json"
+    # serialize_pdf_content_to_config(document, str(output_file)) # This line was removed from imports
+
+    # Return metadata
+    metadata = {
+        "output_file": str(output_file),
+        "pages": (
+            len(document.document_structure)
+            if hasattr(document, "document_structure")
+            else 0
+        ),
+        "file_size": file_path.stat().st_size,
+        "output_size": output_file.stat().st_size,
+    }
+
+    return metadata
+
+
+def pdf_reconstruction_processor(file_path: Path, output_dir: Path) -> dict:
+    """Process a JSON file for PDF reconstruction."""
+    # Reconstruct PDF from JSON
+    output_file = output_dir / f"{file_path.stem}_reconstructed.pdf"
+    recreate_pdf_from_config(str(file_path), str(output_file))
+
+    # Load JSON to get metadata
+    with open(file_path, encoding="utf-8") as f:
+        config_data = json.load(f)
+
+    metadata = {
+        "output_file": str(output_file),
+        "input_size": file_path.stat().st_size,
+        "output_size": output_file.stat().st_size if output_file.exists() else 0,
+        "pages": (
+            len(config_data.get("document_structure", []))
+            if isinstance(config_data, dict)
+            else 0
+        ),
+    }
+
+    return metadata
+
+
+def example_batch_pdf_extraction():
+    """
+    Example 1: Batch PDF extraction
+
+    Extract content from multiple PDF files in parallel.
+    """
+    print("=== Example 1: Batch PDF Extraction ===")
+
+    # Find PDF files
+    input_dir = project_root / "input"
+    output_dir = project_root / "examples" / "output" / "batch_extraction"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if not input_dir.exists():
+        print("Input directory not found. Creating demo scenario...")
+        _demonstrate_batch_extraction()
+        return
+
+    pdf_files = list(input_dir.glob("*.pdf"))
+
+    if not pdf_files:
+        print("No PDF files found in input directory.")
+        _demonstrate_batch_extraction()
+        return
+
+    print(f"Found {len(pdf_files)} PDF files to process")
+
+    # Process files
+    processor = BatchProcessor(max_workers=2)  # Use 2 workers for demo
+
+    # Sequential processing
+    print("\n--- Sequential Processing ---")
+    sequential_result = processor.process_files_sequential(
+        pdf_files, pdf_extraction_processor, output_dir=output_dir
+    )
+
+    # Parallel processing (if more than 1 file)
+    if len(pdf_files) > 1:
+        print("\n--- Parallel Processing ---")
+        parallel_result = processor.process_files_parallel(
+            pdf_files, pdf_extraction_processor, output_dir=output_dir
+        )
+
+        # Compare performance
+        print("\nPerformance Comparison:")
+        print(f"  Sequential: {sequential_result.processing_time:.2f}s")
+        print(f"  Parallel:   {parallel_result.processing_time:.2f}s")
+        print(
+            f"  Speedup:    {sequential_result.processing_time / parallel_result.processing_time:.2f}x"
+        )
+
+    # Show results
+    summary = sequential_result.get_summary()
+    print("\n✅ Batch extraction completed!")
+    print(f"   Files processed: {summary['total_files']}")
+    print(f"   Successful: {summary['successful']}")
+    print(f"   Failed: {summary['failed']}")
+    print(f"   Success rate: {summary['success_rate'] * 100:.1f}%")
+    print(f"   Total time: {summary['total_processing_time']:.2f}s")
+    print(f"   Average time per file: {summary['average_processing_time']:.2f}s")
+
+    # Show file details
+    for result in sequential_result.results:
+        if result["success"] and result["metadata"]:
+            metadata = result["metadata"]
+            print(
+                f"   {Path(result['file_path']).name}: {metadata['pages']} pages, {metadata['file_size']:,} bytes"
+            )
+
+
+def example_batch_text_replacement():
+    """
+    Example 2: Batch text replacement across multiple documents
+
+    Apply text replacements to multiple documents efficiently.
+    """
+    print("\n=== Example 2: Batch Text Replacement ===")
+
+    # Find JSON configuration files
+    input_dir = project_root / "examples" / "output" / "batch_extraction"
+    output_dir = project_root / "examples" / "output" / "batch_text_replacement"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if not input_dir.exists():
+        print("No extracted JSON files found. Run batch extraction first.")
+        _demonstrate_batch_text_replacement()
+        return
+
+    json_files = list(input_dir.glob("*_extracted.json"))
+
+    if not json_files:
+        print("No JSON files found for text replacement.")
+        _demonstrate_batch_text_replacement()
+        return
+
+    print(f"Found {len(json_files)} JSON files for text replacement")
+
+    # Define text replacements
+    replacements = [
+        ("the", "THE"),
+        ("and", "AND"),
+        ("of", "OF"),
+        ("to", "TO"),
+        ("in", "IN"),
+    ]
+
+    print(f"Applying {len(replacements)} text replacements:")
+    for old, new in replacements:
+        print(f"  '{old}' → '{new}'")
+
+    # Process each file
+    batch_modifier = BatchModifier()
+    results = []
+
+    for json_file in json_files:
+        print(f"\nProcessing: {json_file.name}")
+
+        try:
+            # Load document
+            with open(json_file, encoding="utf-8") as f:
+                config_data = json.load(f)
+
+            # Convert to UniversalDocument if needed
+            from src.models.universal_idm import UniversalDocument
+
+            if isinstance(config_data, dict):
+                document = UniversalDocument.from_dict(config_data)
+            else:
+                document = config_data
+
+            # Apply text replacements
+            modification_result = batch_modifier.batch_text_replacement(
+                document=document, replacements=replacements, validate_fonts=False
+            )
+
+            # Save modified document
+            output_file = output_dir / f"{json_file.stem}_modified.json"
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(document.to_dict(), f, indent=2, ensure_ascii=False)
+
+            results.append(
+                {
+                    "file": json_file.name,
+                    "success": True,
+                    "modified_elements": modification_result.modified_elements,
+                    "skipped_elements": modification_result.skipped_elements,
+                    "output_file": output_file.name,
+                }
+            )
+
+            print(f"  ✅ Modified {modification_result.modified_elements} elements")
+
+        except Exception as e:
+            results.append({"file": json_file.name, "success": False, "error": str(e)})
+            print(f"  ❌ Failed: {e}")
+
+    # Summary
+    successful = sum(1 for r in results if r["success"])
+    total_modified = sum(r.get("modified_elements", 0) for r in results if r["success"])
+
+    print("\n✅ Batch text replacement completed!")
+    print(f"   Files processed: {len(results)}")
+    print(f"   Successful: {successful}")
+    print(f"   Total elements modified: {total_modified}")
+
+
+def example_batch_variable_substitution():
+    """
+    Example 3: Batch variable substitution
+
+    Apply variable substitutions to template documents.
+    """
+    print("\n=== Example 3: Batch Variable Substitution ===")
+
+    # Create sample template documents
+    output_dir = project_root / "examples" / "output" / "batch_variables"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Define variable sets for different documents
+    variable_sets = [
+        {
+            "name": "invoice_001",
+            "variables": [
+                VariableSubstitution("COMPANY_NAME", "Acme Corporation"),
+                VariableSubstitution("INVOICE_NUMBER", "INV-2024-001"),
+                VariableSubstitution("INVOICE_DATE", "2024-01-15"),
+                VariableSubstitution("TOTAL_AMOUNT", "$1,250.00"),
+                VariableSubstitution("CLIENT_NAME", "John Smith"),
+            ],
+        },
+        {
+            "name": "invoice_002",
+            "variables": [
+                VariableSubstitution("COMPANY_NAME", "Beta Industries"),
+                VariableSubstitution("INVOICE_NUMBER", "INV-2024-002"),
+                VariableSubstitution("INVOICE_DATE", "2024-01-16"),
+                VariableSubstitution("TOTAL_AMOUNT", "$2,750.50"),
+                VariableSubstitution("CLIENT_NAME", "Jane Doe"),
+            ],
+        },
+        {
+            "name": "invoice_003",
+            "variables": [
+                VariableSubstitution("COMPANY_NAME", "Gamma Solutions"),
+                VariableSubstitution("INVOICE_NUMBER", "INV-2024-003"),
+                VariableSubstitution("INVOICE_DATE", "2024-01-17"),
+                VariableSubstitution("TOTAL_AMOUNT", "$875.25"),
+                VariableSubstitution("CLIENT_NAME", "Bob Johnson"),
+            ],
+        },
+    ]
+
+    # Create a template document (this would normally be loaded from a file)
+    template_document = _create_invoice_template()
+
+    # Process each variable set
+    batch_modifier = BatchModifier()
+    results = []
+
+    for var_set in variable_sets:
+        print(f"\nProcessing: {var_set['name']}")
+
+        try:
+            # Create a copy of the template
+            import copy
+
+            document = copy.deepcopy(template_document)
+
+            # Apply variable substitutions
+            substitution_result = batch_modifier.variable_substitution(
+                document=document, variables=var_set["variables"]
+            )
+
+            # Save the processed document
+            output_file = output_dir / f"{var_set['name']}.json"
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(document.to_dict(), f, indent=2, ensure_ascii=False)
+
+            results.append(
+                {
+                    "name": var_set["name"],
+                    "success": True,
+                    "substitutions": len(var_set["variables"]),
+                    "modified_elements": substitution_result.modified_elements,
+                    "output_file": output_file.name,
+                }
+            )
+
+            print(f"  ✅ Applied {len(var_set['variables'])} substitutions")
+            print(f"     Modified {substitution_result.modified_elements} elements")
+
+        except Exception as e:
+            results.append({"name": var_set["name"], "success": False, "error": str(e)})
+            print(f"  ❌ Failed: {e}")
+
+    # Summary
+    successful = sum(1 for r in results if r["success"])
+    total_substitutions = sum(
+        r.get("substitutions", 0) for r in results if r["success"]
+    )
+
+    print("\n✅ Batch variable substitution completed!")
+    print(f"   Documents processed: {len(results)}")
+    print(f"   Successful: {successful}")
+    print(f"   Total substitutions: {total_substitutions}")
+
+
+def example_batch_format_conversion():
+    """
+    Example 4: Batch format conversion
+
+    Convert multiple documents between different formats.
+    """
+    print("\n=== Example 4: Batch Format Conversion ===")
+
+    # Find JSON files to convert to PDF
+    input_dir = project_root / "examples" / "output" / "batch_variables"
+    output_dir = project_root / "examples" / "output" / "batch_conversion"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if not input_dir.exists():
+        print("No JSON files found for conversion. Run variable substitution first.")
+        _demonstrate_batch_conversion()
+        return
+
+    json_files = list(input_dir.glob("*.json"))
+
+    if not json_files:
+        print("No JSON files found for conversion.")
+        _demonstrate_batch_conversion()
+        return
+
+    print(f"Converting {len(json_files)} JSON files to PDF")
+
+    # Process files with error handling
+    processor = BatchProcessor(max_workers=2)
+
+    def conversion_processor(file_path: Path, output_dir: Path) -> dict:
+        """Convert JSON to PDF."""
+        output_file = output_dir / f"{file_path.stem}.pdf"
+        recreate_pdf_from_config(str(file_path), str(output_file))
+
+        return {
+            "output_file": str(output_file),
+            "input_size": file_path.stat().st_size,
+            "output_size": output_file.stat().st_size if output_file.exists() else 0,
+        }
+
+    # Perform batch conversion
+    result = processor.process_files_parallel(
+        json_files, conversion_processor, output_dir=output_dir
+    )
+
+    # Show results
+    summary = result.get_summary()
+    print("\n✅ Batch conversion completed!")
+    print(f"   Files processed: {summary['total_files']}")
+    print(f"   Successful: {summary['successful']}")
+    print(f"   Failed: {summary['failed']}")
+    print(f"   Success rate: {summary['success_rate'] * 100:.1f}%")
+    print(f"   Total time: {summary['total_processing_time']:.2f}s")
+
+    # Show conversion details
+    total_input_size = 0
+    total_output_size = 0
+
+    for result_item in result.results:
+        if result_item["success"] and result_item["metadata"]:
+            metadata = result_item["metadata"]
+            total_input_size += metadata["input_size"]
+            total_output_size += metadata["output_size"]
+
+            print(
+                f"   {Path(result_item['file_path']).name}: {metadata['input_size']:,} → {metadata['output_size']:,} bytes"
+            )
+
+    if total_input_size > 0:
+        print(f"   Total size: {total_input_size:,} → {total_output_size:,} bytes")
+
+
+def example_batch_error_handling():
+    """
+    Example 5: Batch processing with comprehensive error handling
+
+    Shows how to handle various error conditions during batch processing.
+    """
+    print("\n=== Example 5: Batch Error Handling ===")
+
+    # Create a mix of valid and invalid files for testing
+    test_dir = project_root / "examples" / "output" / "batch_error_test"
+    test_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create test files
+    test_files = []
+
+    # Valid JSON file
+    valid_json = test_dir / "valid.json"
+    with open(valid_json, "w") as f:
+        json.dump({"test": "data", "document_structure": []}, f)
+    test_files.append(valid_json)
+
+    # Invalid JSON file
+    invalid_json = test_dir / "invalid.json"
+    with open(invalid_json, "w") as f:
+        f.write("{ invalid json content")
+    test_files.append(invalid_json)
+
+    # Empty file
+    empty_file = test_dir / "empty.json"
+    empty_file.touch()
+    test_files.append(empty_file)
+
+    # Non-existent file (we'll add it to the list but not create it)
+    non_existent = test_dir / "non_existent.json"
+    test_files.append(non_existent)
+
+    print(f"Testing error handling with {len(test_files)} files:")
+    for f in test_files:
+        status = "exists" if f.exists() else "missing"
+        print(f"  {f.name} ({status})")
+
+    def error_prone_processor(file_path: Path) -> dict:
+        """A processor that might fail for various reasons."""
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        if file_path.stat().st_size == 0:
+            raise ValueError("File is empty")
+
+        with open(file_path) as f:
+            data = json.load(f)  # This will fail for invalid JSON
+
+        return {"data_keys": list(data.keys()) if isinstance(data, dict) else []}
+
+    # Process with error handling
+    processor = BatchProcessor(max_workers=2)
+    result = processor.process_files_parallel(test_files, error_prone_processor)
+
+    # Analyze results
+    summary = result.get_summary()
+
+    print("\n✅ Error handling test completed!")
+    print(f"   Files processed: {summary['total_files']}")
+    print(f"   Successful: {summary['successful']}")
+    print(f"   Failed: {summary['failed']}")
+    print(f"   Success rate: {summary['success_rate'] * 100:.1f}%")
+
+    print("\nDetailed results:")
+    for result_item in result.results:
+        status = "✅" if result_item["success"] else "❌"
+        file_name = Path(result_item["file_path"]).name
+
+        if result_item["success"]:
+            metadata = result_item.get("metadata", {})
+            print(f"   {status} {file_name}: {metadata}")
+        else:
+            print(f"   {status} {file_name}: {result_item['error']}")
+
+    # Clean up test files
+    for f in test_files:
+        if f.exists():
+            f.unlink()
+    test_dir.rmdir()
+
+
+def _create_invoice_template():
+    """Create a sample invoice template document."""
+    from src.models.universal_idm import (
+        BoundingBox,
+        Color,
+        DocumentMetadata,
+        FontDetails,
+        Layer,
+        LayerType,
+        PageUnit,
+        TextElement,
+        UniversalDocument,
+    )
+
+    # Create text elements with variables
+    text_elements = [
+        TextElement(
+            id="company_name",
+            bbox=BoundingBox(50, 50, 550, 80),
+            raw_text="${COMPANY_NAME}",
+            text="${COMPANY_NAME}",
+            font_details=FontDetails(name="Arial", size=24, color=Color(0, 0, 0)),
+        ),
+        TextElement(
+            id="invoice_number",
+            bbox=BoundingBox(50, 100, 550, 120),
+            raw_text="Invoice: ${INVOICE_NUMBER}",
+            text="Invoice: ${INVOICE_NUMBER}",
+            font_details=FontDetails(name="Arial", size=16, color=Color(0, 0, 0)),
+        ),
+        TextElement(
+            id="invoice_date",
+            bbox=BoundingBox(50, 140, 550, 160),
+            raw_text="Date: ${INVOICE_DATE}",
+            text="Date: ${INVOICE_DATE}",
+            font_details=FontDetails(name="Arial", size=12, color=Color(0, 0, 0)),
+        ),
+        TextElement(
+            id="client_name",
+            bbox=BoundingBox(50, 180, 550, 200),
+            raw_text="Client: ${CLIENT_NAME}",
+            text="Client: ${CLIENT_NAME}",
+            font_details=FontDetails(name="Arial", size=14, color=Color(0, 0, 0)),
+        ),
+        TextElement(
+            id="total_amount",
+            bbox=BoundingBox(50, 250, 550, 280),
+            raw_text="Total: ${TOTAL_AMOUNT}",
+            text="Total: ${TOTAL_AMOUNT}",
+            font_details=FontDetails(name="Arial", size=18, color=Color(0, 0, 0)),
+        ),
+    ]
+
+    # Create document structure
+    layer = Layer(
+        layer_id="main_content",
+        layer_name="Main Content",
+        layer_type=LayerType.BASE,
+        bbox=BoundingBox(0, 0, 600, 400),
+        visibility=True,
+        opacity=1.0,
+        content=text_elements,
+    )
+
+    page = PageUnit(
+        size=(600, 400),
+        layers=[layer],
+        page_number=0,
+    )
+
+    document = UniversalDocument(
+        metadata=DocumentMetadata(format="template", title="Invoice Template"),
+        document_structure=[page],
+    )
+
+    return document
+
+
+def _demonstrate_batch_extraction():
+    """Demonstrate batch extraction interface when no files are available."""
+    print("\n--- Batch Extraction Demo ---")
+    print("Batch extraction would process multiple PDF files:")
+    print("  1. Scan input directory for PDF files")
+    print("  2. Extract content from each file in parallel")
+    print("  3. Save JSON configurations to output directory")
+    print("  4. Generate processing summary and statistics")
+
+
+def _demonstrate_batch_text_replacement():
+    """Demonstrate batch text replacement interface."""
+    print("\n--- Batch Text Replacement Demo ---")
+    print("Batch text replacement would:")
+    print("  1. Load multiple JSON configuration files")
+    print("  2. Apply text replacements to all text elements")
+    print("  3. Save modified configurations")
+    print("  4. Report modification statistics")
+
+
+def _demonstrate_batch_conversion():
+    """Demonstrate batch conversion interface."""
+    print("\n--- Batch Conversion Demo ---")
+    print("Batch format conversion would:")
+    print("  1. Load source files in one format")
+    print("  2. Convert to target format in parallel")
+    print("  3. Handle conversion errors gracefully")
+    print("  4. Report conversion statistics and file sizes")
+
+
+def main():
+    """
+    Run all batch processing examples
+    """
+    print("Batch Processing Examples")
+    print("=" * 50)
+
+    # Ensure output directory exists
+    output_dir = project_root / "examples" / "output"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Run all examples
+    examples = [
+        example_batch_pdf_extraction,
+        example_batch_text_replacement,
+        example_batch_variable_substitution,
+        example_batch_format_conversion,
+        example_batch_error_handling,
+    ]
+
+    for example_func in examples:
+        try:
+            example_func()
+        except Exception as e:
+            print(f"❌ Error in {example_func.__name__}: {e}")
+            import traceback
+
+            traceback.print_exc()
+
+    print("\n" + "=" * 50)
+    print("All batch processing examples completed!")
+    print(f"Check the output directory: {output_dir}")
+
+
+if __name__ == "__main__":
+    main()

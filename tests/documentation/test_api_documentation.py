@@ -1,0 +1,296 @@
+"""
+Tests for API documentation examples and completeness.
+
+This module validates that the API documentation is accurate and that
+code examples execute correctly.
+"""
+
+import ast
+import importlib
+import inspect
+import sys
+import unittest
+from pathlib import Path
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+
+class TestAPIDocumentation(unittest.TestCase):
+    """Test API documentation accuracy and completeness"""
+
+    def setUp(self):
+        """Set up test environment"""
+        self.api_docs_dir = project_root / "docs" / "api"
+        self.src_dir = project_root / "src"
+
+    def test_api_documentation_exists(self):
+        """Test that API documentation files exist"""
+        self.assertTrue(self.api_docs_dir.exists(), "API documentation directory should exist")
+
+        # Check main API files
+        main_files = ["README.md", "COMPREHENSIVE_GUIDE.md"]
+
+        for file_name in main_files:
+            file_path = self.api_docs_dir / file_name
+            self.assertTrue(file_path.exists(), f"API documentation file {file_name} should exist")
+
+    def test_module_documentation_coverage(self):
+        """Test that all major modules have documentation"""
+        # Key modules that should have documentation
+        key_modules = [
+            "models/universal_idm.md",
+            "engine/document_parser.md",
+            "engine/document_renderer.md",
+            "engine/extract_pdf_content_fitz.md",
+            "settings.md",
+        ]
+
+        for module_doc in key_modules:
+            doc_path = self.api_docs_dir / module_doc
+            self.assertTrue(doc_path.exists(), f"Documentation for {module_doc} should exist")
+
+            # Check that file is not empty
+            with open(doc_path) as f:
+                content = f.read().strip()
+                self.assertTrue(
+                    len(content) > 100,
+                    f"Documentation for {module_doc} should not be empty",
+                )
+
+    def test_universal_idm_imports(self):
+        """Test that Universal IDM module can be imported"""
+        try:
+            from pdfrebuilder.models.universal_idm import BoundingBox, Color
+
+            # Test basic instantiation
+            bbox = BoundingBox(0, 0, 100, 100)
+            self.assertEqual(bbox.width, 100)
+            self.assertEqual(bbox.height, 100)
+
+            color = Color(1.0, 0.0, 0.0, 1.0)  # Red
+            self.assertEqual(color.to_rgb_tuple(), (1.0, 0.0, 0.0))
+
+        except ImportError as e:
+            self.fail(f"Failed to import Universal IDM components: {e}")
+
+    def test_document_parser_imports(self):
+        """Test that document parser components can be imported"""
+        try:
+            from pdfrebuilder.engine.document_parser import AssetManifest
+
+            # Test AssetManifest
+            manifest = AssetManifest()
+            manifest.add_image("test.jpg", "original.jpg")
+            self.assertEqual(len(manifest.images), 1)
+
+        except ImportError as e:
+            self.fail(f"Failed to import document parser components: {e}")
+
+    def test_settings_imports(self):
+        """Test that settings module can be imported"""
+        try:
+            from pdfrebuilder.settings import get_config_value
+
+            # Test configuration access
+            image_dir = get_config_value("image_dir")
+            self.assertIsNotNone(image_dir)
+
+        except ImportError as e:
+            self.fail(f"Failed to import settings components: {e}")
+
+    def test_api_examples_syntax(self):
+        """Test that API examples have valid Python syntax"""
+        examples_file = project_root / "docs" / "examples" / "api_usage_examples.py"
+
+        if not examples_file.exists():
+            self.skipTest("API examples file not found")
+
+        # Parse the examples file to check syntax
+        with open(examples_file) as f:
+            content = f.read()
+
+        try:
+            ast.parse(content)
+        except SyntaxError as e:
+            self.fail(f"API examples file has syntax error: {e}")
+
+    def test_comprehensive_guide_structure(self):
+        """Test that comprehensive guide has expected structure"""
+        guide_path = self.api_docs_dir / "COMPREHENSIVE_GUIDE.md"
+
+        if not guide_path.exists():
+            self.skipTest("Comprehensive guide not found")
+
+        with open(guide_path) as f:
+            content = f.read()
+
+        # Check for key sections
+        expected_sections = [
+            "# Comprehensive API Guide",
+            "## Getting Started",
+            "## Core Concepts",
+            "## Universal IDM Data Model",
+            "## Document Parsing",
+            "## Configuration Management",
+            "## Best Practices",
+        ]
+
+        for section in expected_sections:
+            self.assertIn(section, content, f"Guide should contain section: {section}")
+
+    def test_api_documentation_links(self):
+        """Test that API documentation has valid internal links"""
+        readme_path = self.api_docs_dir / "README.md"
+
+        if not readme_path.exists():
+            self.skipTest("API README not found")
+
+        with open(readme_path) as f:
+            content = f.read()
+
+        # Check for key links
+        expected_links = [
+            "models/universal_idm.md",
+            "engine/document_parser.md",
+            "engine/document_renderer.md",
+        ]
+
+        for link in expected_links:
+            self.assertIn(link, content, f"README should link to {link}")
+
+    def test_module_docstrings_exist(self):
+        """Test that key modules have docstrings"""
+        key_modules = [
+            "src.models.universal_idm",
+            "src.engine.document_parser",
+            "src.settings",
+        ]
+
+        for module_name in key_modules:
+            try:
+                module = importlib.import_module(module_name)
+                docstring = inspect.getdoc(module)
+                self.assertIsNotNone(docstring, f"Module {module_name} should have a docstring")
+                self.assertTrue(
+                    len(docstring) > 50,
+                    f"Module {module_name} docstring should be substantial",
+                )
+
+            except ImportError:
+                self.skipTest(f"Module {module_name} not available for testing")
+
+    def test_class_documentation_completeness(self):
+        """Test that key classes have proper documentation"""
+        try:
+            from pdfrebuilder.models.universal_idm import BoundingBox, TextElement, UniversalDocument
+
+            # Test that classes have docstrings
+            classes_to_check = [UniversalDocument, TextElement, BoundingBox]
+
+            for cls in classes_to_check:
+                docstring = inspect.getdoc(cls)
+                self.assertIsNotNone(docstring, f"Class {cls.__name__} should have a docstring")
+
+                # Check that key methods have docstrings
+                for method_name in ["__init__", "to_dict"]:
+                    if hasattr(cls, method_name):
+                        method = getattr(cls, method_name)
+                        method_doc = inspect.getdoc(method)
+                        # Note: __init__ methods often don't have docstrings, so we're lenient
+                        if method_name != "__init__":
+                            self.assertIsNotNone(
+                                method_doc,
+                                f"Method {cls.__name__}.{method_name} should have a docstring",
+                            )
+
+        except ImportError:
+            self.skipTest("Universal IDM classes not available for testing")
+
+
+class TestAPIExamples(unittest.TestCase):
+    """Test that API examples work correctly"""
+
+    def setUp(self):
+        """Set up test environment"""
+        self.project_root = Path(__file__).parent.parent
+        sys.path.insert(0, str(self.project_root))
+
+    def test_universal_idm_creation(self):
+        """Test Universal IDM document creation example"""
+        try:
+            from pdfrebuilder.models.universal_idm import DocumentMetadata, UniversalDocument
+
+            # Create document as shown in examples
+            metadata = DocumentMetadata(title="Test Document", author="Test Author")
+
+            document = UniversalDocument(engine="test_engine", engine_version="1.0", metadata=metadata)
+
+            # Verify document creation
+            self.assertEqual(document.engine, "test_engine")
+            self.assertEqual(document.metadata.title, "Test Document")
+
+            # Test JSON serialization
+            json_str = document.to_json()
+            self.assertIsInstance(json_str, str)
+            self.assertIn("test_engine", json_str)
+
+            # Test deserialization
+            loaded_doc = UniversalDocument.from_json(json_str)
+            self.assertEqual(loaded_doc.engine, "test_engine")
+
+        except ImportError as e:
+            self.skipTest(f"Universal IDM not available: {e}")
+
+    def test_bounding_box_operations(self):
+        """Test BoundingBox operations as shown in examples"""
+        try:
+            from pdfrebuilder.models.universal_idm import BoundingBox
+
+            # Create bounding box
+            bbox = BoundingBox(10, 20, 110, 120)
+
+            # Test properties
+            self.assertEqual(bbox.width, 100)
+            self.assertEqual(bbox.height, 100)
+
+            # Test serialization
+            bbox_list = bbox.to_list()
+            self.assertEqual(bbox_list, [10, 20, 110, 120])
+
+            # Test deserialization
+            bbox2 = BoundingBox.from_list(bbox_list)
+            self.assertEqual(bbox2.x1, 10)
+            self.assertEqual(bbox2.y1, 20)
+
+        except ImportError as e:
+            self.skipTest(f"BoundingBox not available: {e}")
+
+    def test_color_operations(self):
+        """Test Color operations as shown in examples"""
+        try:
+            from pdfrebuilder.models.universal_idm import Color
+
+            # Create color
+            color = Color(1.0, 0.5, 0.0, 1.0)  # Orange
+
+            # Test conversions
+            rgb_tuple = color.to_rgb_tuple()
+            self.assertEqual(rgb_tuple, (1.0, 0.5, 0.0))
+
+            rgba_tuple = color.to_rgba_tuple()
+            self.assertEqual(rgba_tuple, (1.0, 0.5, 0.0, 1.0))
+
+            # Test creation from tuple
+            color2 = Color.from_rgb_tuple((1.0, 0.5, 0.0))
+            self.assertEqual(color2.r, 1.0)
+            self.assertEqual(color2.g, 0.5)
+            self.assertEqual(color2.b, 0.0)
+
+        except ImportError as e:
+            self.skipTest(f"Color not available: {e}")
+
+
+if __name__ == "__main__":
+    unittest.main()

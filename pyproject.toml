@@ -1,0 +1,311 @@
+# This file is the single source of truth for your project's metadata and tooling.
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pdfrebuilder"
+dynamic = ["version"]  # use VCS for version like project 1
+description = "Extract and rebuild PDF layouts with high fidelity"
+readme = "README.md"
+requires-python = ">=3.12"  # align with project 1; bump if you need 3.11
+authors = [
+    {name = "Michel Martin", email = "172776424+mmartin-sub@users.noreply.github.com"},
+]
+license = { file = "LICENSE" } # { text = "MIT" }
+keywords = ["pdf", "layout", "extraction", "rebuilding", "document-processing", "psd"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: General",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+]
+
+# ---- pdfrebuilder runtime deps (kept from your 2nd file) ----
+dependencies = [
+    "rich>=13.7.0",
+    "fonttools[ufo,lxml,woff,unicode]>=4.47.0",
+    "requests>=2.31.0",
+    "typer>=0.9.0",
+    "defusedxml>=0.7.1",
+    "reportlab>=4.0.0",
+    "plumbum>=1.8.0",
+    "pydantic>=2.11.0",
+    "pydantic-settings>=2.0.0",
+    "platformdirs>=4.0.0",
+    "tomli>=2.0.0; python_version<'3.11'",
+    "tomli-w>=1.0.0",
+    "psutil>=7.0.0",
+    "PyMuPDF>=1.26",
+    "json5>=0.9.14",
+    "Pillow>=10.2.0",
+    "opencv-python>=4.12.0",
+    "pytesseract>=0.3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/mmartin-sub/pdfrebuilder"
+Documentation = "https://github.com/mmartin-sub/pdfrebuilder"
+Repository = "https://github.com/mmartin-sub/pdfrebuilder"
+Issues = "https://github.com/mmartin-sub/pdfrebuilder/issues"
+
+[project.scripts]
+pdfrebuilder = "pdfrebuilder.cli:main"
+
+[project.optional-dependencies]
+# keep your extras
+psd = ["psd-tools>=1.10.9", "numpy>=1.24.0"]
+wand = ["Wand>=0.6.13"]
+validation = ["scikit-image>=0.25.2", "numpy>=1.24.0"]
+
+# test & dev (mirrors project 1 tooling)
+test = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-asyncio>=1.1.0",
+]
+dev = [
+    "pdfrebuilder[test]",
+
+    # Core dev tools (same style as project 1)
+    "ruff>=0.5.0",
+    "bandit",
+    "detect-secrets",
+
+    # Legacy/compat tools
+    "mypy>=1.10.0",
+    "vulture>=2.11",
+
+    # Future-facing type checker
+    "pyright",
+
+    # Type Stubs
+    "types-PyYAML",
+    "types-requests",
+    "types-beautifulsoup4",
+    "types-fpdf2",
+    "types-jinja2",
+
+]
+all = [
+    "pdfrebuilder[test,dev,psd,wand,validation]",
+]
+# so you can use:
+# hatch env remove/prune
+# hatch env create
+# hatch shell
+# uv sync --extra all
+
+# --- HATCH CONFIG ---
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pdfrebuilder"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    ".trunk/", ".git/", ".kiro/", "book/", "*.log", "test_*", "__pycache__/",
+    "*.pyc", ".pytest_cache/", ".mypy_cache/", ".ruff_cache/",
+]
+
+[tool.hatch.envs.default]
+dev-mode = true
+extras = ["all"]
+path = ".venv"
+installer = "uv"
+python = "3.12"
+
+# This section enables the `hatch fmt` command.
+[tool.hatch.formatting]
+format.dependencies = ["ruff>=0.5.0"]
+format.command = "ruff format {args:.}"
+fix.dependencies = ["ruff>=0.5.0"]
+fix.command = "ruff check --fix {args:.}"
+
+[tool.hatch.envs.default.scripts]
+check = [
+    "lint-check",
+    "format-check",
+    "types-pyright",
+    "security",
+]
+test = "pytest {args:tests/}"
+test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src {args:tests/}"
+
+# --- Formatting & Linting (Ruff) ---
+format = "ruff format {args:.}"
+format-check = "ruff format --check {args:.}"
+lint = "ruff check --fix {args:.}"
+lint-check = "ruff check {args:.}"
+fix-imports = "ruff check --select F401 --fix ."
+
+# --- Type Checking ---
+types-pyright = "pyright {args:.}"
+types-mypy = "mypy src"
+
+# --- Other checks ---
+security = "bandit -c pyproject.toml ."
+dead-code = "vulture src tests"
+
+# --- Package management helpers ---
+check-updates = "uv pip list --outdated"
+detect-secrets-scan = "detect-secrets scan --baseline .secrets.baseline"
+detect-secrets-audit = "detect-secrets audit .secrets.baseline"
+
+# --- RUFF ---
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+extend-exclude = [".history"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B", "C4", "UP", "RUF"]
+ignore = ["B008", "B904", "E501", "RUF022"]
+fixable = ["ALL"]
+allowed-confusables = ["ℹ"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pdfrebuilder"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["B007", "B017", "F841", "F401", "E501", "RUF002", "RUF003", "RUF012"]
+"examples/**/*.py" = ["B007", "B017", "F841", "F401", "E501", "RUF002", "RUF003", "E402"]
+"scripts/**/*.py" = ["B007", "B017", "F841", "F401", "E501", "E402"]
+"docs/examples/**/*.py" = ["B007", "B017", "F841", "F401", "E501", "RUF002", "RUF003"]
+"**/__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+exclude = [".venv", "build", "dist", ".trunk", "docs"]
+
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unused_configs = true
+warn_no_return = true
+warn_unreachable = false
+check_untyped_defs = true
+
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+no_implicit_optional = false
+
+strict_equality = true
+show_error_codes = true
+allow_redefinition = true
+allow_untyped_globals = true
+
+# ignore_missing_imports for heavy/optional libs you use
+[[tool.mypy.overrides]]
+module = [
+    "fitz", "fitz.*",              # PyMuPDF
+    "cv2", "cv2.*",                # OpenCV
+    "skimage", "skimage.*",        # scikit-image (optional extra)
+    "PIL.*",                       # Pillow
+    "reportlab.*",
+    "rich.*",
+    "json5.*",
+    "pytest.*",
+    "psd_tools.*",
+    "fontTools.*",
+    "psutil.*",
+    "jsonschema.*",
+    "defusedxml.*",
+    "wand.*",
+    "pytesseract.*",
+    "tomllib.*",
+    "plumbum.*",
+]
+ignore_missing_imports = true
+
+[tool.pyright]
+pythonVersion = "3.12"
+include = ["src", "tests"]
+exclude = [".venv", "build", "dist", "**/__pycache__", ".trunk", "docs", "tests/**/wip_*.py"]
+typeCheckingMode = "standard"
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportPossiblyUnboundVariable = false
+
+[tool.vulture]
+min_confidence = 92
+# Sort unused code by size.
+sort_by_size = true
+
+# Combined and refined list of paths to scan.
+# .vulture_whitelist is included here to be checked by Vulture.
+paths = ["src", "tests", "scripts", "examples", ".vulture_whitelist"]
+
+# A merged list of exclusion patterns for Vulture's analysis.
+exclude = [
+    "*/migrations/*",
+    "*/venv/*",
+    "*/__pycache__/*",
+    "*/.git/*",
+    "*/node_modules/*",
+    "*/.mypy_cache/*",
+    "*/.ruff_cache/*",
+    "*/.pytest_cache/*",
+    "build/",
+    "dist/",
+    # ,"scripts"
+]
+
+# Combined list of names to ignore.
+ignore_names = [
+    "_*",
+    "test_*",
+    "Test*",
+    "setUp*",
+    "tearDown*",
+    "Mock*",
+    "mock_*",
+    "fixture_*",
+    "new_config",
+]
+
+# List of decorators to ignore.
+ignore_decorators = [
+    "@app.route",
+    "@pytest.fixture",
+    "@click.command",
+    "@typer.command",
+    "@contextmanager",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q --strict-markers"
+asyncio_mode = "auto"
+norecursedirs = ["tests/utils"]
+log_cli = false
+log_cli_level = "WARNING"
+log_cli_format = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+log_level = "WARNING"
+log_disable = ["fontTools.ttLib.ttFont", "fontTools.ttLib", "fontTools"]
+markers = [
+    "human_review: marks tests requiring human visual review", "e2e: marks end-to-end integration tests",
+    "unit: marks unit tests", "integration: marks integration tests", "performance: marks performance tests",
+    "psd: marks tests requiring PSD support (psd-tools)", "validation: marks tests requiring image validation (scikit-image)",
+    "ocr: marks tests requiring OCR support (pytesseract)", "optional_deps: marks tests requiring any optional dependencies"
+]
+
+# --- BANDIT ---
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
+skips = ["B101"]

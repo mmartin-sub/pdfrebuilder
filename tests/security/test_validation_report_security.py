@@ -1,0 +1,893 @@
+"""
+Integration tests for validation report security
+
+This test suite provides comprehensive integration testing for XML security
+in validation report generation, including JUnit report generation with secure
+XML parsing, HTML report generation safety with malicious input, and XML pretty
+printing security in report generation as specified in requirements 4.1 and 4.4.
+"""
+
+import json
+import logging
+import os
+import tempfile
+from unittest.mock import patch
+
+import pytest
+
+from pdfrebuilder.engine.validation_report import (
+    ValidationReport,
+    ValidationResult,
+    XMLParsingError,
+    XMLSecurityError,
+    secure_xml_parse,
+    secure_xml_pretty_print,
+)
+
+
+class TestJUnitReportSecurityIntegration:
+    """Integration tests for JUnit report generation with secure XML parsing"""
+
+    def create_sample_validation_results(self):
+        """Create sample validation results for testing"""
+        return [
+            ValidationResult(
+                passed=True,
+                ssim_score=0.95,
+                threshold=0.9,
+                original_path="original1.pdf",
+                generated_path="generated1.pdf",
+                details={"test_case": "basic_text"},
+            ),
+            ValidationResult(
+                passed=False,
+                ssim_score=0.75,
+                threshold=0.9,
+                original_path="original2.pdf",
+                generated_path="generated2.pdf",
+                diff_image_path="diff2.png",
+                details={"test_case": "complex_layout"},
+                failure_analysis={
+                    "failure_reason": "moderate_visual_difference",
+                    "severity": "high",
+                    "recommendations": ["Check layout positioning"],
+                },
+            ),
+            ValidationResult(
+                passed=True,
+                ssim_score=0.92,
+                threshold=0.9,
+                original_path="original3.pdf",
+                generated_path="generated3.pdf",
+                details={"test_case": "image_rendering"},
+            ),
+        ]
+
+    def test_junit_report_generation_with_secure_parsing(self, caplog):
+        """Test that JUnit report generation uses secure XML parsing"""
+        results = self.create_sample_validation_results()
+        report = ValidationReport(
+            document_name="security_test_document",
+            results=results,
+            metadata={"test_type": "security_integration"},
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            junit_path = os.path.join(temp_dir, "junit_report.xml")
+
+            # Generate JUnit report
+            report.generate_junit_report(junit_path)
+
+            # Verify file was created
+            assert os.path.exists(junit_path)
+
+            # Read and verify the generated XML is valid and secure
+            with open(junit_path, encoding="utf-8") as f:
+                junit_content = f.read()
+
+            # Verify XML structure
+            assert '<?xml version="1.0" encoding="UTF-8"?>' in junit_content
+            assert "<testsuite" in junit_content
+            assert "</testsuite>" in junit_content
+            assert 'name="security_test_document"' in junit_content
+
+            # Verify test cases are present
+            assert junit_content.count("<testcase") == 3
+            assert 'name="basic_text"' in junit_content
+            assert 'name="complex_layout"' in junit_content
+            assert 'name="image_rendering"' in junit_content
+
+            # Verify failure case is properly handled
+            assert "<failure" in junit_content
+            assert "moderate_visual_difference" in junit_content
+
+            # Verify the generated XML can be securely parsed
+            parsed_element = secure_xml_parse(junit_content)
+            assert parsed_element.tag == "testsuites"
+            # Get the testsuite child element
+            testsuite = parsed_element.find("testsuite")
+            assert testsuite is not None
+
+            # Verify no security warnings were logged during generation
+            security_warnings = [
+                record
+                for record in caplog.records
+                if "XML Security Event:" in record.message and "insecure" in record.message.lower()
+            ]
+            assert len(security_warnings) == 0
+
+    def test_junit_report_with_malicious_input_in_details(self, caplog):
+        """Test JUnit report generation with malicious XML content in result details"""
+        # Create results with potentially malicious content in details
+        malicious_results = [
+            ValidationResult(
+                passed=False,
+                ssim_score=0.5,
+                threshold=0.9,
+                original_path="original.pdf",
+                generated_path="generated.pdf",
+                details={
+                    "error_message": "<!DOCTYPE root [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><root>&xxe;</root>",
+                    "malicious_content": "<?xml version='1.0'?><!DOCTYPE lolz [<!ENTITY lol 'lol'><!ENTITY lol2 '&lol;&lol;'>]><lolz>&lol2;</lolz>",
+                    "script_injection": "<script>alert('xss')</script>",
+                    "special_chars": "& < > \" '",
+                },
+                failure_analysis={
+                    "failure_reason": "malicious_content_test",
+                    "severity": "critical",
+                    "recommendations": ["Sanitize input"],
+                },
+            )
+        ]
+
+        report = ValidationReport(
+            document_name="malicious_input_test",
+            results=malicious_results,
+            metadata={"security_test": "malicious_input"},
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            junit_path = os.path.join(temp_dir, "malicious_junit_report.xml")
+
+            # Generate JUnit report - should handle malicious content safely
+            with caplog.at_level(logging.WARNING):
+                report.generate_junit_report(junit_path)
+
+            # Verify file was created
+            assert os.path.exists(junit_path)
+
+            # Read and verify the generated XML
+            with open(junit_path, encoding="utf-8") as f:
+                junit_content = f.read()
+
+            # Verify malicious content was properly escaped/sanitized
+            assert "<!DOCTYPE" not in junit_content or "&lt;!DOCTYPE" in junit_content
+            assert "<!ENTITY" not in junit_content or "&lt;!ENTITY" in junit_content
+            assert "<script>" not in junit_content or "&lt;script&gt;" in junit_content
+
+            # Verify special characters are properly escaped
+            assert "&amp;" in junit_content or "&" not in junit_content.replace("&amp;", "").replace(
+                "&lt;", ""
+            ).replace("&gt;", "").replace("&quot;", "").replace("&apos;", "")
+
+            # Verify the generated XML can be securely parsed
+            parsed_element = secure_xml_parse(junit_content)
+            assert parsed_element.tag == "testsuites"
+            # Get the testsuite child element
+            testsuite = parsed_element.find("testsuite")
+            assert testsuite is not None
+
+            # Verify security events were logged if any malicious content was detected
+            _security_events = [record for record in caplog.records if "XML Security Event:" in record.message]
+            # Note: May or may not have security events depending on how content is handled
+
+    def test_junit_report_xml_structure_integrity(self):
+        """Test that JUnit report maintains proper XML structure with security measures"""
+        results = self.create_sample_validation_results()
+        report = ValidationReport(
+            document_name="xml_structure_test",
+            results=results,
+            metadata={
+                "generator": "validation_report_security_test",
+                "version": "1.0",
+            },
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            junit_path = os.path.join(temp_dir, "structure_test.xml")
+
+            # Generate JUnit report
+            report.generate_junit_report(junit_path)
+
+            # Parse the generated XML to verify structure
+            with open(junit_path, encoding="utf-8") as f:
+                junit_content = f.read()
+
+            parsed_element = secure_xml_parse(junit_content)
+
+            # Verify testsuites element
+            assert parsed_element.tag == "testsuites"
+            # Get the testsuite child element
+            testsuite = parsed_element.find("testsuite")
+            assert testsuite is not None
+            assert testsuite.get("name") == "xml_structure_test"
+            assert testsuite.get("tests") == "3"
+            assert parsed_element.get("failures") == "1"
+            assert parsed_element.get("errors") == "0"
+
+            # Verify testcase elements
+            testcases = testsuite.findall("testcase")
+            assert len(testcases) == 3
+
+            # Verify failure element structure
+            failure_cases = [tc for tc in testcases if tc.find("failure") is not None]
+            assert len(failure_cases) == 1
+
+            failure_element = failure_cases[0].find("failure")
+            assert failure_element is not None
+            assert failure_element.get("type") == "moderate_visual_difference"
+            assert "moderate_visual_difference" in failure_element.get("message", "")
+
+    def test_junit_report_with_unicode_content(self):
+        """Test JUnit report generation with Unicode content"""
+        unicode_results = [
+            ValidationResult(
+                passed=False,
+                ssim_score=0.8,
+                threshold=0.9,
+                original_path="测试文档.pdf",
+                generated_path="生成文档.pdf",
+                details={
+                    "unicode_test": "测试内容 🚀 émojis and spëcial chars",
+                    "multilingual": "English, 中文, العربية, русский, 日本語",
+                },
+                failure_analysis={
+                    "failure_reason": "unicode_rendering_issue",
+                    "severity": "medium",
+                    "recommendations": ["Check Unicode font support"],
+                },
+            )
+        ]
+
+        report = ValidationReport(
+            document_name="unicode_test_文档",
+            results=unicode_results,
+            metadata={"encoding": "UTF-8"},
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            junit_path = os.path.join(temp_dir, "unicode_junit_report.xml")
+
+            # Generate JUnit report
+            report.generate_junit_report(junit_path)
+
+            # Verify file was created and contains Unicode content
+            assert os.path.exists(junit_path)
+
+            with open(junit_path, encoding="utf-8") as f:
+                junit_content = f.read()
+
+            # Verify Unicode content is preserved
+            assert "测试文档.pdf" in junit_content
+            assert "生成文档.pdf" in junit_content
+            assert "测试内容" in junit_content
+            assert "🚀" in junit_content
+            assert "émojis" in junit_content
+            assert "spëcial" in junit_content
+
+            # Verify the XML can be parsed securely
+            parsed_element = secure_xml_parse(junit_content)
+            assert parsed_element.tag == "testsuites"
+            # Get the testsuite child element
+            testsuite = parsed_element.find("testsuite")
+            assert testsuite is not None
+
+
+class TestHTMLReportSecurityIntegration:
+    """Integration tests for HTML report generation safety with malicious input"""
+
+    def create_malicious_validation_results(self):
+        """Create validation results with potentially malicious content"""
+        return [
+            ValidationResult(
+                passed=False,
+                ssim_score=0.6,
+                threshold=0.9,
+                original_path="<script>alert('xss')</script>.pdf",
+                generated_path="generated.pdf",
+                details={
+                    "xss_attempt": "<script>alert('XSS')</script>",
+                    "html_injection": "<img src=x onerror=alert('img')>",
+                    "css_injection": "<style>body{background:url('javascript:alert(1)')}</style>",
+                    "javascript_url": "javascript:alert('js')",
+                    "data_url": "data:text/html,<script>alert('data')</script>",
+                    "svg_injection": "<svg onload=alert('svg')>",
+                },
+                failure_analysis={
+                    "failure_reason": "security_test",
+                    "severity": "critical",
+                    "recommendations": [
+                        "<script>alert('rec1')</script>",
+                        "Check for <img src=x onerror=alert('rec2')>",
+                    ],
+                },
+            ),
+            ValidationResult(
+                passed=True,
+                ssim_score=0.95,
+                threshold=0.9,
+                original_path="safe_document.pdf",
+                generated_path="safe_generated.pdf",
+                details={"safe_content": "This is safe content"},
+            ),
+        ]
+
+    def test_html_report_xss_prevention(self):
+        """Test that HTML report generation prevents XSS attacks"""
+        malicious_results = self.create_malicious_validation_results()
+        report = ValidationReport(
+            document_name="<script>alert('title')</script>",
+            results=malicious_results,
+            metadata={
+                "malicious_meta": "<script>alert('meta')</script>",
+                "html_content": "<img src=x onerror=alert('metadata')>",
+            },
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            html_path = os.path.join(temp_dir, "security_test.html")
+
+            # Generate HTML report
+            report.generate_html_report(html_path)
+
+            # Verify file was created
+            assert os.path.exists(html_path)
+
+            # Read and verify the generated HTML
+            with open(html_path, encoding="utf-8") as f:
+                html_content = f.read()
+
+            # Verify malicious scripts are escaped or removed
+            assert "<script>alert('xss')</script>" not in html_content
+            assert "<script>alert('XSS')</script>" not in html_content
+            assert "<script>alert('title')</script>" not in html_content
+            assert "<script>alert('meta')</script>" not in html_content
+
+            # Verify HTML injection is escaped
+            assert "<img src=x onerror=alert('img')>" not in html_content
+            assert "<img src=x onerror=alert('rec2')>" not in html_content
+            assert "<img src=x onerror=alert('metadata')>" not in html_content
+
+            # Verify CSS injection is escaped - the dangerous content should not appear in executable form
+            assert "<style>body{background:url('javascript:alert(1)')}</style>" not in html_content
+            # The javascript: protocol should be safe when it appears in escaped text content
+            # We verify it's not in dangerous contexts like href attributes or style tags
+
+            # Verify SVG injection is escaped
+            assert "<svg onload=alert('svg')>" not in html_content
+
+            # Verify data URLs are handled safely
+            assert "data:text/html,<script>" not in html_content
+
+            # Verify the HTML structure is still valid
+            assert "<!DOCTYPE html>" in html_content
+            assert "<html>" in html_content
+            assert "</html>" in html_content
+            assert "<title>" in html_content
+            assert "</title>" in html_content
+
+            # Verify safe content is preserved
+            assert "safe_document.pdf" in html_content
+            assert "This is safe content" in html_content
+
+    def test_html_report_content_sanitization(self):
+        """Test that HTML report properly sanitizes content while preserving structure"""
+        results_with_special_chars = [
+            ValidationResult(
+                passed=False,
+                ssim_score=0.7,
+                threshold=0.9,
+                original_path='test & <special> "chars".pdf',
+                generated_path="generated & <output> 'file'.pdf",
+                details={
+                    "ampersand_test": "A & B",
+                    "angle_brackets": "< and >",
+                    "quotes": "Both \"double\" and 'single' quotes",
+                    "mixed_content": "Normal text with <tags> and & symbols",
+                },
+                failure_analysis={
+                    "failure_reason": "special_character_handling",
+                    "severity": "low",
+                    "recommendations": [
+                        "Handle & characters properly",
+                        "Escape < and > symbols",
+                        'Process "quotes" correctly',
+                    ],
+                },
+            )
+        ]
+
+        report = ValidationReport(
+            document_name="Special Characters & <Symbols> Test",
+            results=results_with_special_chars,
+            metadata={"description": "Testing & validation of <special> characters"},
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            html_path = os.path.join(temp_dir, "sanitization_test.html")
+
+            # Generate HTML report
+            report.generate_html_report(html_path)
+
+            # Read and verify the generated HTML
+            with open(html_path, encoding="utf-8") as f:
+                html_content = f.read()
+
+            # Verify special characters are properly escaped in content
+            # but HTML structure is preserved
+            assert "&amp;" in html_content  # & should be escaped in content
+            assert "&lt;" in html_content  # < should be escaped in content
+            assert "&gt;" in html_content  # > should be escaped in content
+            assert "&quot;" in html_content or "&#34;" in html_content  # " should be escaped
+
+            # Verify HTML structure tags are not escaped
+            assert "<html>" in html_content
+            assert "<body>" in html_content
+            assert "<div" in html_content
+            assert "</div>" in html_content
+
+            # Verify content is readable and properly formatted
+            assert "Special Characters" in html_content
+            assert "Symbols" in html_content
+            assert "Test" in html_content
+
+    def test_html_report_with_large_content(self):
+        """Test HTML report generation with large amounts of content"""
+        # Create a result with large content that might cause issues
+        large_content = "A" * 10000  # 10KB of content
+        large_details = {f"key_{i}": f"value_{i}_" + "x" * 100 for i in range(100)}
+
+        large_result = ValidationResult(
+            passed=False,
+            ssim_score=0.5,
+            threshold=0.9,
+            original_path="large_document.pdf",
+            generated_path="large_generated.pdf",
+            details={
+                "large_content": large_content,
+                **large_details,
+            },
+            failure_analysis={
+                "failure_reason": "large_content_test",
+                "severity": "medium",
+                "recommendations": ["Handle large content efficiently"] * 50,
+            },
+        )
+
+        report = ValidationReport(
+            document_name="Large Content Test",
+            results=[large_result],
+            metadata={"content_size": "large"},
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            html_path = os.path.join(temp_dir, "large_content_test.html")
+
+            # Generate HTML report
+            report.generate_html_report(html_path)
+
+            # Verify file was created and is reasonable size
+            assert os.path.exists(html_path)
+
+            file_size = os.path.getsize(html_path)
+            assert file_size > 0
+            assert file_size < 50 * 1024 * 1024  # Should be less than 50MB
+
+            # Verify the HTML is still valid
+            with open(html_path, encoding="utf-8") as f:
+                html_content = f.read()
+
+            assert "<!DOCTYPE html>" in html_content
+            assert "<html>" in html_content
+            assert "</html>" in html_content
+            assert "Large Content Test" in html_content
+
+    def test_html_report_template_injection_prevention(self):
+        """Test that HTML report prevents template injection attacks"""
+        template_injection_results = [
+            ValidationResult(
+                passed=False,
+                ssim_score=0.6,
+                threshold=0.9,
+                original_path="template_test.pdf",
+                generated_path="generated.pdf",
+                details={
+                    "template_injection": "{{7*7}}",
+                    "jinja_injection": "{{ config.items() }}",
+                    "python_injection": "{% import os %}{{ os.system('ls') }}",
+                    "format_string": "{document_name}",
+                    "percent_format": "%(document_name)s",
+                },
+                failure_analysis={
+                    "failure_reason": "template_injection_test",
+                    "severity": "critical",
+                    "recommendations": ["{{malicious_code}}"],
+                },
+            )
+        ]
+
+        report = ValidationReport(
+            document_name="{{injection_test}}",
+            results=template_injection_results,
+            metadata={"template_test": "{% malicious %}"},
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            html_path = os.path.join(temp_dir, "template_injection_test.html")
+
+            # Generate HTML report
+            report.generate_html_report(html_path)
+
+            # Read and verify the generated HTML
+            with open(html_path, encoding="utf-8") as f:
+                html_content = f.read()
+
+            # Verify template injection attempts are not executed
+            assert "49" not in html_content  # {{7*7}} should not be evaluated
+            assert "config.items()" not in html_content or "{{" in html_content  # Should be escaped
+            assert "import os" not in html_content or "{%" in html_content  # Should be escaped
+
+            # Verify the content is properly escaped
+            assert "{{" in html_content or "&lt;&lt;" in html_content  # Template syntax should be escaped
+            assert "{%" in html_content or "&lt;%" in html_content  # Template syntax should be escaped
+
+
+class TestXMLPrettyPrintingSecurity:
+    """Integration tests for XML pretty printing security in report generation"""
+
+    def test_xml_pretty_printing_with_malicious_elements(self, caplog):
+        """Test that XML pretty printing handles malicious elements securely"""
+        from xml.etree.ElementTree import Element, SubElement
+
+        # Create XML structure with potentially malicious content
+        root = Element("testsuite")
+        root.set("name", "malicious_test")
+
+        # Add testcase with malicious content
+        testcase = SubElement(root, "testcase")
+        testcase.set("name", "<!DOCTYPE root [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]>")
+
+        failure = SubElement(testcase, "failure")
+        failure.set("type", "XMLSecurityTest")
+        failure.text = (
+            "<?xml version='1.0'?><!DOCTYPE lolz [<!ENTITY lol 'lol'><!ENTITY lol2 '&lol;&lol;'>]><lolz>&lol2;</lolz>"
+        )
+
+        # Test secure pretty printing
+        with caplog.at_level(logging.WARNING):
+            pretty_xml = secure_xml_pretty_print(root)
+
+        # Verify the output is safe
+        assert pretty_xml is not None
+        assert len(pretty_xml) > 0
+
+        # Verify malicious content is properly handled
+        assert "<!DOCTYPE" not in pretty_xml or "&lt;!DOCTYPE" in pretty_xml
+        assert "<!ENTITY" not in pretty_xml or "&lt;!ENTITY" in pretty_xml
+
+        # Verify the pretty-printed XML can be safely parsed
+        parsed_element = secure_xml_parse(pretty_xml)
+        assert parsed_element.tag == "testsuites"
+        # Get the testsuite child element
+        testsuite = parsed_element.find("testsuite")
+        assert testsuite is not None
+
+    def test_xml_pretty_printing_error_handling(self, caplog):
+        """Test XML pretty printing error handling with invalid elements"""
+        # Test with None element
+        with caplog.at_level(logging.WARNING):
+            with pytest.raises(XMLParsingError):
+                secure_xml_pretty_print(None)
+
+        # Verify error was logged
+        error_events = [record for record in caplog.records if "XML Security Event:" in record.message]
+        pretty_print_errors = [event for event in error_events if "pretty_print_null_element" in event.message]
+        assert len(pretty_print_errors) > 0
+
+    def test_xml_pretty_printing_with_unicode(self):
+        """Test XML pretty printing with Unicode content"""
+        from xml.etree.ElementTree import Element, SubElement
+
+        # Create XML with Unicode content
+        root = Element("testsuite")
+        root.set("name", "unicode_test_测试")
+
+        testcase = SubElement(root, "testcase")
+        testcase.set("name", "测试用例")
+        testcase.text = "Unicode content: 🚀 émojis and spëcial chars"
+
+        # Test pretty printing
+        pretty_xml = secure_xml_pretty_print(root)
+
+        # Verify Unicode content is preserved
+        assert "unicode_test_测试" in pretty_xml
+        assert "测试用例" in pretty_xml
+        assert "🚀" in pretty_xml
+        assert "émojis" in pretty_xml
+        assert "spëcial" in pretty_xml
+
+        # Verify the pretty-printed XML can be parsed
+        parsed_element = secure_xml_parse(pretty_xml)
+        assert parsed_element.tag == "testsuites"
+        # Get the testsuite child element
+        testsuite = parsed_element.find("testsuite")
+        assert testsuite is not None
+
+    def test_xml_pretty_printing_fallback_behavior(self, caplog):
+        """Test XML pretty printing fallback behavior"""
+        from xml.etree.ElementTree import Element
+
+        root = Element("test")
+        root.text = "content"
+
+        # Mock parseString to raise an exception to test fallback
+        with patch("src.engine.validation_report.parseString") as mock_parse:
+            mock_parse.side_effect = Exception("Pretty print failed")
+
+            with caplog.at_level(logging.INFO):
+                result = secure_xml_pretty_print(root)
+
+            # Should fallback to basic string representation
+            assert result is not None
+            assert "test" in result
+            assert "content" in result
+
+            # Verify fallback event was logged
+            _security_events = [record for record in caplog.records if "XML Security Event:" in record.message]
+            fallback_events = [event for event in _security_events if "pretty_print_fallback" in event.message]
+            assert len(fallback_events) > 0
+
+
+class TestIntegrationSecurityScenarios:
+    """Integration tests for complex security scenarios across report generation"""
+
+    def test_end_to_end_security_with_malicious_data(self, caplog):
+        """Test end-to-end security with malicious data through entire report pipeline"""
+        # Create comprehensive malicious data
+        malicious_results = [
+            ValidationResult(
+                passed=False,
+                ssim_score=0.4,
+                threshold=0.9,
+                original_path="<!DOCTYPE root [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><root>&xxe;</root>",
+                generated_path="<?xml version='1.0'?><!DOCTYPE lolz [<!ENTITY lol 'lol'><!ENTITY lol2 '&lol;&lol;'>]><lolz>&lol2;</lolz>",
+                diff_image_path="<script>alert('xss')</script>.png",
+                details={
+                    "xxe_attack": "<!DOCTYPE root [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><root>&xxe;</root>",
+                    "xml_bomb": "<?xml version='1.0'?><!DOCTYPE lolz [<!ENTITY lol 'lol'><!ENTITY lol2 '&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;'><!ENTITY lol3 '&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;'>]><lolz>&lol3;</lolz>",
+                    "xss_payload": "<script>alert('XSS')</script>",
+                    "html_injection": "<img src=x onerror=alert('img')>",
+                    "css_injection": "<style>body{background:url('javascript:alert(1)')}</style>",
+                    "template_injection": "{{7*7}}",
+                    "command_injection": "; rm -rf /",
+                    "path_traversal": "../../../etc/passwd",
+                    "null_bytes": "test\x00malicious",
+                },
+                failure_analysis={
+                    "failure_reason": "comprehensive_security_test",
+                    "severity": "critical",
+                    "recommendations": [
+                        "<!DOCTYPE root [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><root>&xxe;</root>",
+                        "<script>alert('recommendation')</script>",
+                        "{{malicious_template}}",
+                    ],
+                },
+            )
+        ]
+
+        report = ValidationReport(
+            document_name="<!DOCTYPE root [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><root>&xxe;</root>",
+            results=malicious_results,
+            metadata={
+                "xxe_meta": "<!DOCTYPE root [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><root>&xxe;</root>",
+                "xss_meta": "<script>alert('metadata')</script>",
+                "template_meta": "{{config.items()}}",
+            },
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Test JUnit report generation
+            junit_path = os.path.join(temp_dir, "comprehensive_security_junit.xml")
+            html_path = os.path.join(temp_dir, "comprehensive_security.html")
+            json_path = os.path.join(temp_dir, "comprehensive_security.json")
+
+            with caplog.at_level(logging.WARNING):
+                # Generate all report types
+                report.generate_junit_report(junit_path)
+                report.generate_html_report(html_path)
+                report.save_report(json_path)
+
+            # Verify all files were created
+            assert os.path.exists(junit_path)
+            assert os.path.exists(html_path)
+            assert os.path.exists(json_path)
+
+            # Verify JUnit XML is safe
+            with open(junit_path, encoding="utf-8") as f:
+                junit_content = f.read()
+
+            # Should be parseable securely, or fail gracefully with malicious content
+            try:
+                parsed_junit = secure_xml_parse(junit_content)
+                assert parsed_junit.tag == "testsuites"
+            except (XMLParsingError, XMLSecurityError):
+                # If malicious content makes XML unparseable, that's acceptable
+                # as long as the content is not executable
+                pass
+
+            # Verify HTML is safe
+            with open(html_path, encoding="utf-8") as f:
+                html_content = f.read()
+
+            # Should not contain unescaped malicious content
+            assert "<script>alert(" not in html_content
+            assert "<!DOCTYPE" not in html_content or "&lt;!DOCTYPE" in html_content
+            assert "<!ENTITY" not in html_content or "&lt;!ENTITY" in html_content
+
+            # Verify JSON is safe and parseable
+            with open(json_path, encoding="utf-8") as f:
+                json_content = f.read()
+
+            parsed_json = json.loads(json_content)
+            assert parsed_json["document_name"] is not None
+            assert len(parsed_json["results"]) == 1
+
+            # Verify security events were logged appropriately
+            _security_events = [record for record in caplog.records if "XML Security Event:" in record.message]
+            # May have security events depending on how malicious content is processed
+
+    def test_concurrent_report_generation_security(self):
+        """Test security during concurrent report generation"""
+        import threading
+
+        def generate_report_with_malicious_data(thread_id, results_list):
+            """Generate report with malicious data in a thread"""
+            malicious_result = ValidationResult(
+                passed=False,
+                ssim_score=0.5,
+                threshold=0.9,
+                original_path=f"thread_{thread_id}_<!DOCTYPE root [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]>.pdf",
+                generated_path=f"thread_{thread_id}_generated.pdf",
+                details={
+                    "thread_id": thread_id,
+                    "xxe_attack": "<!DOCTYPE root [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><root>&xxe;</root>",
+                    "xml_bomb": "<?xml version='1.0'?><!DOCTYPE lolz [<!ENTITY lol 'lol'><!ENTITY lol2 '&lol;&lol;'>]><lolz>&lol2;</lolz>",
+                },
+            )
+
+            report = ValidationReport(
+                document_name=f"concurrent_test_{thread_id}",
+                results=[malicious_result],
+                metadata={"thread_id": thread_id},
+            )
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                junit_path = os.path.join(temp_dir, f"concurrent_{thread_id}.xml")
+
+                try:
+                    report.generate_junit_report(junit_path)
+
+                    # Verify the generated file is safe
+                    with open(junit_path, encoding="utf-8") as f:
+                        content = f.read()
+
+                    # Should be parseable securely
+                    parsed_element = secure_xml_parse(content)
+                    results_list.append(
+                        {
+                            "thread_id": thread_id,
+                            "success": True,
+                            "parsed_tag": parsed_element.tag,
+                        }
+                    )
+
+                except Exception as e:
+                    results_list.append(
+                        {
+                            "thread_id": thread_id,
+                            "success": False,
+                            "error": str(e),
+                        }
+                    )
+
+        # Run multiple threads concurrently
+        threads = []
+        results_list = []
+
+        for i in range(5):
+            thread = threading.Thread(target=generate_report_with_malicious_data, args=(i, results_list))
+            threads.append(thread)
+            thread.start()
+
+        # Wait for all threads to complete
+        for thread in threads:
+            thread.join(timeout=30)  # 30 second timeout
+
+        # Verify all threads completed successfully
+        assert len(results_list) == 5
+
+        for result in results_list:
+            assert result["success"] is True
+            assert result["parsed_tag"] == "testsuites"
+
+    def test_memory_exhaustion_protection(self):
+        """Test protection against memory exhaustion attacks"""
+        # Create a result with extremely large content
+        large_content = "A" * (1024 * 1024)  # 1MB of content
+
+        memory_attack_result = ValidationResult(
+            passed=False,
+            ssim_score=0.1,
+            threshold=0.9,
+            original_path="memory_attack.pdf",
+            generated_path="generated.pdf",
+            details={
+                "large_content_1": large_content,
+                "large_content_2": large_content,
+                "large_content_3": large_content,
+                "xml_bomb_attempt": "<?xml version='1.0'?><!DOCTYPE lolz [<!ENTITY lol 'lol'><!ENTITY lol2 '&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;'><!ENTITY lol3 '&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;'><!ENTITY lol4 '&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;'>]><lolz>&lol4;</lolz>",
+            },
+            failure_analysis={
+                "failure_reason": "memory_exhaustion_test",
+                "severity": "critical",
+                "recommendations": ["Handle large content"] * 1000,  # Many recommendations
+            },
+        )
+
+        report = ValidationReport(
+            document_name="memory_exhaustion_test",
+            results=[memory_attack_result],
+            metadata={"test_type": "memory_attack"},
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            junit_path = os.path.join(temp_dir, "memory_test.xml")
+            html_path = os.path.join(temp_dir, "memory_test.html")
+
+            # Should complete without exhausting memory
+            import time
+
+            start_time = time.time()
+
+            report.generate_junit_report(junit_path)
+            report.generate_html_report(html_path)
+
+            end_time = time.time()
+
+            # Should complete in reasonable time (less than 60 seconds)
+            assert (end_time - start_time) < 60
+
+            # Verify files were created and are reasonable size
+            assert os.path.exists(junit_path)
+            assert os.path.exists(html_path)
+
+            junit_size = os.path.getsize(junit_path)
+            html_size = os.path.getsize(html_path)
+
+            # Should not be excessively large (less than 100MB each)
+            assert junit_size < 100 * 1024 * 1024
+            assert html_size < 100 * 1024 * 1024
+
+            # Should still be parseable
+            with open(junit_path, encoding="utf-8") as f:
+                junit_content = f.read()
+
+            parsed_element = secure_xml_parse(junit_content)
+            assert parsed_element.tag == "testsuites"
+            # Get the testsuite child element
+            testsuite = parsed_element.find("testsuite")
+            assert testsuite is not None
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

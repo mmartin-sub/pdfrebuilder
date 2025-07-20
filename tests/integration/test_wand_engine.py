@@ -1,0 +1,334 @@
+"""
+Tests for the Wand input engine.
+
+This module tests the Python-Wand based document parser for PSD and image formats.
+"""
+
+import os
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from pdfrebuilder.engine.extract_wand_content import (
+    check_tesseract_availability,
+    check_wand_availability,
+    get_wand_config,
+    validate_wand_config,
+)
+
+
+def _tesseract_available():
+    """
+    Helper function to check if Tesseract is actually available for testing.
+
+    This function is used with @unittest.skipIf to conditionally skip tests
+    that require actual Tesseract OCR installation. Tests that mock Tesseract
+    behavior should not use this function.
+
+    Returns:
+        bool: True if Tesseract OCR is available and working, False otherwise.
+    """
+    try:
+        is_available, _ = check_tesseract_availability()
+        return is_available
+    except Exception:
+        return False
+
+
+class TestWandEngine(unittest.TestCase):
+    """Test cases for the Wand input engine."""
+
+    def test_check_wand_availability_not_installed(self):
+        """Test Wand availability check when Wand is not installed."""
+        # Mock the wand.image import to raise ImportError
+        with patch.dict("sys.modules", {"wand": None, "wand.image": None, "wand.version": None}):
+            with patch("builtins.__import__", side_effect=ImportError("No module named 'wand'")):
+                is_available, info = check_wand_availability()
+
+                self.assertFalse(is_available)
+                self.assertIn("error", info)
+                self.assertIn("Python-Wand is not installed", info["error"])
+                self.assertIn("install_command", info)
+
+    def test_check_tesseract_availability_not_installed(self):
+        """Test Tesseract availability check when pytesseract is not installed."""
+        # Mock the import statement to raise ImportError
+        original_import = __builtins__["__import__"]
+
+        def mock_import(name, *args, **kwargs):
+            if name == "pytesseract":
+                raise ImportError("No module named 'pytesseract'")
+            return original_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=mock_import):
+            is_available, info = check_tesseract_availability()
+
+            self.assertFalse(is_available)
+            self.assertIn("error", info)
+            self.assertIn("pytesseract is not installed", info["error"])
+            self.assertIn("install_command", info)
+            self.assertEqual(info["install_command"], "pip install pytesseract")
+
+    def test_check_tesseract_availability_binary_not_found(self):
+        """Test Tesseract availability check when tesseract binary is not found."""
+        # Mock the import to succeed but get_tesseract_version to fail
+        original_import = __builtins__["__import__"]
+
+        def mock_import(name, *args, **kwargs):
+            if name == "pytesseract":
+                # Create a mock pytesseract module
+                import types
+
+                mock_pytesseract = types.ModuleType("pytesseract")
+
+                def failing_get_version():
+                    raise Exception("tesseract is not installed or it's not in your PATH")
+
+                mock_pytesseract.get_tesseract_version = failing_get_version
+                return mock_pytesseract
+            return original_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=mock_import):
+            is_available, info = check_tesseract_availability()
+
+            self.assertFalse(is_available)
+            self.assertIn("error", info)
+            self.assertIn("Tesseract OCR is not available:", info["error"])
+            self.assertIn("tesseract is not installed or it's not in your PATH", info["error"])
+            self.assertIn("install_command", info)
+            self.assertIsInstance(info["install_command"], dict)
+
+    def test_check_tesseract_availability_other_error(self):
+        """Test Tesseract availability check with other exception scenarios."""
+        # Mock the import to succeed but get_tesseract_version to fail with different error
+        original_import = __builtins__["__import__"]
+
+        def mock_import(name, *args, **kwargs):
+            if name == "pytesseract":
+                # Create a mock pytesseract module
+                import types
+
+                mock_pytesseract = types.ModuleType("pytesseract")
+
+                def failing_get_version():
+                    raise Exception("Some other error")
+
+                mock_pytesseract.get_tesseract_version = failing_get_version
+                return mock_pytesseract
+            return original_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=mock_import):
+            is_available, info = check_tesseract_availability()
+
+            self.assertFalse(is_available)
+            self.assertIn("error", info)
+            self.assertIn("Tesseract OCR is not available: Some other error", info["error"])
+            self.assertIn("install_command", info)
+
+    def test_check_tesseract_availability_success(self):
+        """Test Tesseract availability check when tesseract is available."""
+        # Mock the import to succeed and get_tesseract_version to return version
+        original_import = __builtins__["__import__"]
+
+        def mock_import(name, *args, **kwargs):
+            if name == "pytesseract":
+                # Create a mock pytesseract module
+                import types
+
+                mock_pytesseract = types.ModuleType("pytesseract")
+
+                def successful_get_version():
+                    return "5.3.0"
+
+                mock_pytesseract.get_tesseract_version = successful_get_version
+                return mock_pytesseract
+            return original_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=mock_import):
+            is_available, info = check_tesseract_availability()
+
+            self.assertTrue(is_available)
+            self.assertIn("tesseract_version", info)
+            self.assertIn("tesseract 5.3.0", info["tesseract_version"])
+            self.assertIn("status", info)
+            self.assertEqual(info["status"], "available")
+
+    @unittest.skipIf(not _tesseract_available(), "Tesseract not available")
+    def test_tesseract_actual_functionality(self):
+        """
+        Test that demonstrates conditional skipping when Tesseract is not available.
+
+        This test only runs if Tesseract OCR is actually installed on the system.
+        It's skipped automatically if Tesseract is not available, preventing
+        test failures in environments where OCR is not needed.
+
+        This pattern should be used for tests that require actual Tesseract
+        functionality rather than mocked behavior.
+        """
+        # This test would only run if Tesseract is actually installed
+        is_available, info = check_tesseract_availability()
+        self.assertTrue(is_available)
+        self.assertIn("tesseract_version", info)
+
+    def test_get_wand_config(self):
+        """Test getting Wand configuration."""
+        config = get_wand_config()
+
+        # Check that all expected keys are present
+        expected_keys = [
+            "density",
+            "use_ocr",
+            "tesseract_lang",
+            "image_format",
+            "color_management",
+            "memory_limit_mb",
+        ]
+
+        for key in expected_keys:
+            self.assertIn(key, config)
+
+        # Check default values
+        self.assertEqual(config["density"], 300)
+        self.assertEqual(config["image_format"], "png")
+        self.assertTrue(config["color_management"])
+
+    def test_validate_wand_config_valid(self):
+        """Test validation of valid Wand configuration."""
+        valid_config = {
+            "density": 300,
+            "use_ocr": False,
+            "tesseract_lang": "eng",
+            "image_format": "png",
+            "color_management": True,
+            "memory_limit_mb": 1024,
+        }
+
+        is_valid, errors = validate_wand_config(valid_config)
+
+        self.assertTrue(is_valid)
+        self.assertEqual(len(errors), 0)
+
+    def test_validate_wand_config_invalid_density(self):
+        """Test validation of invalid density in Wand configuration."""
+        invalid_config = {
+            "density": -100,  # Invalid negative density
+            "memory_limit_mb": 1024,
+            "image_format": "png",
+        }
+
+        is_valid, errors = validate_wand_config(invalid_config)
+
+        self.assertFalse(is_valid)
+        self.assertTrue(any("density" in error for error in errors))
+
+    def test_validate_wand_config_invalid_format(self):
+        """Test validation of invalid image format in Wand configuration."""
+        invalid_config = {
+            "density": 300,
+            "memory_limit_mb": 1024,
+            "image_format": "invalid_format",  # Invalid format
+        }
+
+        is_valid, errors = validate_wand_config(invalid_config)
+
+        self.assertFalse(is_valid)
+        self.assertTrue(any("image_format" in error for error in errors))
+
+    def test_validate_wand_config_ocr_without_lang(self):
+        """Test validation when OCR is enabled but language is invalid."""
+        invalid_config = {
+            "density": 300,
+            "memory_limit_mb": 1024,
+            "image_format": "png",
+            "use_ocr": True,
+            "tesseract_lang": "",  # Empty language when OCR is enabled
+        }
+
+        is_valid, errors = validate_wand_config(invalid_config)
+
+        self.assertFalse(is_valid)
+        self.assertTrue(any("tesseract_lang" in error for error in errors))
+
+
+class TestWandParser(unittest.TestCase):
+    """Test cases for the WandParser class."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        from pdfrebuilder.engine.document_parser import WandParser
+
+        self.parser = WandParser()
+
+    def test_can_parse_psd_file(self):
+        """Test that WandParser can identify PSD files."""
+        # Create a temporary file with PSD extension
+        with tempfile.NamedTemporaryFile(suffix=".psd", delete=False) as temp_file:
+            temp_file.write(b"fake psd content")
+            temp_path = temp_file.name
+
+        try:
+            # Mock the detect_file_format function to return 'psd'
+            with patch("src.engine.document_parser.detect_file_format", return_value="psd"):
+                can_parse = self.parser.can_parse(temp_path)
+                self.assertTrue(can_parse)
+        finally:
+            os.unlink(temp_path)
+
+    def test_can_parse_image_files(self):
+        """Test that WandParser can identify various image files."""
+        image_formats = ["png", "jpg", "jpeg", "gif", "bmp", "tiff", "svg"]
+
+        for fmt in image_formats:
+            with tempfile.NamedTemporaryFile(suffix=f".{fmt}", delete=False) as temp_file:
+                temp_file.write(b"fake image content")
+                temp_path = temp_file.name
+
+            try:
+                # Mock the detect_file_format function
+                with patch("src.engine.document_parser.detect_file_format", return_value=fmt):
+                    can_parse = self.parser.can_parse(temp_path)
+                    self.assertTrue(can_parse, f"Should be able to parse {fmt} files")
+            finally:
+                os.unlink(temp_path)
+
+    def test_cannot_parse_nonexistent_file(self):
+        """Test that WandParser rejects non-existent files."""
+        can_parse = self.parser.can_parse("/nonexistent/file.psd")
+        self.assertFalse(can_parse)
+
+    def test_cannot_parse_unsupported_format(self):
+        """Test that WandParser rejects unsupported file formats."""
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as temp_file:
+            temp_file.write(b"text content")
+            temp_path = temp_file.name
+
+        try:
+            # Mock the detect_file_format function to return unsupported format
+            with patch("src.engine.document_parser.detect_file_format", return_value="txt"):
+                can_parse = self.parser.can_parse(temp_path)
+                self.assertFalse(can_parse)
+        finally:
+            os.unlink(temp_path)
+
+    def test_parse_without_wand_raises_error(self):
+        """Test that parsing without Wand installed raises appropriate error."""
+        with tempfile.NamedTemporaryFile(suffix=".psd", delete=False) as temp_file:
+            temp_file.write(b"fake psd content")
+            temp_path = temp_file.name
+
+        try:
+            # Mock Wand as not available
+            with patch(
+                "src.engine.extract_wand_content.check_wand_availability",
+                return_value=(False, {"error": "Wand not available"}),
+            ):
+                with self.assertRaises(NotImplementedError) as context:
+                    self.parser.parse(temp_path)
+
+                self.assertIn("Wand not available", str(context.exception))
+        finally:
+            os.unlink(temp_path)
+
+
+if __name__ == "__main__":
+    unittest.main()
