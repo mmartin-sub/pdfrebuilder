@@ -154,3 +154,6 @@ dev_reports
 tests/human_review_outputs
 tests/temp_e2e_output
 tests/sample
+
+images/
+pyproject.toml.backup
