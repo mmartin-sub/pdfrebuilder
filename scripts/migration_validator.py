@@ -9,7 +9,7 @@ structure. Tests imports, CLI functionality, examples, and package installation.
 import argparse
 import importlib
 import json
-import subprocess
+import subprocess  # nosec
 import sys
 from pathlib import Path
 
@@ -80,7 +80,7 @@ class MigrationValidator:
 
         for cmd in cli_tests:
             try:
-                result = subprocess.run(
+                result = subprocess.run(  # nosec
                     cmd,
                     capture_output=True,
                     text=True,

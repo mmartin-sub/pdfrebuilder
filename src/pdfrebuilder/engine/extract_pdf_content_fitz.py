@@ -42,7 +42,7 @@ def _process_image_block(block, image_dir, element_id):
         with open(path, "wb") as f:
             f.write(img_bytes)
 
-        bbox = BoundingBox.from_list(block["bbox"])
+        bbox = BoundingBox.from_list(list(block["bbox"]))
         return ImageElement(
             id=element_id,
             bbox=bbox,
@@ -97,7 +97,7 @@ def _process_text_block(block, space_density_threshold, element_id_counter):
                     original_flags=font_flags,
                 )
 
-                bbox = BoundingBox.from_list(span["bbox"])
+                bbox = BoundingBox.from_list(list(span["bbox"]))
                 element_id = f"text_{element_id_counter[0]}"
                 element_id_counter[0] += 1
 
@@ -183,7 +183,7 @@ def _process_drawing(drawing, drawing_idx):
             drawing_commands.append(
                 DrawingCommand(
                     cmd="rect",
-                    bbox=BoundingBox(*rect_list),
+                    bbox=BoundingBox.from_list(rect_list),
                 )
             )
 
@@ -204,7 +204,7 @@ def _process_drawing(drawing, drawing_idx):
         bbox_val = [0.0, 0.0, 0.0, 0.0]
     return DrawingElement(
         id=f"drawing_{drawing_idx}",
-        bbox=BoundingBox.from_list(bbox_val),
+        bbox=BoundingBox.from_list(list(bbox_val)),
         z_index=drawing_idx,
         color=stroke_color,
         fill=fill_color,
@@ -233,14 +233,14 @@ def extract_pdf_content(pdf_path, extraction_flags=None):
 
     try:
         doc = fitz.open(pdf_path)
-    except fitz.errors.FitzError as e:
+    except RuntimeError as e:
         raise ValueError(f"Could not open or parse PDF file at '{pdf_path}': {e}")
 
     # Get engine info
     # engine_info = get_engine_info("fitz") # This line is removed as per the edit hint.
 
     # Create document metadata
-    pdf_metadata = doc.metadata
+    pdf_metadata = doc.metadata or {}
     metadata = DocumentMetadata(
         format="PDF",
         title=pdf_metadata.get("title"),
@@ -269,7 +269,7 @@ def extract_pdf_content(pdf_path, extraction_flags=None):
 
     for page_num in range(doc.page_count):
         logger.info(f"Extraction progress: Processing page {page_num + 1}/{doc.page_count}")
-        page = doc[page_num]
+        page: fitz.Page = doc[page_num]
 
         # Create a new page unit
         page_unit = PageUnit(
@@ -340,8 +340,8 @@ def extract_pdf_content(pdf_path, extraction_flags=None):
             for rect_draw in filled_rects:
                 if not rect_draw.get("used_for_background"):
                     bg_rect = fitz.Rect(rect_draw["rect"])
-                    intersection_area = (text_rect & bg_rect).get_area()
-                    if text_rect.contains(bg_rect) or intersection_area > (text_rect.get_area() * 0.8):
+                    intersection_area = (text_rect & bg_rect).area
+                    if text_rect.contains(bg_rect) or intersection_area > (text_rect.area * 0.8):
                         # Set background color for text
                         if rect_draw.get("fill"):
                             text_elem.background_color = Color.from_rgb_tuple(rect_draw["fill"])
@@ -352,10 +352,11 @@ def extract_pdf_content(pdf_path, extraction_flags=None):
                         # If raw background drawings are to be included
                         if extraction_flags.get("include_raw_background_drawings", False):
                             bg_drawing_id = f"bg_drawing_{len(raw_background_drawings)}"
-                            bg_drawing_cmd = DrawingCommand(cmd="rect", bbox=BoundingBox.from_list(bg_rect))
+                            bg_rect_list = [bg_rect.x0, bg_rect.y0, bg_rect.x1, bg_rect.y1]
+                            bg_drawing_cmd = DrawingCommand(cmd="rect", bbox=BoundingBox.from_list(bg_rect_list))
                             bg_drawing = DrawingElement(
                                 id=bg_drawing_id,
-                                bbox=BoundingBox.from_list(bg_rect),
+                                bbox=BoundingBox.from_list(bg_rect_list),
                                 color=None,
                                 fill=(Color.from_rgb_tuple(rect_draw["fill"]) if rect_draw.get("fill") else None),
                                 drawing_commands=[bg_drawing_cmd],

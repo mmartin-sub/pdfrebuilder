@@ -268,7 +268,7 @@ class TestWandParser(unittest.TestCase):
 
         try:
             # Mock the detect_file_format function to return 'psd'
-            with patch("src.engine.document_parser.detect_file_format", return_value="psd"):
+            with patch("pdfrebuilder.engine.document_parser.detect_file_format", return_value="psd"):
                 can_parse = self.parser.can_parse(temp_path)
                 self.assertTrue(can_parse)
         finally:
@@ -285,7 +285,7 @@ class TestWandParser(unittest.TestCase):
 
             try:
                 # Mock the detect_file_format function
-                with patch("src.engine.document_parser.detect_file_format", return_value=fmt):
+                with patch("pdfrebuilder.engine.document_parser.detect_file_format", return_value=fmt):
                     can_parse = self.parser.can_parse(temp_path)
                     self.assertTrue(can_parse, f"Should be able to parse {fmt} files")
             finally:
@@ -304,7 +304,7 @@ class TestWandParser(unittest.TestCase):
 
         try:
             # Mock the detect_file_format function to return unsupported format
-            with patch("src.engine.document_parser.detect_file_format", return_value="txt"):
+            with patch("pdfrebuilder.engine.document_parser.detect_file_format", return_value="txt"):
                 can_parse = self.parser.can_parse(temp_path)
                 self.assertFalse(can_parse)
         finally:
@@ -319,7 +319,7 @@ class TestWandParser(unittest.TestCase):
         try:
             # Mock Wand as not available
             with patch(
-                "src.engine.extract_wand_content.check_wand_availability",
+                "pdfrebuilder.engine.extract_wand_content.check_wand_availability",
                 return_value=(False, {"error": "Wand not available"}),
             ):
                 with self.assertRaises(NotImplementedError) as context:

@@ -128,14 +128,18 @@ class TestXMLOutputFormatCompatibility:
 
             failure = failures[0]
             assert failure.get("type") == "moderate_visual_difference"
-            assert "SSIM score 0.75" in failure.get("message")
+            message = failure.get("message")
+            assert message is not None
+            assert "SSIM score 0.75" in message
             assert failure.text is not None
             assert "SSIM Score: 0.75" in failure.text
             assert "Threshold: 0.9" in failure.text
 
             system_outs = failed_case.findall("system-out")
             assert len(system_outs) == 1
-            assert "SSIM Score: 0.75" in system_outs[0].text
+            text = system_outs[0].text
+            assert text is not None
+            assert "SSIM Score: 0.75" in text
 
     def test_junit_xml_content_format_unchanged(self):
         """Test that JUnit XML content format remains unchanged"""

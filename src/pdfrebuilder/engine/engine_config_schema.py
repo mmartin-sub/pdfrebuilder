@@ -338,7 +338,9 @@ class EngineConfigValidator:
         full_config = self.apply_defaults(config)
         return full_config.get(engine_name, {})
 
-    def validate_engine_config(self, config: dict[str, Any], engine_name: str) -> ValidationResult:
+    def validate_engine_config(
+        self, config: dict[str, Any], engine_name: str
+    ) -> "EngineConfigValidator.ValidationResult":
         """
         Validate configuration for a specific engine.
 
@@ -394,7 +396,7 @@ def get_config_validator() -> EngineConfigValidator:
     return _validator
 
 
-def validate_engine_config(config: dict[str, Any]) -> dict[str, Any]:
+def validate_engine_config(config: dict[str, Any]) -> "EngineConfigValidator.ValidationResult":
     """Validate engine configuration using the global validator."""
     validator = get_config_validator()
     return validator.validate(config)

@@ -140,7 +140,7 @@ class PDFRenderer(DocumentRenderer):
 
             # Render each page
             for page_num in page_numbers:
-                page = doc[page_num]
+                page: fitz.Page = doc.load_page(page_num)
 
                 # Create a pixmap with appropriate colorspace
                 if config.transparent_background and config.color_space == "RGBA":
@@ -156,7 +156,7 @@ class PDFRenderer(DocumentRenderer):
                     save_args = {}
                 elif config.output_format == "jpg" or config.output_format == "jpeg":
                     file_ext = "jpg"
-                    save_args = {"quality": config.compression_quality}
+                    save_args = {"jpg_quality": config.compression_quality}
                 else:
                     file_ext = config.output_format
                     save_args = {}
@@ -239,6 +239,10 @@ class PSDRenderer(DocumentRenderer):
             # Composite the PSD (flatten all visible layers)
             image = psd.composite()
 
+            if image is None:
+                logger.warning(f"PSD file has no visible layers to render: {file_path}")
+                return RenderResult(success=True, output_paths=[], error_message="No visible layers to render.")
+
             # Resize if needed
             if scale != 1.0:
                 new_width = int(image.width * scale)
@@ -260,19 +264,19 @@ class PSDRenderer(DocumentRenderer):
             # Determine output format and file extension
             if config.output_format == "png":
                 file_ext = "png"
-                save_args = {}
-            elif config.output_format == "jpg" or config.output_format == "jpeg":
+            elif config.output_format in ("jpg", "jpeg"):
                 file_ext = "jpg"
-                save_args = {"quality": config.compression_quality}
             else:
                 file_ext = config.output_format
-                save_args = {}
 
             # Create output path
             output_path = os.path.join(output_dir, f"canvas.{file_ext}")
 
             # Save the image
-            image.save(output_path, **save_args)
+            if config.output_format in ("jpg", "jpeg"):
+                image.save(output_path, quality=config.compression_quality)
+            else:
+                image.save(output_path)
             output_paths.append(output_path)
 
             logger.info(f"Rendered PSD to {output_path}")

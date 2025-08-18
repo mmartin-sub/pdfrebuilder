@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from pdfrebuilder.compare_pdfs_visual import ERROR_CODES, compare_pdfs_visual
+from pdfrebuilder.core.compare_pdfs_visual import ERROR_CODES, compare_pdfs_visual
 
 
 class TestComparePDFsVisual(unittest.TestCase):

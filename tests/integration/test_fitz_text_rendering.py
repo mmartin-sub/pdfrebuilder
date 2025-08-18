@@ -23,6 +23,7 @@ doc = None
 try:
     # 1. Create a new PDF document
     doc = fitz.open()
+    ## STUB-ISSUE ##
     page = doc.new_page()
     print("Created a new PDF document in memory.")
 

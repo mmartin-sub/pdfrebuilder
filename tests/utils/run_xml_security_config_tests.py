@@ -37,7 +37,7 @@ def main():
     print("=" * 50)
 
     # Import test classes
-    from tests.test_xml_security_config import (
+    from ..security.test_xml_security_config import (
         TestConfigureXMLSecurity,
         TestXMLSecurityAuditEntry,
         TestXMLSecurityConfig,

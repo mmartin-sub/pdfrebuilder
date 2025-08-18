@@ -9,6 +9,7 @@ external entity blocking, and malformed XML handling.
 
 import logging
 import sys
+from importlib import metadata
 from pathlib import Path
 
 # Import pytest for test framework compatibility
@@ -371,9 +372,8 @@ class XMLSecurityTestRunner:
         if XML_SECURITY_ENABLED:
             print("✓ defusedxml library is available and active")
             try:
-                import defusedxml
-
-                print(f"✓ defusedxml version: {defusedxml.__version__}")
+                version = metadata.version("defusedxml")
+                print(f"✓ defusedxml version: {version}")
             except ImportError:
                 raise AssertionError("XML_SECURITY_ENABLED is True but defusedxml not importable")
         else:

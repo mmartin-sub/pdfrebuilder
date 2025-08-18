@@ -178,11 +178,11 @@ class TestReportLabEngine:
         """Test error handling in the engine."""
         # Test with invalid document
         with pytest.raises(ValueError):
-            self.engine.generate("invalid_config", "output.pdf")
+            self.engine.generate("invalid_config", "output.pdf")  # type: ignore[arg-type]
 
         # Test with None document
         with pytest.raises(ValueError):
-            self.engine.generate(None, "output.pdf")
+            self.engine.generate(None, "output.pdf")  # type: ignore[arg-type]
 
     def test_font_registration(self):
         """Test font registration functionality."""

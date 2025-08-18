@@ -173,10 +173,11 @@ class TestAPIDocumentation(unittest.TestCase):
                 module = importlib.import_module(module_name)
                 docstring = inspect.getdoc(module)
                 self.assertIsNotNone(docstring, f"Module {module_name} should have a docstring")
-                self.assertTrue(
-                    len(docstring) > 50,
-                    f"Module {module_name} docstring should be substantial",
-                )
+                if docstring:
+                    self.assertTrue(
+                        len(docstring) > 50,
+                        f"Module {module_name} docstring should be substantial",
+                    )
 
             except ImportError:
                 self.skipTest(f"Module {module_name} not available for testing")

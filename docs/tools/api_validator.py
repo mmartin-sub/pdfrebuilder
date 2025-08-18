@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .validation import ValidationResult, ValidationStatus
+from docs.tools.validation import ValidationResult, ValidationStatus
 
 
 @dataclass

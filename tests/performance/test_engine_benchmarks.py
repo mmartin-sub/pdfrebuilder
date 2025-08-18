@@ -14,9 +14,9 @@ from typing import Any
 
 import pytest
 
+from pdfrebuilder.core.recreate_pdf_from_config import recreate_pdf_from_config
 from pdfrebuilder.engine.pdf_engine_selector import get_engine_selector
 from pdfrebuilder.engine.performance_metrics import generate_performance_report, get_performance_collector
-from pdfrebuilder.recreate_pdf_from_config import recreate_pdf_from_config
 
 
 class TestEngineBenchmarks:

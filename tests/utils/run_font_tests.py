@@ -35,15 +35,15 @@ from pdfrebuilder.settings import configure_output_directories
 from tests.config import configure_test_output, generate_test_report, get_test_output_dir
 
 # Import test suites
-from tests.test_font_manager import (
+from ..font.test_font_manager import (
     TestFontCoverage,
     TestFontDiscovery,
     TestFontManagerIntegration,
     TestFontRegistration,
     TestGoogleFontsIntegration,
 )
-from tests.test_font_substitution import TestFontFallbackChain, TestFontSubstitutionEngine
-from tests.test_google_fonts_integration import TestGoogleFontsAPI, TestGoogleFontsIntegrationEdgeCases
+from ..font.test_font_substitution import TestFontFallbackChain, TestFontSubstitutionEngine
+from ..font.test_google_fonts_integration import TestGoogleFontsAPI, TestGoogleFontsIntegrationEdgeCases
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent

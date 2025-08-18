@@ -46,6 +46,13 @@ class ReportLabEngine(PDFRenderingEngine):
         self.font_validator = font_validator or FontValidator()
         self._registered_fonts: dict[str, str] = {}
         self._font_cache: dict[str, bool] = {}
+        self.compression: int = 1
+        self.page_mode: str = "portrait"
+        self.embed_fonts: bool = True
+        self.font_subsetting: bool = True
+        self.image_compression: str = "jpeg"
+        self.color_space: str = "rgb"
+        self.precision: float = 1.0
 
     def initialize(self, config: dict[str, Any]) -> None:
         """Initialize the engine with configuration."""
@@ -85,8 +92,8 @@ class ReportLabEngine(PDFRenderingEngine):
             )
 
             # Store metadata for later use
-            doc._metadata = metadata
-            doc._story = []
+            setattr(doc, "_metadata", metadata)
+            setattr(doc, "_story", [])
 
             return doc
 
@@ -105,8 +112,10 @@ class ReportLabEngine(PDFRenderingEngine):
             # We'll create a page break and return a page context
             from reportlab.platypus import PageBreak
 
-            if hasattr(document, "_story") and document._story:
-                document._story.append(PageBreak())
+            if hasattr(document, "_story"):
+                story = getattr(document, "_story")
+                if story:
+                    story.append(PageBreak())
 
             # Create a page context object
             page_context: dict[str, Any] = {
@@ -159,7 +168,7 @@ class ReportLabEngine(PDFRenderingEngine):
 
             # Build the document with the story
             if hasattr(document, "_story"):
-                document.build(document._story)
+                document.build(getattr(document, "_story"))
             else:
                 # Create empty document if no story
                 document.build([])
@@ -544,8 +553,8 @@ class ReportLabEngine(PDFRenderingEngine):
 
         try:
             # Check if font is available
-            if self.font_validator and hasattr(self.font_validator, "_is_font_available"):
-                is_available = self.font_validator._is_font_available(font_name)
+            if self.font_validator:
+                is_available = self.font_validator.is_font_available(font_name)
                 if not is_available:
                     logger.warning(f"Font '{font_name}' not available, using fallback")
                     font_name = "Helvetica"  # Fallback font
@@ -593,7 +602,7 @@ class ReportLabEngine(PDFRenderingEngine):
 
         try:
             # Check if font is available
-            is_available = self.font_validator._is_font_available(font_name)
+            is_available = self.font_validator.is_font_available(font_name)
 
             # For now, we'll assume fonts are embeddable
             # In a full implementation, you'd check actual licensing

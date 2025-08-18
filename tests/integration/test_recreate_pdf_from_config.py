@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from pdfrebuilder.recreate_pdf_from_config import recreate_pdf_from_config
+from pdfrebuilder.core.recreate_pdf_from_config import recreate_pdf_from_config
 
 
 class TestRecreatePDFFromConfig(unittest.TestCase):

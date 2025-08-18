@@ -1,11 +1,13 @@
 # src/pdf_engine.py
 
 import logging
-from typing import Any
+from typing import Any, ClassVar
 
 import fitz
 
-from pdfrebuilder.render import _render_element
+from pdfrebuilder.models.universal_idm import UniversalDocument
+
+from .render import _render_element
 
 
 class PDFEngineBase:
@@ -16,10 +18,11 @@ class PDFEngineBase:
 
     engine_name: str = "base"
     engine_version: str = "unknown"
-    supported_features: dict[str, bool] = {}
+    supported_features: ClassVar[dict[str, bool]] = {}
     logger: logging.Logger = logging.getLogger(__name__)
+    output_schema_version: str = "1.0"
 
-    def extract(self, input_pdf_path: str) -> dict[str, Any]:
+    def extract(self, input_pdf_path: str) -> UniversalDocument:
         """
         Extracts layout/content from a PDF and returns universal JSON.
         Must be implemented by subclasses.
@@ -49,7 +52,7 @@ class PDFEngineBase:
     @property
     def engine_info(self):
         return {
-            "version": (self.output_schema_version if hasattr(self, "output_schema_version") else "1.0"),
+            "version": self.output_schema_version,
             "engine": self.engine_name,
             "engine_version": self.engine_version,
         }
@@ -58,14 +61,14 @@ class PDFEngineBase:
 class FitzPDFEngine(PDFEngineBase):
     engine_name = "fitz"
     engine_version = getattr(fitz, "__doc__", "unknown").splitlines()[0] if hasattr(fitz, "__doc__") else "unknown"
-    supported_features = {
+    supported_features: ClassVar[dict[str, bool]] = {
         "rotation": False,
         "images": True,
         "drawings": True,
         "text": True,
     }
 
-    def extract(self, input_pdf_path: str) -> dict:
+    def extract(self, input_pdf_path: str) -> UniversalDocument:
         """
         Extracts layout/content from a PDF and returns universal JSON.
         """
@@ -78,25 +81,25 @@ class FitzPDFEngine(PDFEngineBase):
         Generates a PDF from universal JSON config.
         """
         try:
-            doc = fitz.open()
-            tpl_doc = fitz.open(original_pdf_for_template) if original_pdf_for_template else None
-            for doc_unit_idx, doc_unit_data in enumerate(config.get("document_structure", [])):
-                if doc_unit_data.get("type") != "page":
-                    continue
-                page_data = doc_unit_data
-                page_idx = page_data.get("page_number", doc_unit_idx)
-                page = doc.new_page(width=page_data["size"][0], height=page_data["size"][1])
-                page_bg_color = page_data.get("page_background_color")
-                if page_bg_color is not None:
-                    page.draw_rect(page.rect, fill=page_bg_color)
-                if tpl_doc and page_idx < tpl_doc.page_count:
-                    page.show_pdf_page(page.rect, tpl_doc, page_idx)
-                for layer_data in page_data.get("layers", []):
-                    for element in layer_data.get("content", []):
-                        _render_element(page, element, page_idx, {}, config)
-            doc.save(output_pdf_path)
-            if tpl_doc:
-                tpl_doc.close()
+            with fitz.open() as doc:
+                tpl_doc = fitz.open(original_pdf_for_template) if original_pdf_for_template else None
+                for doc_unit_idx, doc_unit_data in enumerate(config.get("document_structure", [])):
+                    if doc_unit_data.get("type") != "page":
+                        continue
+                    page_data = doc_unit_data
+                    page_idx = page_data.get("page_number", doc_unit_idx)
+                    page = doc.new_page(width=page_data["size"][0], height=page_data["size"][1])
+                    page_bg_color = page_data.get("page_background_color")
+                    if page_bg_color is not None:
+                        page.draw_rect(page.rect, fill=page_bg_color)
+                    if tpl_doc and page_idx < tpl_doc.page_count:
+                        page.show_pdf_page(page.rect, tpl_doc, page_idx)
+                    for layer_data in page_data.get("layers", []):
+                        for element in layer_data.get("content", []):
+                            _render_element(page, element, page_idx, {}, config)
+                doc.save(output_pdf_path)
+                if tpl_doc:
+                    tpl_doc.close()
         except Exception as e:
             self.warn_unsupported("PDF generation", str(e))
             raise

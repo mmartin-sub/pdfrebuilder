@@ -6,8 +6,7 @@ import os
 import tempfile
 from unittest.mock import Mock, patch
 
-from pdfrebuilder.generate_debug_pdf_layers import (
-    _create_debug_page,
+from pdfrebuilder.core.generate_debug_pdf_layers import (
     _get_element_info_text,
     _render_debug_element,
     generate_debug_pdf_layers,
@@ -67,7 +66,7 @@ class TestGenerateDebugPdfLayers:
             ],
         }
 
-    @patch("src.generate_debug_pdf_layers.fitz.open")
+    @patch("pdfrebuilder.core.generate_debug_pdf_layers.fitz.open")
     def test_generate_debug_pdf_layers_success(self, mock_fitz_open):
         """Test successful debug PDF generation"""
         # Mock PyMuPDF document
@@ -100,7 +99,7 @@ class TestGenerateDebugPdfLayers:
 
         assert result is False
 
-    @patch("src.generate_debug_pdf_layers.fitz.open")
+    @patch("pdfrebuilder.core.generate_debug_pdf_layers.fitz.open")
     def test_generate_debug_pdf_layers_exception(self, mock_fitz_open):
         """Test exception handling during debug PDF generation"""
         # Mock the document but make save() raise an exception
@@ -121,20 +120,6 @@ class TestGenerateDebugPdfLayers:
         result = generate_debug_pdf_layers(self.config_path, self.output_path)
 
         assert result is False
-
-    @patch("src.generate_debug_pdf_layers.fitz")
-    def test_create_debug_page(self, mock_fitz):
-        """Test debug page creation"""
-        mock_doc = Mock()
-        mock_page = Mock()
-        mock_doc.new_page.return_value = mock_page
-
-        page_config = self.sample_config["document_structure"][0]
-
-        _create_debug_page(mock_doc, page_config, 0)
-
-        # Verify page was created with correct dimensions
-        mock_doc.new_page.assert_called_with(width=page_config["size"][0], height=page_config["size"][1])
 
     def test_render_debug_element_text(self):
         """Test rendering debug information for text elements"""

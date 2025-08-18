@@ -66,7 +66,9 @@ class TestWandMultiFormat(unittest.TestCase):
             self.assertEqual(layer.layer_name, "PNG Image")
             self.assertEqual(layer.layer_id, "png_base_layer")
             self.assertEqual(len(layer.content), 1)
-            self.assertEqual(layer.content[0]["type"], "image")
+            element = layer.content[0]
+            assert element.type is not None
+            self.assertEqual(element.type.value, "image")
 
     def test_single_image_structure_no_images(self):
         """Test single image structure when images are disabled."""
@@ -122,11 +124,12 @@ class TestWandMultiFormat(unittest.TestCase):
             result = _extract_single_image_content(mock_img, "png", [0, 0, 800, 600])
 
             self.assertIsNotNone(result)
-            self.assertEqual(result["type"], "image")
-            self.assertEqual(result["bbox"], [0, 0, 800, 600])
-            self.assertEqual(result["original_format"], "PNG")
-            self.assertEqual(result["has_transparency"], True)
-            self.assertEqual(result["color_space"], "SRGB")
+            assert result.type is not None
+            self.assertEqual(result.type.value, "image")
+            self.assertEqual(result.bbox.to_list(), [0, 0, 800, 600])
+            self.assertEqual(result.original_format, "PNG")
+            self.assertEqual(result.has_transparency, True)
+            self.assertEqual(result.color_space, "SRGB")
 
     def test_is_multi_page_tiff_detection(self):
         """Test multi-page TIFF detection."""

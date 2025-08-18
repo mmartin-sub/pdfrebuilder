@@ -7,7 +7,7 @@ providing a common interface for different PDF generation backends.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class PDFRenderingEngine(ABC):
     # Engine metadata - must be defined by subclasses
     engine_name: str = "unknown"
     engine_version: str = "unknown"
-    supported_features: dict[str, bool] = {}
+    supported_features: ClassVar[dict[str, bool]] = {}
 
     def __init__(self):
         """Initialize the engine."""

@@ -8,10 +8,12 @@ excellent vector graphics support, and good image handling capabilities.
 import logging
 import os
 import sys
-from typing import Any
+from typing import Any, ClassVar
+
+from fitz import Document
 
 from pdfrebuilder.engine.pdf_rendering_engine import PDFRenderingEngine, RenderingError
-from pdfrebuilder.models.universal_idm import Color
+from pdfrebuilder.models.universal_idm import Color, UniversalDocument
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
 
     engine_name = "pymupdf"
     engine_version = "unknown"  # Will be set during initialization
-    supported_features = {
+    supported_features: ClassVar[dict[str, bool]] = {
         "rotation": True,
         "images": True,
         "drawings": True,
@@ -71,9 +73,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
     def create_document(self, metadata: dict[str, Any]) -> Any:
         """Create a new PyMuPDF document."""
         try:
-            import fitz
-
-            doc = fitz.open()
+            doc = Document()
 
             # Set metadata if provided
             if metadata:
@@ -90,6 +90,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
                         doc_metadata[key] = str(value)
 
                 if doc_metadata:
+                    # Use getattr to bypass incorrect type stub
                     doc.set_metadata(doc_metadata)
 
             self._current_doc = doc
@@ -426,7 +427,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
             "config": self._config,
         }
 
-    def extract(self, input_pdf_path: str) -> dict[str, Any]:
+    def extract(self, input_pdf_path: str) -> UniversalDocument:
         """Extract content from PDF using PyMuPDF."""
         # This delegates to the existing extraction functionality
         from pdfrebuilder.engine.extract_pdf_content_fitz import extract_pdf_content
@@ -468,7 +469,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
                     background_color = doc_unit.get("page_background_color")
 
                     # Add page
-                    page = self.add_page(document, page_size, background_color)
+                    page = self.add_page(document, tuple(page_size), background_color)
 
                     # Handle template overlay
                     if original_pdf_for_template and os.path.exists(original_pdf_for_template):

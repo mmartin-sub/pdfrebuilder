@@ -284,7 +284,7 @@ def test_backward_compatibility_runner():
     print("Testing backward compatibility test runner...")
 
     try:
-        from tests.run_backward_compatibility_tests import BackwardCompatibilityTester
+        from .run_backward_compatibility_tests import BackwardCompatibilityTester
 
         # Test initialization
         tester = BackwardCompatibilityTester(verbose=False)

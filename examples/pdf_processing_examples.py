@@ -15,7 +15,6 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import after path setup - this is necessary for the imports to work
-# ruff: noqa: E402
 from pdfrebuilder.engine.extract_pdf_content_fitz import extract_pdf_content
 from pdfrebuilder.recreate_pdf_from_config import recreate_pdf_from_config
 from pdfrebuilder.tools import serialize_pdf_content_to_config

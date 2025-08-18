@@ -130,7 +130,7 @@ class TestSecureExecutor:
     def test_validate_command_not_list(self):
         """Test validation of non-list command."""
         executor = SecureExecutor()
-        result = executor.validate_command("python --version")
+        result = executor.validate_command("python --version")  # type: ignore[arg-type]
 
         assert not result.is_valid
         assert "list" in result.error_message.lower()
@@ -163,7 +163,7 @@ class TestSecureExecutor:
     def test_validate_command_non_string_argument(self):
         """Test validation with non-string argument."""
         executor = SecureExecutor()
-        result = executor.validate_command(["python", 123])
+        result = executor.validate_command(["python", 123])  # type: ignore[arg-type]
 
         assert not result.is_valid
         assert "must be a string" in result.error_message

@@ -72,7 +72,7 @@ def run_pipeline(args):
     import logging
 
     # Load configuration from all sources
-    from pdfrebuilder.config import ConfigManager
+    from pdfrebuilder.config.manager import ConfigManager
 
     config_manager = ConfigManager()
 

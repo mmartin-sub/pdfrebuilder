@@ -2,7 +2,7 @@ import logging
 import os
 from io import StringIO
 
-from pdfrebuilder.recreate_pdf_from_config import recreate_pdf_from_config
+from pdfrebuilder.core.recreate_pdf_from_config import recreate_pdf_from_config
 from pdfrebuilder.settings import configure_logging
 from tests.config import get_test_output_path, get_unique_id
 

@@ -226,7 +226,7 @@ class TestSecureSubprocessWrapper:
         wrapper = SecureSubprocessWrapper()
 
         with pytest.raises(SubprocessCompatibilityError) as exc_info:
-            wrapper._prepare_command(123, False)
+            wrapper._prepare_command(123, False)  # type: ignore[arg-type]
 
         assert "Invalid command type" in str(exc_info.value)
 

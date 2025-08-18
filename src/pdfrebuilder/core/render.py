@@ -27,7 +27,7 @@ class FontPreValidationResult(TypedDict):
 
 
 @singledispatch
-def json_serializer(obj):
+def json_serializer(obj: Any) -> Any:
     """Custom JSON serializer for various types."""
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
@@ -38,10 +38,18 @@ def _(obj: bytes):
 
 
 @json_serializer.register(fitz.Rect)
+def _(obj: fitz.Rect) -> list[float]:
+    return [obj.x0, obj.y0, obj.x1, obj.y1]
+
+
 @json_serializer.register(fitz.Point)
+def _(obj: fitz.Point) -> list[float]:
+    return [obj.x, obj.y]
+
+
 @json_serializer.register(fitz.Matrix)
-def _(obj):
-    return list(obj)
+def _(obj: fitz.Matrix) -> list[float]:
+    return [obj.a, obj.b, obj.c, obj.d, obj.e, obj.f]
 
 
 @json_serializer.register(float)
@@ -744,7 +752,7 @@ def _render_element(page, element, page_idx, page_overrides, config, use_htmlbox
 
             effective_params["pymupdf_call"] = "page.insert_htmlbox" if use_htmlbox else "page.insert_text"
             final_kwargs["text_content"] = text
-            final_kwargs["rect"] = list(rect_obj)
+            final_kwargs["rect"] = [rect_obj.x0, rect_obj.y0, rect_obj.x1, rect_obj.y1]
             effective_params["pymupdf_kwargs"] = final_kwargs
 
         elif elem_type == "image":
@@ -759,7 +767,7 @@ def _render_element(page, element, page_idx, page_overrides, config, use_htmlbox
                     {
                         "pymupdf_call": "page.insert_image",
                         "pymupdf_kwargs": {
-                            "rect": list(rect_obj),
+                            "rect": [rect_obj.x0, rect_obj.y0, rect_obj.x1, rect_obj.y1],
                             "filename": image_file,
                         },
                     }

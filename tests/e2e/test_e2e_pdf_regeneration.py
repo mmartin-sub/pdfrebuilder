@@ -95,10 +95,10 @@ import os
 # import shutil  # Uncomment if shutil is actually used
 import fitz
 import pytest
-from main import run_pipeline
 
+from pdfrebuilder.pipeline import run_pipeline
+from pdfrebuilder.core.generate_debug_pdf_layers import generate_debug_pdf_layers
 from pdfrebuilder.engine.visual_validator import validate_documents
-from pdfrebuilder.generate_debug_pdf_layers import generate_debug_pdf_layers
 
 # Configure logging
 from pdfrebuilder.settings import configure_logging, get_config_value
@@ -164,7 +164,7 @@ def create_pdf_with_elements(elements, output_path, elements_per_page=None):
     """
     import random
 
-    from pdfrebuilder.pdf_engine import FitzPDFEngine
+    from pdfrebuilder.core.pdf_engine import FitzPDFEngine
 
     # If elements_per_page is None, put all elements on one page
     if elements_per_page is None:

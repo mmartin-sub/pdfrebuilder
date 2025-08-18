@@ -2,13 +2,16 @@
 Tests for API reference validation system.
 """
 
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from pdfrebuilder.docs.api_validator import APIReference, APIReferenceValidator
-from pdfrebuilder.docs.validation import ValidationStatus
+# Add docs/tools to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "docs" / "tools"))
+from api_validator import APIReference, APIReferenceValidator
+from validation import ValidationStatus
 
 
 class TestAPIReferenceValidator:

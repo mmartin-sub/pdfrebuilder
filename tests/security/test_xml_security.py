@@ -727,7 +727,7 @@ class TestSecurityEventLogging:
 class TestFallbackBehavior:
     """Test suite for fallback behavior when defusedxml is not available"""
 
-    @patch("src.engine.validation_report.XML_SECURITY_ENABLED", False)
+    @patch("pdfrebuilder.engine.validation_report.XML_SECURITY_ENABLED", False)
     def test_fallback_parsing_with_warnings(self, caplog):
         """Test that fallback parsing works with appropriate warnings"""
         valid_xml = "<root><child>content</child></root>"
@@ -735,14 +735,15 @@ class TestFallbackBehavior:
         with caplog.at_level(logging.WARNING):
             result = secure_xml_parse(valid_xml)
             assert result.tag == "root"
-            assert result.find("child").text == "content"
+            child = result.find("child")
+            assert child is not None and child.text == "content"
 
         # Should log warning about insecure parsing
         warning_messages = [record for record in caplog.records if record.levelname == "WARNING"]
         insecure_warnings = [msg for msg in warning_messages if "without security protection" in msg.message]
         assert len(insecure_warnings) > 0
 
-    @patch("src.engine.validation_report.XML_SECURITY_ENABLED", False)
+    @patch("pdfrebuilder.engine.validation_report.XML_SECURITY_ENABLED", False)
     def test_fallback_pretty_print_with_warnings(self, caplog):
         """Test that fallback pretty printing works with appropriate warnings"""
         from xml.etree.ElementTree import Element, SubElement
@@ -762,7 +763,7 @@ class TestFallbackBehavior:
         insecure_warnings = [msg for msg in warning_messages if "without security protection" in msg.message]
         assert len(insecure_warnings) > 0
 
-    @patch("src.engine.validation_report.XML_SECURITY_ENABLED", False)
+    @patch("pdfrebuilder.engine.validation_report.XML_SECURITY_ENABLED", False)
     def test_fallback_security_event_logging(self, caplog):
         """Test that security events are still logged in fallback mode"""
         valid_xml = "<root>content</root>"
@@ -789,7 +790,8 @@ class TestEdgeCasesAndCornerCases:
         try:
             result = secure_xml_parse(large_xml)
             assert result.tag == "root"
-            assert "content" in result.find("data").text
+            child = result.find("data")
+            assert child is not None and "content" in child.text
         except XMLSecurityError:
             # If it's blocked due to size limits, that's also acceptable
             pass
@@ -835,8 +837,10 @@ class TestEdgeCasesAndCornerCases:
 
         result = secure_xml_parse(unicode_xml)
         assert result.tag == "root"
-        assert "世界" in result.find("content").text
-        assert "🚀" in result.find("emoji").text
+        content = result.find("content")
+        assert content is not None and "世界" in content.text
+        emoji = result.find("emoji")
+        assert emoji is not None and "🚀" in emoji.text
 
     def test_xml_with_mixed_content(self, caplog):
         """Test handling of XML with mixed content (text and elements)"""
@@ -850,8 +854,10 @@ class TestEdgeCasesAndCornerCases:
 
         result = secure_xml_parse(mixed_xml)
         assert result.tag == "root"
-        assert result.find("child").text == "child content"
-        assert result.find("another").text == "more content"
+        child = result.find("child")
+        assert child is not None and child.text == "child content"
+        another = result.find("another")
+        assert another is not None and another.text == "more content"
 
     def test_xml_with_comments_and_processing_instructions(self, caplog):
         """Test handling of XML with comments and processing instructions"""
@@ -865,7 +871,8 @@ class TestEdgeCasesAndCornerCases:
 
         result = secure_xml_parse(xml_with_comments)
         assert result.tag == "root"
-        assert result.find("content").text == "data"
+        child = result.find("content")
+        assert child is not None and child.text == "data"
 
     def test_xml_with_namespaces_and_prefixes(self, caplog):
         """Test handling of XML with complex namespaces"""

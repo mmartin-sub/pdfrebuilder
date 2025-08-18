@@ -3,14 +3,17 @@ Tests for Universal IDM (Intermediate Document Model) classes.
 """
 
 from pdfrebuilder.models.universal_idm import (
+    BoundingBox,
     Canvas,
-    Document,
+    Color,
     DocumentMetadata,
     DrawingElement,
+    FontDetails,
     ImageElement,
     Layer,
     Page,
     TextElement,
+    UniversalDocument,
 )
 
 
@@ -62,22 +65,22 @@ class TestTextElement:
     def test_text_element_creation(self):
         """Test creating TextElement instance"""
         element = TextElement(
-            element_id="text_1",
-            bbox=[100, 100, 200, 120],
+            id="text_1",
+            bbox=BoundingBox(100, 100, 200, 120),
             text="Test text",
             raw_text="T e s t   t e x t",
-            font_details={"name": "Arial", "size": 12, "color": 0},
+            font_details=FontDetails(name="Arial", size=12, color=Color(0, 0, 0)),
         )
 
-        assert element.element_id == "text_1"
-        assert element.bbox == [100, 100, 200, 120]
+        assert element.id == "text_1"
+        assert element.bbox.to_list() == [100, 100, 200, 120]
         assert element.text == "Test text"
         assert element.raw_text == "T e s t   t e x t"
-        assert element.font_details["name"] == "Arial"
+        assert element.font_details.name == "Arial"
 
     def test_text_element_to_dict(self):
         """Test converting TextElement to dictionary"""
-        element = TextElement(element_id="text_1", bbox=[100, 100, 200, 120], text="Test text")
+        element = TextElement(id="text_1", bbox=BoundingBox(100, 100, 200, 120), text="Test text")
 
         result = element.to_dict()
 
@@ -89,7 +92,7 @@ class TestTextElement:
 
     def test_text_element_font_details_optional(self):
         """Test TextElement with optional font details"""
-        element = TextElement(element_id="text_1", bbox=[100, 100, 200, 120], text="Test text")
+        element = TextElement(id="text_1", bbox=BoundingBox(100, 100, 200, 120), text="Test text")
 
         # Should not raise an exception
         result = element.to_dict()
@@ -102,20 +105,20 @@ class TestImageElement:
     def test_image_element_creation(self):
         """Test creating ImageElement instance"""
         element = ImageElement(
-            element_id="image_1",
-            bbox=[200, 200, 400, 300],
+            id="image_1",
+            bbox=BoundingBox(200, 200, 400, 300),
             image_file="./images/test.jpg",
         )
 
-        assert element.element_id == "image_1"
-        assert element.bbox == [200, 200, 400, 300]
+        assert element.id == "image_1"
+        assert element.bbox.to_list() == [200, 200, 400, 300]
         assert element.image_file == "./images/test.jpg"
 
     def test_image_element_to_dict(self):
         """Test converting ImageElement to dictionary"""
         element = ImageElement(
-            element_id="image_1",
-            bbox=[200, 200, 400, 300],
+            id="image_1",
+            bbox=BoundingBox(200, 200, 400, 300),
             image_file="./images/test.jpg",
         )
 
@@ -134,8 +137,8 @@ class TestDrawingElement:
     def test_drawing_element_creation(self):
         """Test creating DrawingElement instance"""
         element = DrawingElement(
-            element_id="drawing_1",
-            bbox=[50, 50, 150, 100],
+            id="drawing_1",
+            bbox=BoundingBox(50, 50, 150, 100),
             drawing_commands=[
                 {"cmd": "M", "pts": [50, 50]},
                 {"cmd": "L", "pts": [150, 100]},
@@ -143,16 +146,16 @@ class TestDrawingElement:
             ],
         )
 
-        assert element.element_id == "drawing_1"
-        assert element.bbox == [50, 50, 150, 100]
+        assert element.id == "drawing_1"
+        assert element.bbox.to_list() == [50, 50, 150, 100]
         assert len(element.drawing_commands) == 3
-        assert element.drawing_commands[0]["cmd"] == "M"
+        assert element.drawing_commands[0].cmd == "M"
 
     def test_drawing_element_to_dict(self):
         """Test converting DrawingElement to dictionary"""
         element = DrawingElement(
-            element_id="drawing_1",
-            bbox=[50, 50, 150, 100],
+            id="drawing_1",
+            bbox=BoundingBox(50, 50, 150, 100),
             drawing_commands=[
                 {"cmd": "M", "pts": [50, 50]},
                 {"cmd": "L", "pts": [150, 100]},
@@ -170,11 +173,11 @@ class TestDrawingElement:
     def test_drawing_element_with_colors(self):
         """Test DrawingElement with color and fill"""
         element = DrawingElement(
-            element_id="drawing_1",
-            bbox=[50, 50, 150, 100],
+            id="drawing_1",
+            bbox=BoundingBox(50, 50, 150, 100),
             drawing_commands=[],
-            color=[1.0, 0.0, 0.0],
-            fill=[0.0, 1.0, 0.0],
+            color=Color(1.0, 0.0, 0.0),
+            fill=Color(0.0, 1.0, 0.0),
         )
 
         result = element.to_dict()
@@ -188,30 +191,30 @@ class TestLayer:
 
     def test_layer_creation(self):
         """Test creating Layer instance"""
-        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=[0, 0, 612, 792])
+        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=BoundingBox(0, 0, 612, 792))
 
         assert layer.layer_id == "layer_1"
         assert layer.layer_name == "Test Layer"
-        assert layer.bbox == [0, 0, 612, 792]
+        assert layer.bbox.to_list() == [0, 0, 612, 792]
         assert layer.content == []
 
     def test_layer_add_element(self):
         """Test adding elements to layer"""
-        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=[0, 0, 612, 792])
+        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=BoundingBox(0, 0, 612, 792))
 
-        text_element = TextElement(element_id="text_1", bbox=[100, 100, 200, 120], text="Test text")
+        text_element = TextElement(id="text_1", bbox=BoundingBox(100, 100, 200, 120), text="Test text")
 
-        layer.add_element(text_element)
+        layer.content.append(text_element)
 
         assert len(layer.content) == 1
         assert layer.content[0] == text_element
 
     def test_layer_to_dict(self):
         """Test converting Layer to dictionary"""
-        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=[0, 0, 612, 792])
+        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=BoundingBox(0, 0, 612, 792))
 
-        text_element = TextElement(element_id="text_1", bbox=[100, 100, 200, 120], text="Test text")
-        layer.add_element(text_element)
+        text_element = TextElement(id="text_1", bbox=BoundingBox(100, 100, 200, 120), text="Test text")
+        layer.content.append(text_element)
 
         result = layer.to_dict()
 
@@ -228,17 +231,17 @@ class TestPage:
 
     def test_page_creation(self):
         """Test creating Page instance"""
-        page = Page(page_number=0, size=[612, 792])
+        page = Page(page_number=0, size=(612, 792))
 
         assert page.page_number == 0
-        assert page.size == [612, 792]
+        assert page.size == (612, 792)
         assert page.layers == []
 
     def test_page_add_layer(self):
         """Test adding layers to page"""
-        page = Page(page_number=0, size=[612, 792])
+        page = Page(page_number=0, size=(612, 792))
 
-        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=[0, 0, 612, 792])
+        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=BoundingBox(0, 0, 612, 792))
 
         page.add_layer(layer)
 
@@ -247,9 +250,9 @@ class TestPage:
 
     def test_page_to_dict(self):
         """Test converting Page to dictionary"""
-        page = Page(page_number=0, size=[612, 792])
+        page = Page(page_number=0, size=(612, 792))
 
-        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=[0, 0, 612, 792])
+        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=BoundingBox(0, 0, 612, 792))
         page.add_layer(layer)
 
         result = page.to_dict()
@@ -266,16 +269,16 @@ class TestCanvas:
 
     def test_canvas_creation(self):
         """Test creating Canvas instance"""
-        canvas = Canvas(canvas_size=[1920, 1080])
+        canvas = Canvas(canvas_size=(1920, 1080))
 
         assert canvas.canvas_size == [1920, 1080]
         assert canvas.layers == []
 
     def test_canvas_add_layer(self):
         """Test adding layers to canvas"""
-        canvas = Canvas(canvas_size=[1920, 1080])
+        canvas = Canvas(canvas_size=(1920, 1080))
 
-        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=[0, 0, 1920, 1080])
+        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=BoundingBox(0, 0, 1920, 1080))
 
         canvas.add_layer(layer)
 
@@ -284,9 +287,9 @@ class TestCanvas:
 
     def test_canvas_to_dict(self):
         """Test converting Canvas to dictionary"""
-        canvas = Canvas(canvas_size=[1920, 1080])
+        canvas = Canvas(canvas_size=(1920, 1080))
 
-        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=[0, 0, 1920, 1080])
+        layer = Layer(layer_id="layer_1", layer_name="Test Layer", bbox=BoundingBox(0, 0, 1920, 1080))
         canvas.add_layer(layer)
 
         result = canvas.to_dict()
@@ -304,7 +307,7 @@ class TestDocument:
         """Test creating Document instance"""
         metadata = DocumentMetadata(title="Test Document")
 
-        document = Document(
+        document = UniversalDocument(
             version="1.0",
             engine="fitz",
             engine_version="PyMuPDF 1.26.23",
@@ -319,9 +322,9 @@ class TestDocument:
 
     def test_document_add_page(self):
         """Test adding pages to document"""
-        document = Document(version="1.0", engine="fitz")
+        document = UniversalDocument(version="1.0", engine="fitz")
 
-        page = Page(page_number=0, size=[612, 792])
+        page = Page(page_number=0, size=(612, 792))
 
         document.add_document_unit(page)
 
@@ -330,9 +333,9 @@ class TestDocument:
 
     def test_document_add_canvas(self):
         """Test adding canvas to document"""
-        document = Document(version="1.0", engine="psd_tools")
+        document = UniversalDocument(version="1.0", engine="psd_tools")
 
-        canvas = Canvas(canvas_size=[1920, 1080])
+        canvas = Canvas(canvas_size=(1920, 1080))
 
         document.add_document_unit(canvas)
 
@@ -343,14 +346,14 @@ class TestDocument:
         """Test converting Document to dictionary"""
         metadata = DocumentMetadata(title="Test Document")
 
-        document = Document(
+        document = UniversalDocument(
             version="1.0",
             engine="fitz",
             engine_version="PyMuPDF 1.26.23",
             metadata=metadata,
         )
 
-        page = Page(page_number=0, size=[612, 792])
+        page = Page(page_number=0, size=(612, 792))
         document.add_document_unit(page)
 
         result = document.to_dict()
@@ -365,11 +368,11 @@ class TestDocument:
 
     def test_document_get_pages(self):
         """Test getting pages from document"""
-        document = Document(version="1.0", engine="fitz")
+        document = UniversalDocument(version="1.0", engine="fitz")
 
-        page1 = Page(page_number=0, size=[612, 792])
-        page2 = Page(page_number=1, size=[612, 792])
-        canvas = Canvas(canvas_size=[1920, 1080])
+        page1 = Page(page_number=0, size=(612, 792))
+        page2 = Page(page_number=1, size=(612, 792))
+        canvas = Canvas(canvas_size=(1920, 1080))
 
         document.add_document_unit(page1)
         document.add_document_unit(page2)
@@ -384,11 +387,11 @@ class TestDocument:
 
     def test_document_get_canvases(self):
         """Test getting canvases from document"""
-        document = Document(version="1.0", engine="psd_tools")
+        document = UniversalDocument(version="1.0", engine="psd_tools")
 
-        page = Page(page_number=0, size=[612, 792])
-        canvas1 = Canvas(canvas_size=[1920, 1080])
-        canvas2 = Canvas(canvas_size=[1280, 720])
+        page = Page(page_number=0, size=(612, 792))
+        canvas1 = Canvas(canvas_size=(1920, 1080))
+        canvas2 = Canvas(canvas_size=(1280, 720))
 
         document.add_document_unit(page)
         document.add_document_unit(canvas1)

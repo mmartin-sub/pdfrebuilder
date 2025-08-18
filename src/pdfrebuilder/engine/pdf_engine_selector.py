@@ -62,7 +62,7 @@ class PDFEngineSelector:
                 logger.warning("ReportLab engine not available")
 
             try:
-                from pdfrebuilder.pdf_engine import FitzPDFEngine
+                from ..core.pdf_engine import FitzPDFEngine
 
                 # Create a wrapper for the old FitzPDFEngine
                 self.register_engine("pymupdf", cast(type[PDFRenderingEngine], FitzPDFEngine))

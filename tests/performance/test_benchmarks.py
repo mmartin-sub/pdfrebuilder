@@ -24,7 +24,7 @@ class BenchmarkResult:
     memory_usage: float
     success: bool
     error_message: str = ""
-    metadata: dict[str, Any] = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self):
         if self.metadata is None:

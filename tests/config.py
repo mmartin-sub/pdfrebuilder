@@ -25,8 +25,8 @@ class TestConfig:
     def output_dir(self) -> str:
         """Get the base output directory for all test outputs"""
         if self._output_dir is None:
-            # Use the main settings test output directory
-            self._output_dir = get_config_value("test_output_dir")
+            # Use the main settings test output directory or a default
+            self._output_dir = get_config_value("test_output_dir") or "tests/output"
 
         # Ensure directory exists
         os.makedirs(self._output_dir, exist_ok=True)
@@ -44,7 +44,7 @@ class TestConfig:
     def temp_dir(self) -> str:
         """Get the temporary directory for test files"""
         if self._temp_dir is None:
-            self._temp_dir = get_config_value("test_temp_dir")
+            self._temp_dir = get_config_value("test_temp_dir") or os.path.join(self.output_dir, "temp")
         os.makedirs(self._temp_dir, exist_ok=True)
         return self._temp_dir
 
@@ -52,7 +52,7 @@ class TestConfig:
     def fonts_dir(self) -> str:
         """Get the directory for test font files"""
         if self._fonts_dir is None:
-            self._fonts_dir = get_config_value("test_fonts_dir")
+            self._fonts_dir = get_config_value("test_fonts_dir") or os.path.join(self.output_dir, "fonts")
         os.makedirs(self._fonts_dir, exist_ok=True)
         return self._fonts_dir
 
@@ -60,7 +60,7 @@ class TestConfig:
     def reports_dir(self) -> str:
         """Get the directory for test reports and logs"""
         if self._reports_dir is None:
-            self._reports_dir = get_config_value("test_reports_dir")
+            self._reports_dir = get_config_value("test_reports_dir") or os.path.join(self.output_dir, "reports")
         os.makedirs(self._reports_dir, exist_ok=True)
         return self._reports_dir
 
@@ -267,5 +267,6 @@ def get_debug_output_path(base_name: str, ext: str = ".log") -> str:
         Full path to the debug output file
     """
     # Use the main settings for debug logs directory
-    debug_logs_dir = get_config_value("debug_logs_dir")
+    debug_logs_dir = get_config_value("debug_logs_dir") or os.path.join(test_config.output_dir, "debug_logs")
+    os.makedirs(debug_logs_dir, exist_ok=True)
     return os.path.join(debug_logs_dir, f"{base_name}{ext}")

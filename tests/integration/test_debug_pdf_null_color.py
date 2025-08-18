@@ -7,7 +7,7 @@ from pathlib import Path
 # Ensure project root is on sys.path for absolute imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from pdfrebuilder.generate_debug_pdf_layers import generate_debug_pdf_layers
+from pdfrebuilder.core.generate_debug_pdf_layers import generate_debug_pdf_layers
 from pdfrebuilder.settings import configure_logging
 
 # Configure logging

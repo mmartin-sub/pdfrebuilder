@@ -244,7 +244,7 @@ class VisualValidator:
             # Calculate SSIM using scikit-image if available, otherwise fallback
             if HAS_SKIMAGE:
                 # Use scikit-image's structural_similarity (modern approach)
-                ssim_score = structural_similarity(gray1, gray2)
+                ssim_score, _ = structural_similarity(gray1, gray2, full=True, gradient=False)
             else:
                 # Fallback to a simple correlation-based similarity measure
                 logger.warning("scikit-image not available, using correlation-based similarity")

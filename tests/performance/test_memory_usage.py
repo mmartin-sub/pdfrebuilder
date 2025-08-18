@@ -25,7 +25,7 @@ class TestMemoryUsage:
 
     def get_memory_usage(self) -> float:
         """Get current memory usage in MB"""
-        if not HAS_PSUTIL:
+        if not HAS_PSUTIL or psutil is None:
             return 0.0
         process = psutil.Process(os.getpid())
         return process.memory_info().rss / 1024 / 1024  # Convert to MB

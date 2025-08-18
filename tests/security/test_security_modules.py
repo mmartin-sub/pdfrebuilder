@@ -200,7 +200,7 @@ class TestSecureExecution:
     def test_validate_command_safety_empty_command(self):
         """Test validation of empty command"""
         assert validate_command_safety([]) is False
-        assert validate_command_safety(None) is False
+        assert validate_command_safety(None) is False  # type: ignore[arg-type]
 
     @patch("src.security.secure_execution.local")
     def test_secure_executor_working_directory(self, mock_local):
@@ -220,7 +220,7 @@ class TestSecureExecution:
         security_context = SecurityContext(base_path=Path(self.temp_dir).parent)
         executor = SecureExecutor(security_context)
 
-        result = executor.execute_command(["ls"], cwd=self.temp_dir)
+        result = executor.execute_command(["ls"], cwd=Path(self.temp_dir))
 
         assert result.success is True
 

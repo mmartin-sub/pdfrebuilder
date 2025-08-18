@@ -665,25 +665,6 @@ class SecureSubprocessRunner:
             logger.debug(f"Subprocess completed with return code: {result.returncode}")
             return result
 
-        except SecurityError as e:
-            self._execution_stats["security_violations"] += 1
-            self._execution_stats["failed_executions"] += 1
-            execution_time = time.time() - start_time
-
-            # Monitor security violation
-            self.security_monitor.monitor_security_violation(
-                "subprocess_security_error",
-                {
-                    "command": cmd,
-                    "error": str(e),
-                    "user": user,
-                    "execution_time": execution_time,
-                },
-            )
-            self.security_monitor.monitor_command_execution(cmd, user, success, execution_time, cwd, env)
-
-            logger.error(f"Security violation in subprocess: {e}")
-            raise
         except ResourceLimitError as e:
             self._execution_stats["resource_violations"] += 1
             self._execution_stats["failed_executions"] += 1
@@ -702,6 +683,25 @@ class SecureSubprocessRunner:
             self.security_monitor.monitor_command_execution(cmd, user, success, execution_time, cwd, env)
 
             logger.error(f"Resource limit exceeded in subprocess: {e}")
+            raise
+        except SecurityError as e:
+            self._execution_stats["security_violations"] += 1
+            self._execution_stats["failed_executions"] += 1
+            execution_time = time.time() - start_time
+
+            # Monitor security violation
+            self.security_monitor.monitor_security_violation(
+                "subprocess_security_error",
+                {
+                    "command": cmd,
+                    "error": str(e),
+                    "user": user,
+                    "execution_time": execution_time,
+                },
+            )
+            self.security_monitor.monitor_command_execution(cmd, user, success, execution_time, cwd, env)
+
+            logger.error(f"Security violation in subprocess: {e}")
             raise
         except subprocess.TimeoutExpired:
             self._execution_stats["failed_executions"] += 1
@@ -1058,7 +1058,7 @@ class SecurityMetrics:
         blocked_commands: int
         security_violations: dict[str, int]
         resource_violations: int
-        suspicious_patterns: dict[str, list[list[str]]]
+        suspicious_patterns: dict[str, list[dict[str, Any]]]
         execution_times: list[float]
         memory_usage: list[float]
         failed_authentications: int

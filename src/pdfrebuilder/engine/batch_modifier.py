@@ -8,16 +8,10 @@ and font validation capabilities for template-based document generation.
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Any, TypedDict
+from typing import Any
 
 from pdfrebuilder.font.font_validator import FontValidator
 from pdfrebuilder.models.universal_idm import PageUnit, TextElement, UniversalDocument
-
-
-class FontDetails(TypedDict):
-    name: str
-    # Add other font details as needed
-
 
 logger = logging.getLogger(__name__)
 
@@ -276,9 +270,16 @@ class BatchModifier:
                 for element in layer.content:
                     if isinstance(element, TextElement):
                         font_details = element.font_details
-                        # FontDetails is a TypedDict, so we access fields with dictionary syntax
-                        font_name = font_details["name"]
-                        validation_result["fonts_used"].add(font_name)
+                        if isinstance(font_details, dict):
+                            font_name = font_details.get("name")
+                        else:
+                            font_name = font_details.name
+
+                        if font_name:
+                            validation_result["fonts_used"].add(font_name)
+                        else:
+                            # Handle case where font_name is not found
+                            continue
 
                         # Check font availability
                         if not self.font_validator.is_font_available(font_name):
@@ -338,7 +339,10 @@ class BatchModifier:
         """
         # Handle case where font_details might be a dictionary
         font_details = element.font_details
-        font_name = font_details.name if hasattr(font_details, "name") else font_details.get("name")
+        if isinstance(font_details, dict):
+            font_name = font_details.get("name")
+        else:
+            font_name = font_details.name
 
         if not font_name:
             return f"No font name found for text: '{new_text[:30]}...'"

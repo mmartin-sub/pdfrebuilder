@@ -109,8 +109,9 @@ class TestBatchModifier:
         assert result.skipped_elements == 2
 
         # Check that text was actually replaced
-        text_element = self.test_document.document_structure[0].layers[0].content[0]
-        assert text_element.text == "Hi Universe"
+        element = self.test_document.document_structure[0].layers[0].content[0]
+        assert isinstance(element, TextElement)
+        assert element.text == "Hi Universe"
 
     def test_batch_text_replacement_with_element_filtering(self):
         """Test batch text replacement with element filtering."""
@@ -127,8 +128,9 @@ class TestBatchModifier:
         assert result.skipped_elements == 2
 
         # Check that only the targeted element was modified
-        text_element = self.test_document.document_structure[0].layers[0].content[0]
-        assert text_element.text == "Hi World"
+        element = self.test_document.document_structure[0].layers[0].content[0]
+        assert isinstance(element, TextElement)
+        assert element.text == "Hi World"
 
     def test_batch_text_replacement_with_page_filtering(self):
         """Test batch text replacement with page filtering."""
@@ -162,7 +164,9 @@ class TestBatchModifier:
 
         # Check that variables were substituted
         text_elements = self.test_document.document_structure[0].layers[0].content
+        assert isinstance(text_elements[1], TextElement)
         assert text_elements[1].text == "Welcome to Acme Corp"
+        assert isinstance(text_elements[2], TextElement)
         assert text_elements[2].text == "Date: 2024-01-15"
 
     def test_variable_substitution_case_sensitive(self):
@@ -413,8 +417,9 @@ class TestBatchModifier:
         assert result.modified_elements == 1
 
         # Check that all variables were substituted
-        text_element = document.document_structure[0].layers[0].content[0]
-        assert text_element.text == "Hello John, welcome to Acme Corp on 2024-01-15"
+        element = document.document_structure[0].layers[0].content[0]
+        assert isinstance(element, TextElement)
+        assert element.text == "Hello John, welcome to Acme Corp on 2024-01-15"
 
 
 class TestBatchModifierCLI:

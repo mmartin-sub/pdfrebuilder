@@ -11,14 +11,14 @@ import tempfile
 
 import pytest
 
-from pdfrebuilder.engine.config_loader import get_config_loader
-from pdfrebuilder.engine.pdf_engine_selector import get_engine_selector, get_pdf_engine
-from pdfrebuilder.engine.performance_metrics import get_performance_collector
-from pdfrebuilder.recreate_pdf_from_config import (
+from pdfrebuilder.core.recreate_pdf_from_config import (
     get_available_engines,
     recreate_pdf_from_config,
     validate_engine_configuration,
 )
+from pdfrebuilder.engine.config_loader import get_config_loader
+from pdfrebuilder.engine.pdf_engine_selector import get_engine_selector, get_pdf_engine
+from pdfrebuilder.engine.performance_metrics import get_performance_collector
 
 
 class TestEngineSelectionIntegration:

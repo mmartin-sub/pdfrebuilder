@@ -42,8 +42,16 @@ def serialize_pdf_content_to_config(content, config_path):
     if hasattr(content, "document_structure"):
         # Handle UniversalDocument object
         units = content.document_structure
-        unit_types = [unit.type.value for unit in units]
-        unit_type = "pages" if "page" in unit_types else "canvases" if "canvas" in unit_types else "units"
+        unit_types = [
+            unit.type.value if hasattr(unit.type, "value") else unit.type for unit in units
+        ]
+        unit_type = (
+            "pages"
+            if "page" in unit_types
+            else "canvases"
+            if "canvas" in unit_types
+            else "units"
+        )
         print(
             f"[serialize_content_to_config] Config uses UniversalDocument object. Number of {unit_type}: {len(units)}"
         )

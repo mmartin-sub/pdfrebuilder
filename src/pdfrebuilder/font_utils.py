@@ -19,17 +19,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from fontTools.ttLib import TTFont
-from fontTools.ttLib.tables import (
-    table__c_m_a_p,
-    table__h_e_a_d,
-    table__h_h_e_a,
-    table__m_a_x_p,
-    table__n_a_m_e,
-    table__O_S_2f_2,
-)
 
 from pdfrebuilder.font.googlefonts import download_google_font
 from pdfrebuilder.settings import STANDARD_PDF_FONTS, get_config_value
@@ -484,7 +476,7 @@ class FallbackFontManager:
 
     # Prioritized list of fallback fonts (most reliable first)
     # Note: This will be dynamically reordered to prioritize the configured default font
-    FALLBACK_FONTS = [
+    FALLBACK_FONTS: ClassVar[list[str]] = [
         "helv",  # PyMuPDF built-in - prioritized as default
         "Noto Sans",  # Google's free font with excellent Unicode support
         "Open Sans",  # Popular open-source font optimized for readability
@@ -525,11 +517,11 @@ class FallbackFontManager:
 
             default_font = get_config_value("default_font")
 
-            if default_font and default_font in self.FALLBACK_FONTS:
+            if default_font and default_font in FallbackFontManager.FALLBACK_FONTS:
                 # Move the default font to the front of the list
-                fallback_list = self.FALLBACK_FONTS.copy()
+                fallback_list = FallbackFontManager.FALLBACK_FONTS.copy()
                 fallback_list.remove(default_font)
-                self.FALLBACK_FONTS = [default_font, *fallback_list]
+                FallbackFontManager.FALLBACK_FONTS = [default_font, *fallback_list]
                 self.logger.debug(f"Prioritized '{default_font}' as first fallback font")
         except Exception as e:
             self.logger.warning(f"Could not ensure fallback consistency: {e}")
@@ -1071,7 +1063,7 @@ class FallbackFontValidator:
 
         # Create a temporary page for testing font registration
         import fitz
-        from fitz.fitz import Document
+        from fitz import Document
 
         temp_doc: Document = fitz.open()
         temp_page = temp_doc.new_page()
@@ -2321,19 +2313,18 @@ class FontValidator:
 
             if "name" in font:
                 name_table = font["name"]
-                assert isinstance(name_table, table__n_a_m_e)
-                for record in name_table.names:
+                for record in getattr(name_table, "names", []):
                     # Family name (nameID 1)
-                    if record.nameID == 1:
+                    if getattr(record, "nameID", -1) == 1:
                         try:
                             family_name = record.toUnicode()
                             break
                         except UnicodeDecodeError:
                             continue
 
-                for record in name_table.names:
+                for record in getattr(name_table, "names", []):
                     # Style name (nameID 2)
-                    if record.nameID == 2:
+                    if getattr(record, "nameID", -1) == 2:
                         try:
                             style_name = record.toUnicode()
                             break
@@ -2344,8 +2335,7 @@ class FontValidator:
             glyph_count = 0
             if "maxp" in font:
                 maxp_table = font["maxp"]
-                assert isinstance(maxp_table, table__m_a_x_p)
-                glyph_count = maxp_table.numGlyphs
+                glyph_count = getattr(maxp_table, "numGlyphs", 0)
 
             # Extract font metrics
             ascender = None
@@ -2354,14 +2344,12 @@ class FontValidator:
 
             if "hhea" in font:
                 hhea_table = font["hhea"]
-                assert isinstance(hhea_table, table__h_h_e_a)
-                ascender = hhea_table.ascent
-                descender = hhea_table.descent
+                ascender = getattr(hhea_table, "ascent", None)
+                descender = getattr(hhea_table, "descent", None)
 
             if "head" in font:
                 head_table = font["head"]
-                assert isinstance(head_table, table__h_e_a_d)
-                units_per_em = head_table.unitsPerEm
+                units_per_em = getattr(head_table, "unitsPerEm", None)
 
             # Extract style flags
             is_bold = False
@@ -2371,9 +2359,9 @@ class FontValidator:
                 os2_table = font["OS/2"]
                 # Check fsSelection flags
                 if hasattr(os2_table, "fsSelection"):
-                    assert isinstance(os2_table, table__O_S_2f_2)
-                    is_bold = bool(os2_table.fsSelection & 0x20)  # Bold bit
-                    is_italic = bool(os2_table.fsSelection & 0x01)  # Italic bit
+                    fs_selection = getattr(os2_table, "fsSelection", 0)
+                    is_bold = bool(fs_selection & 0x20)  # Bold bit
+                    is_italic = bool(fs_selection & 0x01)  # Italic bit
 
             metadata = FontMetadata(
                 family_name=family_name,
@@ -2547,11 +2535,10 @@ def is_font_file_corrupted(font_path: str) -> bool:
         # Try to access basic font information
         if "name" in font:
             name_table = font["name"]
-            assert isinstance(name_table, table__n_a_m_e)
             # Try to read at least one name record
             found_name = False
-            for record in name_table.names:
-                if record.nameID == 1:  # Family name
+            for record in getattr(name_table, "names", []):
+                if getattr(record, "nameID", -1) == 1:  # Family name
                     try:
                         record.toUnicode()
                         found_name = True
@@ -2610,12 +2597,11 @@ def scan_available_fonts(fonts_dir):
             try:
                 font = TTFont(font_path)
                 name_table = font["name"]
-                assert isinstance(name_table, table__n_a_m_e)
                 # Use the 'name' table to get the font's family name
                 name = None
-                for record in name_table.names:
-                    if record.nameID == 1 and (not name or record.platformID == 3):
-                        name = str(record.string, errors="ignore")
+                for record in getattr(name_table, "names", []):
+                    if getattr(record, "nameID", -1) == 1 and (not name or getattr(record, "platformID", -1) == 3):
+                        name = str(getattr(record, "string", b""), errors="ignore")
                 if name:
                     # Prefer manual fonts over auto-downloaded ones
                     if name not in font_map or "manual" in font_path:
@@ -2633,9 +2619,8 @@ def font_covers_text(font_path, text):
         font = TTFont(font_path)
         cmap = set()
         cmap_table = font["cmap"]
-        assert isinstance(cmap_table, table__c_m_a_p)
-        for table in cmap_table.tables:
-            cmap.update(table.cmap.keys())
+        for table in getattr(cmap_table, "tables", []):
+            cmap.update(getattr(table, "cmap", {}).keys())
         return all(ord(char) in cmap for char in text if char.strip())
     except Exception as e:
         logger.warning(f"[font_utils] Could not check glyph coverage for {font_path}: {e}")

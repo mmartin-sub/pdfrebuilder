@@ -15,7 +15,12 @@ from unittest.mock import Mock, patch
 
 import fitz
 
-from pdfrebuilder.render import _render_element, _render_text_with_fallback, _render_vector_element, json_serializer
+from pdfrebuilder.core.render import (
+    _render_element,
+    _render_text_with_fallback,
+    _render_vector_element,
+    json_serializer,
+)
 
 
 class TestJSONSerializer(unittest.TestCase):

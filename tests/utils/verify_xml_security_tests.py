@@ -26,7 +26,7 @@ def verify_test_module():
 
     try:
         # Import the test module
-        from tests.test_xml_security import (
+        from ..security.test_xml_security import (
             TestEdgeCasesAndCornerCases,
             TestEntityExpansionLimits,
             TestExternalEntityBlocking,

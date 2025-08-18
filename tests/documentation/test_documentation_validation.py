@@ -2,12 +2,15 @@
 Tests for documentation validation framework.
 """
 
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from pdfrebuilder.docs.validation import CodeExample, DocumentationValidator, ValidationStatus
+# Add docs/tools to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "docs" / "tools"))
+from validation import CodeExample, DocumentationValidator, ValidationStatus  # type: ignore[import]
 
 
 class TestDocumentationValidator:

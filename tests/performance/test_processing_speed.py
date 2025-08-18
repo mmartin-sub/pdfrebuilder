@@ -5,6 +5,7 @@ Tests processing time and throughput benchmarks.
 
 import os
 import time
+from typing import Any
 
 import pytest
 
@@ -14,7 +15,7 @@ from pdfrebuilder.settings import get_nested_config_value
 class TestProcessingSpeed:
     """Test processing speed and performance benchmarks"""
 
-    def measure_execution_time(self, func, *args, **kwargs) -> float:
+    def measure_execution_time(self, func, *args, **kwargs) -> tuple[float, Any]:
         """Measure execution time of a function in seconds"""
         start_time = time.time()
         result = func(*args, **kwargs)

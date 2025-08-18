@@ -179,6 +179,59 @@ class FontDetails:
     baseline_shift: float | None = None
     font_caps: str | None = None
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert FontDetails to a dictionary."""
+        return {
+            "name": self.name,
+            "size": self.size,
+            "color": self.color.to_rgba_tuple(),
+            "ascender": self.ascender,
+            "descender": self.descender,
+            "is_superscript": self.is_superscript,
+            "is_italic": self.is_italic,
+            "is_serif": self.is_serif,
+            "is_monospaced": self.is_monospaced,
+            "is_bold": self.is_bold,
+            "original_flags": self.original_flags,
+            "kerning": self.kerning,
+            "leading": self.leading,
+            "tracking": self.tracking,
+            "baseline_shift": self.baseline_shift,
+            "font_caps": self.font_caps,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "FontDetails":
+        """Create FontDetails from a dictionary."""
+        color_val = data.get("color")
+        color_obj = Color(0, 0, 0)  # Default to black
+        if isinstance(color_val, int):
+            color_obj = Color.from_int(color_val)
+        elif isinstance(color_val, list | tuple):
+            if len(color_val) == 4:
+                color_obj = Color.from_rgba_tuple(tuple(color_val))  # type: ignore[arg-type]
+            elif len(color_val) == 3:
+                color_obj = Color.from_rgb_tuple(tuple(color_val))  # type: ignore[arg-type]
+
+        return cls(
+            name=data.get("name", "Arial"),
+            size=data.get("size", 12),
+            color=color_obj,
+            ascender=data.get("ascender", 0.0),
+            descender=data.get("descender", 0.0),
+            is_superscript=data.get("is_superscript", False),
+            is_italic=data.get("is_italic", False),
+            is_serif=data.get("is_serif", False),
+            is_monospaced=data.get("is_monospaced", False),
+            is_bold=data.get("is_bold", False),
+            original_flags=data.get("original_flags", 0),
+            kerning=data.get("kerning"),
+            leading=data.get("leading"),
+            tracking=data.get("tracking"),
+            baseline_shift=data.get("baseline_shift"),
+            font_caps=data.get("font_caps"),
+        )
+
 
 @dataclass
 class DrawingCommand:
@@ -250,15 +303,7 @@ class TextElement(Element):
 
         # Handle font_details - convert dict to FontDetails if needed
         if isinstance(font_details, dict):
-            font_details = FontDetails(
-                name=font_details.get("name", "Arial"),
-                size=font_details.get("size", 12),
-                color=(
-                    Color.from_int(font_details.get("color", 0))
-                    if isinstance(font_details.get("color"), int)
-                    else Color(0, 0, 0)
-                ),
-            )
+            font_details = FontDetails.from_dict(font_details)
         elif font_details is None:
             # Create default font_details
             font_details = FontDetails(
@@ -280,7 +325,7 @@ class TextElement(Element):
         self._font_details = font_details
 
     @property
-    def font_details(self) -> FontDetails | dict[str, Any]:
+    def font_details(self) -> FontDetails:
         return self._font_details
 
     def to_dict(self) -> dict[str, Any]:
@@ -294,21 +339,19 @@ class TextElement(Element):
                 "align": self.align,
                 "adjust_spacing": self.adjust_spacing,
                 "background_color": (list(self.background_color.to_rgba_tuple()) if self.background_color else None),
-                "font_details": {
-                    "name": self._font_details.name,
-                    "size": self._font_details.size,
-                    "color": (
-                        self._font_details.color.to_rgba_tuple()[0]
-                        if hasattr(self._font_details.color, "to_rgba_tuple")
-                        else 0
-                    ),
-                },
+                "font_details": self._font_details.to_dict(),
             }
         )
         return base_dict
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "TextElement":
+        writing_direction_val = data.get("writing_direction", (1.0, 0.0))
+        writing_direction_tuple = (
+            (float(writing_direction_val[0]), float(writing_direction_val[1]))
+            if isinstance(writing_direction_val, list | tuple) and len(writing_direction_val) == 2
+            else (1.0, 0.0)
+        )
         return cls(
             id=data["id"],
             bbox=data["bbox"],
@@ -316,7 +359,7 @@ class TextElement(Element):
             raw_text=data.get("raw_text", ""),
             z_index=data.get("z_index", 0),
             writing_mode=data.get("writing_mode", 0),
-            writing_direction=tuple(data.get("writing_direction", (1.0, 0.0))),
+            writing_direction=writing_direction_tuple,
             align=data.get("align", 0),
             adjust_spacing=data.get("adjust_spacing", False),
             background_color=(
@@ -514,13 +557,14 @@ class Layer:
         self,
         layer_id: str,
         layer_name: str,
+        z_index: int = 0,
         bbox: BoundingBox | list[float] | None = None,
         layer_type: LayerType = LayerType.BASE,
         visibility: bool = True,
         opacity: float = 1.0,
         blend_mode: BlendMode = BlendMode.NORMAL,
         children: Sequence["Layer"] | None = None,
-        content: Sequence[TextElement | ImageElement | DrawingElement] | None = None,
+        content: Sequence[Element] | None = None,
         clipping_mask: bool = False,
         layer_effects: dict[str, Any] | None = None,
     ):
@@ -532,13 +576,14 @@ class Layer:
 
         self.layer_id = layer_id
         self.layer_name = layer_name
+        self.z_index = z_index
         self.layer_type = layer_type
         self.bbox = bbox
         self.visibility = visibility
         self.opacity = opacity
         self.blend_mode = blend_mode
         self.children = list(children) if children is not None else []
-        self.content: list[TextElement | ImageElement | DrawingElement] = list(content) if content is not None else []
+        self.content: list[Element] = list(content) if content is not None else []
         self.clipping_mask = clipping_mask
         self.layer_effects = layer_effects or {}
 
@@ -546,6 +591,7 @@ class Layer:
         return {
             "layer_id": self.layer_id,
             "layer_name": self.layer_name,
+            "z_index": self.z_index,
             "layer_type": self.layer_type.value,
             "bbox": self.bbox.to_list() if hasattr(self.bbox, "to_list") else self.bbox,
             "visibility": self.visibility,
@@ -559,18 +605,31 @@ class Layer:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Layer":
-        # This is a simplified version - you'll need to implement proper deserialization
-        # for the content list based on the element types
+        ELEMENT_TYPE_MAP: dict[str, type[Element]] = {
+            "text": TextElement,
+            "image": ImageElement,
+            "drawing": DrawingElement,
+        }
+        content: list[Element] = []
+        if "content" in data:
+            for item_data in data["content"]:
+                item_type = item_data.get("type")
+                if item_type:
+                    element_class = ELEMENT_TYPE_MAP.get(item_type)
+                    if element_class:
+                        content.append(element_class.from_dict(item_data))
+
         return cls(
             layer_id=data["layer_id"],
             layer_name=data["layer_name"],
+            z_index=data.get("z_index", 0),
             bbox=data["bbox"],
             layer_type=LayerType(data["layer_type"]),
             visibility=data.get("visibility", True),
             opacity=data.get("opacity", 1.0),
             blend_mode=BlendMode(data.get("blend_mode", "Normal")),
             children=[Layer.from_dict(child) for child in data.get("children", [])],
-            content=[],  # This needs proper deserialization based on element type
+            content=content,
             clipping_mask=data.get("clipping_mask", False),
             layer_effects=data.get("layer_effects"),
         )
@@ -632,9 +691,15 @@ class PageUnit(DocumentUnit):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PageUnit":
+        size_val = data.get("size", (612, 792))
+        size_tuple = (
+            (float(size_val[0]), float(size_val[1]))
+            if isinstance(size_val, list | tuple) and len(size_val) == 2
+            else (612, 792)
+        )
         # This is a simplified version - you'll need to implement proper deserialization
         return cls(
-            size=tuple(data["size"]),
+            size=size_tuple,
             background_color=(
                 Color.from_rgba_tuple(tuple(data["background_color"])) if data.get("background_color") else None
             ),
@@ -779,14 +844,21 @@ class UniversalDocument:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "UniversalDocument":
-        # This is a simplified version - you'll need to implement proper deserialization
-        # for the document_structure based on the unit types
+        doc_structure = []
+        if "document_structure" in data:
+            for unit_data in data["document_structure"]:
+                unit_type = unit_data.get("type")
+                if unit_type == DocumentType.PAGE.value:
+                    doc_structure.append(PageUnit.from_dict(unit_data))
+                elif unit_type == DocumentType.CANVAS.value:
+                    doc_structure.append(CanvasUnit.from_dict(unit_data))
+
         return cls(
             version=data.get("version", UNIVERSAL_IDM_VERSION),
             engine=data.get("engine", "unknown"),
             engine_version=data.get("engine_version", "unknown"),
             metadata=DocumentMetadata.from_dict(data.get("metadata", {})),
-            document_structure=[],  # This needs proper deserialization based on unit type
+            document_structure=doc_structure,
         )
 
     def to_json(self, indent: int = 2) -> str:

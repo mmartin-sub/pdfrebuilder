@@ -23,7 +23,7 @@ class TestEnhancedSecurity:
 
     def test_resource_monitoring(self):
         """Test resource monitoring functionality."""
-        from tests.security_test_config import create_safe_runner
+        from tests.fixtures.security_test_config import create_safe_runner
 
         runner = create_safe_runner()
 

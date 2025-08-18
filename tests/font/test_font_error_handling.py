@@ -86,7 +86,7 @@ class TestFontValidator:
             # Restore permissions for cleanup
             os.chmod(font_file, 0o644)
 
-    @patch("src.font_utils.TTFont")
+    @patch("pdfrebuilder.font_utils.TTFont")
     def test_validate_font_format_success(self, mock_ttfont, tmp_path):
         """Test successful font format validation"""
         validator = FontValidator()
@@ -104,9 +104,10 @@ class TestFontValidator:
         result = validator.validate_font_format(font_file)
 
         assert result.valid is True
+        assert result.metadata is not None
         assert result.metadata["format"].value == "TTF"
 
-    @patch("src.font_utils.TTFont")
+    @patch("pdfrebuilder.font_utils.TTFont")
     def test_validate_font_format_missing_tables(self, mock_ttfont, tmp_path):
         """Test font format validation with missing required tables"""
         validator = FontValidator()
@@ -186,6 +187,7 @@ class TestFontErrorReporter:
         reporter.report_registration_error("TestFont", error, context)
 
         summary = reporter.generate_error_summary()
+        assert summary is not None
         assert summary["registration_errors"] == 1
         assert summary["need_font_file_errors"] == 1
 
@@ -280,6 +282,7 @@ class TestFallbackFontManager:
         )
 
         summary = manager.get_substitution_summary()
+        assert summary is not None
         assert summary["total_substitutions"] == 1
         assert summary["substitutions"][0]["original_font"] == "OriginalFont"
         assert summary["substitutions"][0]["substituted_font"] == "FallbackFont"
@@ -364,7 +367,7 @@ class TestEnhancedFontRegistration:
 
     def test_register_font_with_validation_success(self, mock_page):
         """Test successful font registration with validation"""
-        with patch("src.font_utils.STANDARD_PDF_FONTS", ["Helvetica"]):
+        with patch("pdfrebuilder.font_utils.STANDARD_PDF_FONTS", ["Helvetica"]):
             result = register_font_with_validation(page=mock_page, font_name="Helvetica", verbose=False)
 
         assert result.success is True
@@ -374,18 +377,19 @@ class TestEnhancedFontRegistration:
 
     def test_register_font_with_validation_need_font_file_error(self, failing_mock_page):
         """Test registration with 'need font file or buffer' error"""
-        with patch("src.font_utils._find_font_file_for_name", return_value="/mock/font.ttf"):
+        with patch("pdfrebuilder.font_utils._find_font_file_for_name", return_value="/mock/font.ttf"):
             result = register_font_with_validation(page=failing_mock_page, font_name="TestFont", verbose=False)
 
         assert result.success is False
+        assert result.error_message is not None
         assert "need font file or buffer" in result.error_message
 
     def test_register_font_with_validation_fallback(self, mock_page):
         """Test registration with fallback font usage"""
         # Mock font file not found, but fallback succeeds
         with (
-            patch("src.font_utils._find_font_file_for_name", return_value=None),
-            patch("src.font_utils.STANDARD_PDF_FONTS", ["Helvetica"]),
+            patch("pdfrebuilder.font_utils._find_font_file_for_name", return_value=None),
+            patch("pdfrebuilder.font_utils.STANDARD_PDF_FONTS", ["Helvetica"]),
         ):
             result = register_font_with_validation(page=mock_page, font_name="NonexistentFont", verbose=False)
 
@@ -393,7 +397,7 @@ class TestEnhancedFontRegistration:
         assert result.success is True
         assert result.fallback_used is True
 
-    @patch("src.font_utils.register_font_with_validation")
+    @patch("pdfrebuilder.font_utils.register_font_with_validation")
     def test_ensure_font_registered_integration(self, mock_register, mock_page):
         """Test ensure_font_registered integration with enhanced system"""
         # Mock successful registration
@@ -406,7 +410,7 @@ class TestEnhancedFontRegistration:
         assert result == "TestFont"
         mock_register.assert_called_once()
 
-    @patch("src.font_utils.register_font_with_validation")
+    @patch("pdfrebuilder.font_utils.register_font_with_validation")
     def test_ensure_font_registered_critical_failure(self, mock_register, mock_page):
         """Test ensure_font_registered with critical failure"""
         # Mock critical failure
@@ -426,12 +430,12 @@ class TestEnhancedFontRegistration:
 class TestFontErrorIntegration:
     """Test integration of font error handling with rendering system"""
 
-    @patch("src.font_utils.register_font_with_validation")
+    @patch("pdfrebuilder.font_utils.register_font_with_validation")
     def test_render_text_with_fallback_integration(self, mock_register):
         """Test _render_text_with_fallback integration with font error handling"""
         import fitz
 
-        from pdfrebuilder.render import _render_text_with_fallback
+        from pdfrebuilder.core.render import _render_text_with_fallback
 
         # Mock successful registration
         mock_register.return_value = FontRegistrationResult(
@@ -445,15 +449,16 @@ class TestFontErrorIntegration:
 
         result = _render_text_with_fallback(mock_page, mock_rect, "Test text", "TestFont", 12, (0, 0, 0))
 
+        assert result is not None
         assert result["fontname"] == "TestFont"
         mock_register.assert_called_once()
 
-    @patch("src.font_utils.register_font_with_validation")
+    @patch("pdfrebuilder.font_utils.register_font_with_validation")
     def test_render_text_critical_font_error(self, mock_register):
         """Test _render_text_with_fallback with critical font error"""
         import fitz
 
-        from pdfrebuilder.render import _render_text_with_fallback
+        from pdfrebuilder.core.render import _render_text_with_fallback
 
         # Mock critical failure
         critical_result = FontRegistrationResult(
@@ -516,6 +521,7 @@ class TestFontErrorScenarios:
 
         # Verify error was recorded
         assert isinstance(error, FontRegistrationError)
+        assert error.is_need_font_file_error() is True
 
         # Check error summary
         summary = font_test_environment.teardown()

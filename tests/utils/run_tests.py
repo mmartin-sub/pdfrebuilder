@@ -15,8 +15,8 @@ import sys
 from pathlib import Path
 
 # Add src to path for security utilities
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from security.subprocess_utils import SecureSubprocessRunner, SecurityError
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+from pdfrebuilder.security.subprocess_utils import SecureSubprocessRunner, SecurityError
 
 
 def run_tests(verbose_level: str = "quiet", coverage: bool = False) -> int:

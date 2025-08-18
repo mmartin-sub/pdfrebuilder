@@ -6,14 +6,17 @@ including code examples, API references, configuration examples, and coverage.
 """
 
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 import pytest
 
-from pdfrebuilder.docs.coverage_reporter import DocumentationCoverageReporter
-from pdfrebuilder.docs.validation import DocumentationValidator, ValidationStatus
+# Add docs/tools to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "docs" / "tools"))
+from coverage_reporter import DocumentationCoverageReporter  # type: ignore[import]
+from validation import DocumentationValidator, ValidationStatus  # type: ignore[import]
 
 
 class TestComprehensiveDocumentation(unittest.TestCase):

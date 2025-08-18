@@ -25,7 +25,7 @@ class LegacyValidator(Validator):
             if gray1.shape != gray2.shape:
                 gray2 = cv2.resize(gray2, (gray1.shape[1], gray1.shape[0]))
 
-            # Calculate SSIM using the legacy method
+            # Calculate SSIM using the legacy method, ensuring score is a float
             score, _ = compare_ssim(gray1, gray2, full=True)
 
             return ValidationResult(passed=score >= threshold, score=score, engine_used="legacy")

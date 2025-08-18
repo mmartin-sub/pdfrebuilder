@@ -25,6 +25,7 @@ Example:
 
 import logging
 import os
+from pathlib import Path
 from typing import Any
 
 
@@ -40,7 +41,9 @@ class OutputConfig:
     def base_output_dir(self) -> str:
         """Get the base output directory for all outputs"""
         if self._base_output_dir is None:
-            self._base_output_dir = os.path.join(".", "output")
+            # Use pathlib to ensure the path is relative to the project root
+            project_root = Path(__file__).resolve().parents[2]
+            self._base_output_dir = str(project_root / "output")
         os.makedirs(self._base_output_dir, exist_ok=True)
         return self._base_output_dir
 
@@ -420,6 +423,10 @@ def configure_logging(
 
     handlers: list[logging.StreamHandler | logging.FileHandler] = [logging.StreamHandler()]
     if log_file:
+        # Create log directory if it doesn't exist
+        log_dir = os.path.dirname(log_file)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
         handlers.append(logging.FileHandler(log_file, encoding="utf-8"))
     logging.basicConfig(
         level=log_level,

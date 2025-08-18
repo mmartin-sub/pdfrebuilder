@@ -26,7 +26,7 @@ class ScikitImageValidator(Validator):
                 gray2 = cv2.resize(gray2, (gray1.shape[1], gray1.shape[0]))
 
             # Calculate SSIM
-            score, _ = ssim(gray1, gray2, full=True)
+            score, _ = ssim(gray1, gray2, full=True, gradient=False)
 
             return ValidationResult(passed=score >= threshold, score=score, engine_used="scikit-image")
         except Exception as e:

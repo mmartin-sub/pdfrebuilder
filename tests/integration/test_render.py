@@ -1,7 +1,7 @@
 # tests/test_render.py
 import pytest
 
-from pdfrebuilder.render import _convert_color_to_rgb
+from pdfrebuilder.engine.tool_fritz import _convert_color_to_rgb
 
 
 def test_convert_color_to_rgb_int():

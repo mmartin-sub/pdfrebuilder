@@ -165,7 +165,8 @@ class BackwardCompatibilityTester:
             # Verify passed test case
             passed_case = testcases[0]
             assert passed_case.get("name") == "Validation 1"
-            assert "original1" in passed_case.get("classname")
+            classname = passed_case.get("classname")
+            assert classname is not None and "original1" in classname
             assert len(passed_case.findall("failure")) == 0
 
             # Verify failed test case
@@ -176,7 +177,8 @@ class BackwardCompatibilityTester:
 
             failure = failures[0]
             assert failure.get("type") == "moderate_visual_difference"
-            assert "0.75" in failure.get("message")
+            message = failure.get("message")
+            assert message is not None and "0.75" in message
 
     def test_html_report_structure(self):
         """Test that HTML report structure remains unchanged"""
@@ -298,7 +300,8 @@ class BackwardCompatibilityTester:
         xml_content = "<root><child>content</child></root>"
         parsed = secure_xml_parse(xml_content)
         assert parsed.tag == "root"
-        assert parsed.find("child").text == "content"
+        child = parsed.find("child")
+        assert child is not None and child.text == "content"
 
         # Test secure XML pretty printing
         from xml.etree.ElementTree import Element, SubElement

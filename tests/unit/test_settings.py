@@ -2,6 +2,7 @@
 Tests for settings and configuration management.
 """
 
+import logging
 from unittest.mock import patch
 
 from pdfrebuilder.settings import (
@@ -160,7 +161,7 @@ class TestSettings:
     def test_configure_logging_with_file(self, mock_file_handler, mock_basic_config):
         """Test logging configuration with file output"""
         log_file = "/tmp/test.log"
-        log_level = "DEBUG"
+        log_level = logging.DEBUG
         log_format = "%(message)s"
 
         configure_logging(log_file=log_file, log_level=log_level, log_format=log_format)
@@ -174,7 +175,7 @@ class TestSettings:
     @patch("src.settings.logging.basicConfig")
     def test_configure_logging_console_only(self, mock_basic_config):
         """Test logging configuration for console only"""
-        log_level = "INFO"
+        log_level = logging.INFO
         log_format = "%(levelname)s: %(message)s"
 
         configure_logging(log_level=log_level, log_format=log_format)

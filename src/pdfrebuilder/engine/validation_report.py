@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from pdfrebuilder.render import json_serializer
+from ..core.render import json_serializer
 
 
 # XML Security Configuration
@@ -73,18 +73,10 @@ try:
     from xml.etree.ElementTree import Element, SubElement, tostring  # nosec B405 - safe for XML creation only
 
     # Configure defusedxml with secure defaults
-    import defusedxml
     import defusedxml.ElementTree as defused_ET
     from defusedxml.minidom import parseString
 
-    # Defuse standard library XML parsers to prevent security vulnerabilities
-    defusedxml.defuse_stdlib()  # nosec B405, B408 - defusedxml.defuse_stdlib() secures all XML parsers
-
     # Set secure defaults based on our configuration
-    defused_ET.XMLParser.forbid_dtd = XML_SECURITY_CONFIG.forbid_dtd
-    defused_ET.XMLParser.forbid_entities = XML_SECURITY_CONFIG.forbid_entities
-    defused_ET.XMLParser.forbid_external = XML_SECURITY_CONFIG.forbid_external
-
     XML_SECURITY_ENABLED = True
     logger = logging.getLogger(__name__)
     logger.info("Using secure defusedxml library for XML processing")
@@ -211,7 +203,7 @@ def _check_fallback_security_constraints(xml_content: str) -> list[str]:
 logger = logging.getLogger(__name__)
 
 
-def configure_xml_security(config: XMLSecurityConfig = None) -> None:
+def configure_xml_security(config: XMLSecurityConfig | None = None) -> None:
     """
     Configure defusedxml with security settings
 
@@ -225,11 +217,7 @@ def configure_xml_security(config: XMLSecurityConfig = None) -> None:
 
     if XML_SECURITY_ENABLED:
         try:
-            # Apply configuration to defusedxml
-            defused_ET.XMLParser.forbid_dtd = XML_SECURITY_CONFIG.forbid_dtd
-            defused_ET.XMLParser.forbid_entities = XML_SECURITY_CONFIG.forbid_entities
-            defused_ET.XMLParser.forbid_external = XML_SECURITY_CONFIG.forbid_external
-
+            # Apply configuration to defusedxml - this is now done at parse time
             logger.info(
                 f"XML security configuration updated: DTD={XML_SECURITY_CONFIG.forbid_dtd}, "
                 f"Entities={XML_SECURITY_CONFIG.forbid_entities}, "
@@ -384,9 +372,19 @@ def secure_xml_parse(xml_content: str):
                 )
 
         # Use the standard library but with additional safety measures
-        # Bandit: B314 - This is a fallback when defusedxml is unavailable
-        # Security is handled via _check_fallback_security_constraints() which validates content
-        return defused_ET.fromstring(xml_content)  # nosec B314 - secure fallback with validation
+        if XML_SECURITY_ENABLED:
+            # Create a secure parser instance with current config
+            parser = defused_ET.XMLParser(  # nosec B314
+                forbid_dtd=XML_SECURITY_CONFIG.forbid_dtd,
+                forbid_entities=XML_SECURITY_CONFIG.forbid_entities,
+                forbid_external=XML_SECURITY_CONFIG.forbid_external,
+            )
+            return defused_ET.fromstring(xml_content, parser=parser)  # nosec B314
+        else:
+            # Insecure fallback, security checks are done above
+            # Bandit: B314 - This is a fallback when defusedxml is unavailable
+            # Security is handled via _check_fallback_security_constraints() which validates content
+            return defused_ET.fromstring(xml_content)  # nosec B314 - secure fallback with validation
 
     except (XMLSecurityError, XMLParsingError):
         # Re-raise our own exceptions without modification
