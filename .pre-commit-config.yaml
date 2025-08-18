@@ -86,7 +86,7 @@ repos:
         args:
           - -c
           - pyproject.toml
-        exclude: ^(tests/|examples/|\.kiro/|projects/|templates/|\.history/)
+        exclude: ^(tests/|examples/|\.kiro/|projects/|templates/|stubs/|scripts/|\.history/)
         additional_dependencies:
           - tomli
 

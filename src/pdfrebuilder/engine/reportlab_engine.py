@@ -8,7 +8,7 @@ proper font embedding, and licensing verification capabilities.
 import logging
 import os
 import sys
-from typing import Any
+from typing import Any, ClassVar
 
 from reportlab.lib.colors import Color as RLColor
 from reportlab.lib.pagesizes import letter
@@ -20,7 +20,13 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from pdfrebuilder.engine.pdf_rendering_engine import PDFRenderingEngine, RenderingError
 from pdfrebuilder.font.font_validator import FontValidator
-from pdfrebuilder.models.universal_idm import Color, Layer, PageUnit, TextElement, UniversalDocument
+from pdfrebuilder.models.universal_idm import (
+    Color,
+    Layer,
+    PageUnit,
+    TextElement,
+    UniversalDocument,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +36,7 @@ class ReportLabEngine(PDFRenderingEngine):
 
     engine_name = "reportlab"
     engine_version = "4.4.3"
-    supported_features = {
+    supported_features: ClassVar[dict[str, bool]] = {
         "rotation": True,
         "images": True,
         "drawings": True,
@@ -92,8 +98,8 @@ class ReportLabEngine(PDFRenderingEngine):
             )
 
             # Store metadata for later use
-            setattr(doc, "_metadata", metadata)
-            setattr(doc, "_story", [])
+            doc._metadata = metadata
+            doc._story = []
 
             return doc
 
@@ -113,7 +119,7 @@ class ReportLabEngine(PDFRenderingEngine):
             from reportlab.platypus import PageBreak
 
             if hasattr(document, "_story"):
-                story = getattr(document, "_story")
+                story = document._story
                 if story:
                     story.append(PageBreak())
 
@@ -129,7 +135,9 @@ class ReportLabEngine(PDFRenderingEngine):
         except Exception as e:
             raise RenderingError(f"Failed to add page: {e!s}")
 
-    def render_element(self, page: Any, element: dict[str, Any], resources: dict[str, Any]) -> dict[str, Any]:
+    def render_element(
+        self, page: Any, element: dict[str, Any], resources: dict[str, Any]
+    ) -> dict[str, Any]:
         """Render an element on the page."""
         try:
             result = {
@@ -149,7 +157,9 @@ class ReportLabEngine(PDFRenderingEngine):
             else:
                 result["status"] = "unsupported"
                 result["warnings"].append(f"Unsupported element type: {element_type}")
-                self.warn_unsupported_feature(element_type, f"Element ID: {element.get('id', 'unknown')}")
+                self.warn_unsupported_feature(
+                    element_type, f"Element ID: {element.get('id', 'unknown')}"
+                )
 
             return result
 
@@ -168,7 +178,7 @@ class ReportLabEngine(PDFRenderingEngine):
 
             # Build the document with the story
             if hasattr(document, "_story"):
-                document.build(getattr(document, "_story"))
+                document.build(document._story)
             else:
                 # Create empty document if no story
                 document.build([])
@@ -205,7 +215,9 @@ class ReportLabEngine(PDFRenderingEngine):
 
             # Add to page elements
             if "elements" in page:
-                page["elements"].append({"type": "text", "paragraph": paragraph, "bbox": bbox})
+                page["elements"].append(
+                    {"type": "text", "paragraph": paragraph, "bbox": bbox}
+                )
 
         except Exception as e:
             result["status"] = "error"
@@ -229,7 +241,9 @@ class ReportLabEngine(PDFRenderingEngine):
 
             # Add to page elements
             if "elements" in page:
-                page["elements"].append({"type": "image", "file": image_file, "bbox": bbox})
+                page["elements"].append(
+                    {"type": "image", "file": image_file, "bbox": bbox}
+                )
 
         except Exception as e:
             result["status"] = "error"
@@ -327,7 +341,9 @@ class ReportLabEngine(PDFRenderingEngine):
         """Generate PDF from universal JSON config using ReportLab."""
         from pdfrebuilder.engine.performance_metrics import measure_engine_performance
 
-        with measure_engine_performance(self.engine_name, self.engine_version) as metrics:
+        with measure_engine_performance(
+            self.engine_name, self.engine_version
+        ) as metrics:
             try:
                 # Parse the universal document
                 if isinstance(config, dict):
@@ -350,7 +366,9 @@ class ReportLabEngine(PDFRenderingEngine):
                         self._render_page_canvas(output_pdf_path, page_unit, document)
                     else:
                         logger.warning(f"Skipping non-page unit: {type(page_unit)}")
-                        metrics["warnings"].append(f"Skipped non-page unit: {type(page_unit)}")
+                        metrics["warnings"].append(
+                            f"Skipped non-page unit: {type(page_unit)}"
+                        )
 
                 # Update metrics
                 metrics["page_count"] = page_count
@@ -362,7 +380,9 @@ class ReportLabEngine(PDFRenderingEngine):
                 logger.error(f"Error generating PDF with ReportLab: {e}")
                 raise
 
-    def _create_document(self, document: UniversalDocument, output_path: str) -> SimpleDocTemplate:
+    def _create_document(
+        self, document: UniversalDocument, output_path: str
+    ) -> SimpleDocTemplate:
         """Create a ReportLab document with proper configuration."""
         # Get page size from first page or use default
         page_size = letter  # Default
@@ -384,7 +404,9 @@ class ReportLabEngine(PDFRenderingEngine):
 
         return doc
 
-    def _render_page_canvas(self, output_path: str, page_unit: PageUnit, document: UniversalDocument) -> None:
+    def _render_page_canvas(
+        self, output_path: str, page_unit: PageUnit, document: UniversalDocument
+    ) -> None:
         """Render a single page using ReportLab canvas."""
         # Get page size
         page_size: tuple[float, float] = (600.0, 400.0)  # Default
@@ -457,7 +479,9 @@ class ReportLabEngine(PDFRenderingEngine):
         except Exception as e:
             logger.error(f"Error rendering text element {element.id}: {e}")
 
-    def _render_page(self, doc: SimpleDocTemplate, page_unit: PageUnit, document: UniversalDocument) -> None:
+    def _render_page(
+        self, doc: SimpleDocTemplate, page_unit: PageUnit, document: UniversalDocument
+    ) -> None:
         """Render a single page using ReportLab."""
         # Create a new page
         story: list[Any] = []
@@ -482,7 +506,9 @@ class ReportLabEngine(PDFRenderingEngine):
         # Build the page
         doc.build(story)
 
-    def _render_text_element(self, story: list[Any], element: TextElement, layer: Layer) -> None:
+    def _render_text_element(
+        self, story: list[Any], element: TextElement, layer: Layer
+    ) -> None:
         """Render a text element using ReportLab."""
         try:
             # Register font if needed
@@ -613,7 +639,11 @@ class ReportLabEngine(PDFRenderingEngine):
                 "available": is_available,
                 "embeddable": embeddable,
                 "status": "valid" if embeddable else "restricted",
-                "reason": ("Font available and embeddable" if embeddable else "Font not available or restricted"),
+                "reason": (
+                    "Font available and embeddable"
+                    if embeddable
+                    else "Font not available or restricted"
+                ),
             }
         except Exception as e:
             return {

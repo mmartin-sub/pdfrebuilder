@@ -38,10 +38,11 @@ from pathlib import Path
 
 import pytest
 
-from pdfrebuilder.pipeline import run_pipeline
 from pdfrebuilder.core.generate_debug_pdf_layers import generate_debug_pdf_layers
 from pdfrebuilder.engine.visual_validator import validate_documents
+from pdfrebuilder.pipeline import run_pipeline
 from tests.config import get_unique_id
+
 from .test_e2e_pdf_pipeline import create_comprehensive_drawing_test_config
 from .test_e2e_pdf_regeneration import create_pdf_with_elements
 

@@ -6,15 +6,22 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pdfrebuilder"
-dynamic = ["version"]  # use VCS for version like project 1
+dynamic = ["version"] # use VCS for version like project 1
 description = "Extract and rebuild PDF layouts with high fidelity"
 readme = "README.md"
-requires-python = ">=3.12"  # align with project 1; bump if you need 3.11
+requires-python = ">=3.12" # align with project 1; bump if you need 3.11
 authors = [
-    {name = "Michel Martin", email = "172776424+mmartin-sub@users.noreply.github.com"},
+    { name = "Michel Martin", email = "172776424+mmartin-sub@users.noreply.github.com" },
 ]
 license = { file = "LICENSE" } # { text = "MIT" }
-keywords = ["pdf", "layout", "extraction", "rebuilding", "document-processing", "psd"]
+keywords = [
+    "pdf",
+    "layout",
+    "extraction",
+    "rebuilding",
+    "document-processing",
+    "psd",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -68,6 +75,7 @@ test = [
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
     "pytest-asyncio>=1.1.0",
+    "jsonschema>=4.19.0",
 ]
 dev = [
     "pdfrebuilder[test]",
@@ -76,6 +84,10 @@ dev = [
     "ruff>=0.5.0",
     "bandit",
     "detect-secrets",
+
+    "toml",      # needed to generate the stubs
+    "packaging", # Add this line
+    "requests",  # part of the std deps but still needed for dev
 
     # Legacy/compat tools
     "mypy>=1.10.0",
@@ -90,11 +102,10 @@ dev = [
     "types-beautifulsoup4",
     "types-fpdf2",
     "types-jinja2",
+    "types-toml",
 
 ]
-all = [
-    "pdfrebuilder[test,dev,psd,wand,validation]",
-]
+all = ["pdfrebuilder[test,dev,psd,wand,validation]"]
 # so you can use:
 # hatch env remove/prune
 # hatch env create
@@ -111,8 +122,17 @@ packages = ["src/pdfrebuilder"]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
-    ".trunk/", ".git/", ".kiro/", "book/", "*.log", "test_*", "__pycache__/",
-    "*.pyc", ".pytest_cache/", ".mypy_cache/", ".ruff_cache/",
+    ".trunk/",
+    ".git/",
+    ".kiro/",
+    "book/",
+    "*.log",
+    "test_*",
+    "__pycache__/",
+    "*.pyc",
+    ".pytest_cache/",
+    ".mypy_cache/",
+    ".ruff_cache/",
 ]
 
 [tool.hatch.envs.default]
@@ -130,12 +150,7 @@ fix.dependencies = ["ruff>=0.5.0"]
 fix.command = "ruff check --fix {args:.}"
 
 [tool.hatch.envs.default.scripts]
-check = [
-    "lint-check",
-    "format-check",
-    "types-pyright",
-    "security",
-]
+check = ["lint-check", "format-check", "types-pyright", "security"]
 test = "pytest {args:tests/}"
 test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src {args:tests/}"
 
@@ -159,12 +174,22 @@ check-updates = "uv pip list --outdated"
 detect-secrets-scan = "detect-secrets scan --baseline .secrets.baseline"
 detect-secrets-audit = "detect-secrets audit .secrets.baseline"
 
+
+# This script cleans and regenerates all type stubs.
+# Usage: hatch run stubs:update
+# Checks for community-maintained stubs on PyPI
+stubs-check = "python scripts/update-stubs.py check"
+
+# --i.e. hatch run python scripts/update-stubs.py generate --only autogen_agentchat
+# generate is too broad and some libs are causing issues
+stubs-generate = "python scripts/update-stubs.py generate"
+
 # --- RUFF ---
 
 [tool.ruff]
 target-version = "py312"
 line-length = 120
-extend-exclude = [".history"]
+extend-exclude = [".history", "stubs"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "B", "C4", "UP", "RUF"]
@@ -176,11 +201,48 @@ allowed-confusables = ["ℹ"]
 known-first-party = ["pdfrebuilder"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["B007", "B017", "F841", "F401", "E501", "RUF002", "RUF003", "RUF012"]
-"examples/**/*.py" = ["B007", "B017", "F841", "F401", "E501", "RUF002", "RUF003", "E402"]
+"tests/**/*.py" = [
+    "B007",
+    "B017",
+    "F841",
+    "F401",
+    "E501",
+    "RUF002",
+    "RUF003",
+    "RUF012",
+]
+"examples/**/*.py" = [
+    "B007",
+    "B017",
+    "F841",
+    "F401",
+    "E501",
+    "RUF002",
+    "RUF003",
+    "E402",
+]
 "scripts/**/*.py" = ["B007", "B017", "F841", "F401", "E501", "E402"]
-"docs/examples/**/*.py" = ["B007", "B017", "F841", "F401", "E501", "RUF002", "RUF003"]
+"docs/examples/**/*.py" = [
+    "B007",
+    "B017",
+    "F841",
+    "F401",
+    "E501",
+    "RUF002",
+    "RUF003",
+]
 "**/__init__.py" = ["F401"]
+
+"stubs/**/*.py*" = [
+    "B007",
+    "B017",
+    "F841",
+    "F401",
+    "E501",
+    "RUF002",
+    "RUF003",
+    "F405",
+] # should not be tested
 
 [tool.ruff.format]
 quote-style = "double"
@@ -211,10 +273,13 @@ allow_untyped_globals = true
 # ignore_missing_imports for heavy/optional libs you use
 [[tool.mypy.overrides]]
 module = [
-    "fitz", "fitz.*",              # PyMuPDF
-    "cv2", "cv2.*",                # OpenCV
-    "skimage", "skimage.*",        # scikit-image (optional extra)
-    "PIL.*",                       # Pillow
+    "fitz",
+    "fitz.*",        # PyMuPDF
+    "cv2",
+    "cv2.*",         # OpenCV
+    "skimage",
+    "skimage.*",     # scikit-image (optional extra)
+    "PIL.*",         # Pillow
     "reportlab.*",
     "rich.*",
     "json5.*",
@@ -234,7 +299,15 @@ ignore_missing_imports = true
 [tool.pyright]
 pythonVersion = "3.12"
 include = ["src", "tests"]
-exclude = [".venv", "build", "dist", "**/__pycache__", ".trunk", "docs", "tests/**/wip_*.py"]
+exclude = [
+    ".venv",
+    "build",
+    "dist",
+    "**/__pycache__",
+    ".trunk",
+    "docs",
+    "tests/**/wip_*.py",
+]
 typeCheckingMode = "standard"
 reportMissingImports = true
 reportMissingTypeStubs = false
@@ -298,10 +371,15 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 log_level = "WARNING"
 log_disable = ["fontTools.ttLib.ttFont", "fontTools.ttLib", "fontTools"]
 markers = [
-    "human_review: marks tests requiring human visual review", "e2e: marks end-to-end integration tests",
-    "unit: marks unit tests", "integration: marks integration tests", "performance: marks performance tests",
-    "psd: marks tests requiring PSD support (psd-tools)", "validation: marks tests requiring image validation (scikit-image)",
-    "ocr: marks tests requiring OCR support (pytesseract)", "optional_deps: marks tests requiring any optional dependencies"
+    "human_review: marks tests requiring human visual review",
+    "e2e: marks end-to-end integration tests",
+    "unit: marks unit tests",
+    "integration: marks integration tests",
+    "performance: marks performance tests",
+    "psd: marks tests requiring PSD support (psd-tools)",
+    "validation: marks tests requiring image validation (scikit-image)",
+    "ocr: marks tests requiring OCR support (pytesseract)",
+    "optional_deps: marks tests requiring any optional dependencies",
 ]
 
 # --- BANDIT ---
@@ -309,3 +387,41 @@ markers = [
 [tool.bandit]
 exclude_dirs = ["tests", ".venv"]
 skips = ["B101"]
+
+
+[tool.coverage.run]
+source = ["pdfrebuilder"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/migrations/*",
+    "*/mypy_cache/*",
+    "*/ruff_cache/*",
+    "*/pytest_cache/*",
+    "*/coverage/*",
+]
+relative_files = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "raise ImportError",
+    "except ImportError:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.coverage.html]
+directory = "tests/htmlcov"

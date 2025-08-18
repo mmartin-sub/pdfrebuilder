@@ -96,9 +96,9 @@ import os
 import fitz
 import pytest
 
-from pdfrebuilder.pipeline import run_pipeline
 from pdfrebuilder.core.generate_debug_pdf_layers import generate_debug_pdf_layers
 from pdfrebuilder.engine.visual_validator import validate_documents
+from pdfrebuilder.pipeline import run_pipeline
 
 # Configure logging
 from pdfrebuilder.settings import configure_logging, get_config_value

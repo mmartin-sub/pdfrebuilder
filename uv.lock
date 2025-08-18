@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 
 [[package]]
@@ -621,7 +621,6 @@ dependencies = [
     { name = "defusedxml" },
     { name = "fonttools", extra = ["lxml", "unicode", "woff"] },
     { name = "json5" },
-    { name = "jsonschema" },
     { name = "opencv-python" },
     { name = "pillow" },
     { name = "platformdirs" },
@@ -642,37 +641,47 @@ dependencies = [
 all = [
     { name = "bandit" },
     { name = "detect-secrets" },
+    { name = "jsonschema" },
     { name = "mypy" },
     { name = "numpy" },
+    { name = "packaging" },
     { name = "psd-tools" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
+    { name = "requests" },
     { name = "ruff" },
     { name = "scikit-image" },
+    { name = "toml" },
     { name = "types-beautifulsoup4" },
     { name = "types-fpdf2" },
     { name = "types-jinja2" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
+    { name = "types-toml" },
     { name = "vulture" },
     { name = "wand" },
 ]
 dev = [
     { name = "bandit" },
     { name = "detect-secrets" },
+    { name = "jsonschema" },
     { name = "mypy" },
+    { name = "packaging" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
+    { name = "requests" },
     { name = "ruff" },
+    { name = "toml" },
     { name = "types-beautifulsoup4" },
     { name = "types-fpdf2" },
     { name = "types-jinja2" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
+    { name = "types-toml" },
     { name = "vulture" },
 ]
 psd = [
@@ -680,6 +689,7 @@ psd = [
     { name = "psd-tools" },
 ]
 test = [
+    { name = "jsonschema" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -701,13 +711,17 @@ requires-dist = [
     { name = "detect-secrets", marker = "extra == 'dev'" },
     { name = "fonttools", extras = ["lxml", "ufo", "unicode", "woff"], specifier = ">=4.47.0" },
     { name = "json5", specifier = ">=0.9.14" },
-    { name = "jsonschema", specifier = ">=4.0.0" },
+    { name = "jsonschema", marker = "extra == 'all'", specifier = ">=4.19.0" },
+    { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.19.0" },
+    { name = "jsonschema", marker = "extra == 'test'", specifier = ">=4.19.0" },
     { name = "mypy", marker = "extra == 'all'", specifier = ">=1.10.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10.0" },
     { name = "numpy", marker = "extra == 'all'", specifier = ">=1.24.0" },
     { name = "numpy", marker = "extra == 'psd'", specifier = ">=1.24.0" },
     { name = "numpy", marker = "extra == 'validation'", specifier = ">=1.24.0" },
     { name = "opencv-python", specifier = ">=4.12.0" },
+    { name = "packaging", marker = "extra == 'all'" },
+    { name = "packaging", marker = "extra == 'dev'" },
     { name = "pillow", specifier = ">=10.2.0" },
     { name = "platformdirs", specifier = ">=4.0.0" },
     { name = "plumbum", specifier = ">=1.8.0" },
@@ -731,11 +745,15 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=6.2.1" },
     { name = "reportlab", specifier = ">=4.0.0" },
     { name = "requests", specifier = ">=2.31.0" },
+    { name = "requests", marker = "extra == 'all'" },
+    { name = "requests", marker = "extra == 'dev'" },
     { name = "rich", specifier = ">=13.7.0" },
     { name = "ruff", marker = "extra == 'all'", specifier = ">=0.5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5.0" },
     { name = "scikit-image", marker = "extra == 'all'", specifier = ">=0.25.2" },
     { name = "scikit-image", marker = "extra == 'validation'", specifier = ">=0.25.2" },
+    { name = "toml", marker = "extra == 'all'" },
+    { name = "toml", marker = "extra == 'dev'" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.0" },
     { name = "tomli-w", specifier = ">=1.0.0" },
     { name = "typer", specifier = ">=0.9.0" },
@@ -749,6 +767,8 @@ requires-dist = [
     { name = "types-pyyaml", marker = "extra == 'dev'" },
     { name = "types-requests", marker = "extra == 'all'" },
     { name = "types-requests", marker = "extra == 'dev'" },
+    { name = "types-toml", marker = "extra == 'all'" },
+    { name = "types-toml", marker = "extra == 'dev'" },
     { name = "vulture", marker = "extra == 'all'", specifier = ">=2.11" },
     { name = "vulture", marker = "extra == 'dev'", specifier = ">=2.11" },
     { name = "wand", marker = "extra == 'all'", specifier = ">=0.6.13" },
@@ -1414,6 +1434,15 @@ wheels = [
 ]
 
 [[package]]
+name = "toml"
+version = "0.10.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253, upload-time = "2020-11-01T01:40:22.204Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588, upload-time = "2020-11-01T01:40:20.672Z" },
+]
+
+[[package]]
 name = "tomli-w"
 version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1510,6 +1539,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6d/7f/73b3a04a53b0fd2a911d4ec517940ecd6600630b559e4505cc7b68beb5a0/types_requests-2.32.4.20250611.tar.gz", hash = "sha256:741c8777ed6425830bf51e54d6abe245f79b4dcb9019f1622b773463946bf826", size = 23118, upload-time = "2025-06-11T03:11:41.272Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3d/ea/0be9258c5a4fa1ba2300111aa5a0767ee6d18eb3fd20e91616c12082284d/types_requests-2.32.4.20250611-py3-none-any.whl", hash = "sha256:ad2fe5d3b0cb3c2c902c8815a70e7fb2302c4b8c1f77bdcd738192cdb3878072", size = 20643, upload-time = "2025-06-11T03:11:40.186Z" },
+]
+
+[[package]]
+name = "types-toml"
+version = "0.10.8.20240310"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/47/3e4c75042792bff8e90d7991aa5c51812cc668828cc6cce711e97f63a607/types-toml-0.10.8.20240310.tar.gz", hash = "sha256:3d41501302972436a6b8b239c850b26689657e25281b48ff0ec06345b8830331", size = 4392, upload-time = "2024-03-10T02:18:37.518Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/da/a2/d32ab58c0b216912638b140ab2170ee4b8644067c293b170e19fba340ccc/types_toml-0.10.8.20240310-py3-none-any.whl", hash = "sha256:627b47775d25fa29977d9c70dc0cbab3f314f32c8d8d0c012f2ef5de7aaec05d", size = 4777, upload-time = "2024-03-10T02:18:36.568Z" },
 ]
 
 [[package]]
