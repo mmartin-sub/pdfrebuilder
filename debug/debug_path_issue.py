@@ -3,15 +3,16 @@ import sys
 from unittest.mock import Mock, patch
 
 # Add src directory to path to allow imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
 from pdfrebuilder.font_utils import (
+    _FONT_DOWNLOAD_ATTEMPTED,
+    _FONT_REGISTRATION_CACHE,
+    FontValidator,
     ensure_font_registered,
     set_font_validator,
-    FontValidator,
-    _FONT_REGISTRATION_CACHE,
-    _FONT_DOWNLOAD_ATTEMPTED
 )
+
 
 def run_debug_scenario():
     """
@@ -49,13 +50,17 @@ def run_debug_scenario():
         return False
 
     # 5. Apply patches
-    with patch("pdfrebuilder.font_utils.download_google_font", return_value=None) as mock_download, \
-         patch("pdfrebuilder.font_utils.scan_available_fonts", return_value=available_fonts) as mock_scan, \
-         patch("pdfrebuilder.font_utils.font_covers_text", side_effect=coverage_side_effect) as mock_covers, \
-         patch("pdfrebuilder.font_utils.get_config_value", side_effect=lambda key: test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"), \
-         patch("os.path.exists", return_value=True), \
-         patch("os.path.isfile", return_value=True):
-
+    with (
+        patch("pdfrebuilder.font_utils.download_google_font", return_value=None) as mock_download,
+        patch("pdfrebuilder.font_utils.scan_available_fonts", return_value=available_fonts) as mock_scan,
+        patch("pdfrebuilder.font_utils.font_covers_text", side_effect=coverage_side_effect) as mock_covers,
+        patch(
+            "pdfrebuilder.font_utils.get_config_value",
+            side_effect=lambda key: test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv",
+        ),
+        patch("os.path.exists", return_value=True),
+        patch("os.path.isfile", return_value=True),
+    ):
         print("--- Mocks are active. Calling ensure_font_registered ---")
 
         # Clear caches before running
@@ -72,6 +77,7 @@ def run_debug_scenario():
             print("Tracked substitution details:")
             for sub in font_validator.substitution_tracker:
                 print(f"  - {sub.original_font} -> {sub.substituted_font} (Reason: {sub.reason})")
+
 
 if __name__ == "__main__":
     run_debug_scenario()

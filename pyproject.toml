@@ -134,6 +134,7 @@ extend-exclude = [
     ".pytest_cache/",
     ".mypy_cache/",
     ".ruff_cache/",
+    "debug/",
 ]
 
 [tool.hatch.envs.default]
@@ -190,7 +191,7 @@ stubs-generate = "python scripts/update-stubs.py generate"
 [tool.ruff]
 target-version = "py312"
 line-length = 120
-extend-exclude = [".history", "stubs"]
+extend-exclude = [".history", "stubs", "debug"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "B", "C4", "UP", "RUF"]

@@ -270,10 +270,16 @@ class TestFontSubstitutionWorkflow(unittest.TestCase):
         mock_validation_result.errors = []
         mock_validation_result.warnings = []
 
-        with patch("pdfrebuilder.font_utils.FontValidator.validate_font_file", return_value=mock_validation_result), \
-             patch("pdfrebuilder.font_utils.FontValidator.validate_font_format", return_value=mock_validation_result), \
-             patch("pdfrebuilder.font_utils.get_config_value", side_effect=lambda key: (self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv")):
-
+        with (
+            patch("pdfrebuilder.font_utils.FontValidator.validate_font_file", return_value=mock_validation_result),
+            patch("pdfrebuilder.font_utils.FontValidator.validate_font_format", return_value=mock_validation_result),
+            patch(
+                "pdfrebuilder.font_utils.get_config_value",
+                side_effect=lambda key: (
+                    self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
+                ),
+            ),
+        ):
             result = ensure_font_registered(mock_page, original_font, verbose=False, text=text)
 
         # Should substitute with Arial, as it's available and covers the text

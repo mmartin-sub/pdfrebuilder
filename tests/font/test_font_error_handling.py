@@ -523,9 +523,7 @@ class TestFontErrorScenarios:
         """Test the is_need_font_file_error method directly."""
         # Manually create the specific error we need to test.
         original_exception = Exception("This is a 'need font file or buffer' error")
-        error = FontRegistrationError(
-            "Registration failed", "TestFont", original_exception=original_exception
-        )
+        error = FontRegistrationError("Registration failed", "TestFont", original_exception=original_exception)
 
         # Verify the error has the expected property.
         assert isinstance(error, FontRegistrationError)

@@ -43,6 +43,7 @@ repos:
       - id: check-case-conflict
       - id: check-executables-have-shebangs
         files: \.(sh|bash|zsh|fish)$
+
   - repo: https://github.com/whtsky/pre-commit-pretty-format-json5
     rev: 1.0.0
     hooks:
@@ -52,6 +53,7 @@ repos:
           - --indent
           - "2"
           - --no-sort-keys
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.7
     hooks:
@@ -86,7 +88,7 @@ repos:
         args:
           - -c
           - pyproject.toml
-        exclude: ^(tests/|examples/|\.kiro/|projects/|templates/|stubs/|scripts/|\.history/)
+        exclude: ^(tests/|examples/|\.kiro/|projects/|templates/|stubs/|scripts/|\.history/|debug/)
         additional_dependencies:
           - tomli
 

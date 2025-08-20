@@ -260,16 +260,19 @@ uv add "pdfrebuilder[all]"
 While the Python package for Tesseract (`pytesseract`) is a core dependency, the Tesseract OCR engine itself must be installed on your system for text extraction from images to work.
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt-get install tesseract-ocr tesseract-ocr-eng
 ```
 
 **macOS:**
+
 ```bash
 brew install tesseract
 ```
 
 **Windows:**
+
 1. Download Tesseract from [https://github.com/UB-Mannheim/tesseract/wiki](https://github.com/UB-Mannheim/tesseract/wiki)
 2. Install and add its location to your system's PATH.
 
@@ -278,11 +281,13 @@ brew install tesseract
 For PSD file support and advanced image processing, install ImageMagick:
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt-get install libmagickwand-dev
 ```
 
 **macOS:**
+
 ```bash
 brew install imagemagick
 ```
@@ -424,11 +429,13 @@ wsl --install -d Ubuntu
 
    # Test OCR availability
    python -c "
+
 from pdfrebuilder.engine.extract_wand_content import check_tesseract_availability
    is_available, info = check_tesseract_availability()
    print(f'OCR available: {is_available}')
    if not is_available: print(f'Error: {info[\"error\"]}')
    "
+
    ```
 
 9. **ImageMagick/Wand issues**:
