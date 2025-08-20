@@ -129,7 +129,7 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
             page_size = page_data.get("size", (595, 842))
             for layer in page_data.get("layers", []):
                 for element_idx, element in enumerate(layer.get("content", [])):
-                    debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])
+                    debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])  # type: ignore
                     effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, CONFIG)
                     debug_font_name = CONFIG.get("debug_font_name", "cour")
                     debug_fontsize = CONFIG.get("debug_fontsize", 8)

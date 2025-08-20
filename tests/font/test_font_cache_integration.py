@@ -60,12 +60,12 @@ class TestFontRegistrationCache(unittest.TestCase):
         fonts_to_register = ["Arial", "Times", "Roboto"]
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
         ):
-            with patch("src.font_utils.os.path.exists", return_value=True):
+            with patch("pdfrebuilder.font_utils.os.path.exists", return_value=True):
                 # Register different fonts on different pages
                 ensure_font_registered(page1, fonts_to_register[0], verbose=False)
                 ensure_font_registered(page2, fonts_to_register[1], verbose=False)
@@ -95,12 +95,12 @@ class TestFontRegistrationCache(unittest.TestCase):
         font_name = "Arial"
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
         ):
-            with patch("src.font_utils.os.path.exists", return_value=True):
+            with patch("pdfrebuilder.font_utils.os.path.exists", return_value=True):
                 # Register font multiple times
                 for _ in range(5):
                     result = ensure_font_registered(mock_page, font_name, verbose=False)
@@ -126,12 +126,12 @@ class TestFontRegistrationCache(unittest.TestCase):
                 f.write(f"content for {font_name}")
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
         ):
-            with patch("src.font_utils.os.path.exists", return_value=True):
+            with patch("pdfrebuilder.font_utils.os.path.exists", return_value=True):
                 # Time first registration (should be slower)
                 start_time = time.time()
                 for font_name in font_names:
@@ -187,12 +187,12 @@ class TestFontRegistrationCache(unittest.TestCase):
         font_name = "Arial"
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
         ):
-            with patch("src.font_utils.os.path.exists", return_value=True):
+            with patch("pdfrebuilder.font_utils.os.path.exists", return_value=True):
                 for page in pages:
                     ensure_font_registered(page, font_name, verbose=False)
 
@@ -227,7 +227,7 @@ class TestFontDownloadCache(unittest.TestCase):
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
 
-    @patch("src.font_utils.download_google_font")
+    @patch("pdfrebuilder.font_utils.download_google_font")
     def test_download_attempt_caching(self, mock_download):
         """Test that failed download attempts are cached"""
         mock_page = Mock()
@@ -237,7 +237,7 @@ class TestFontDownloadCache(unittest.TestCase):
         mock_download.return_value = None
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -252,8 +252,8 @@ class TestFontDownloadCache(unittest.TestCase):
             mock_page2 = Mock()
             result3 = ensure_font_registered(mock_page2, font_name, verbose=False)
 
-        # All should fallback to default font (system returns Helvetica instead of helv)
-        expected_fallback = "Helvetica"  # The actual fallback font returned by the system
+        # All should fallback to default font name from the mock config
+        expected_fallback = "helv"
         self.assertEqual(result1, expected_fallback)
         self.assertEqual(result2, expected_fallback)
         self.assertEqual(result3, expected_fallback)
@@ -264,7 +264,7 @@ class TestFontDownloadCache(unittest.TestCase):
         # Font should be in download attempted cache
         self.assertIn(font_name, _FONT_DOWNLOAD_ATTEMPTED)
 
-    @patch("src.font_utils.download_google_font")
+    @patch("pdfrebuilder.font_utils.download_google_font")
     def test_download_cache_with_multiple_fonts(self, mock_download):
         """Test download caching with multiple fonts"""
         mock_page = Mock()
@@ -274,7 +274,7 @@ class TestFontDownloadCache(unittest.TestCase):
         mock_download.return_value = None
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -307,7 +307,7 @@ class TestFontDownloadCache(unittest.TestCase):
         # Second call should find it in cache
         self.assertIn(font_name, _FONT_DOWNLOAD_ATTEMPTED)
 
-    @patch("src.font_utils.download_google_font")
+    @patch("pdfrebuilder.font_utils.download_google_font")
     def test_download_function_called_when_font_not_found(self, mock_download):
         """Test that download function is called when font is not found"""
         mock_page = Mock()
@@ -321,7 +321,7 @@ class TestFontDownloadCache(unittest.TestCase):
         mock_download.return_value = None
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -332,8 +332,8 @@ class TestFontDownloadCache(unittest.TestCase):
         # Should have tried to download
         mock_download.assert_called_once_with(font_name, self.test_fonts_dir)
 
-        # Should fall back to default font (system returns Helvetica instead of helv)
-        expected_fallback = "Helvetica"  # The actual fallback font returned by the system
+        # Should fall back to default font name from the mock config
+        expected_fallback = "helv"
         self.assertEqual(result, expected_fallback)
 
     def test_font_registration_returns_correct_font_name(self):
@@ -349,7 +349,7 @@ class TestFontDownloadCache(unittest.TestCase):
             f.write("test font content")
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -385,7 +385,7 @@ class TestFontValidatorCache(unittest.TestCase):
             with open(font_path, "w") as f:
                 f.write(f"dummy content for {font_file}")
 
-    @patch("src.font.font_validator.scan_available_fonts")
+    @patch("pdfrebuilder.font.font_validator.scan_available_fonts")
     def test_available_fonts_caching(self, mock_scan):
         """Test that available fonts are cached in FontValidator"""
         mock_fonts = {"Arial": "/path/to/arial.ttf", "Times": "/path/to/times.ttf"}
@@ -405,7 +405,7 @@ class TestFontValidatorCache(unittest.TestCase):
         # Scan should only be called once (in __init__)
         mock_scan.assert_called_once_with(self.test_fonts_dir)
 
-    @patch("src.font.font_validator.scan_available_fonts")
+    @patch("pdfrebuilder.font.font_validator.scan_available_fonts")
     def test_cache_refresh_functionality(self, mock_scan):
         """Test cache refresh functionality"""
         # Initial scan result
@@ -594,7 +594,7 @@ class TestCacheIntegrationPerformance(unittest.TestCase):
         mock_pages = [Mock() for _ in range(num_pages)]
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -645,7 +645,7 @@ class TestCacheIntegrationPerformance(unittest.TestCase):
         font_names = [f"TestFont{i}" for i in range(5)]
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -682,7 +682,7 @@ class TestCacheIntegrationPerformance(unittest.TestCase):
         mock_pages = [Mock() for _ in range(num_pages)]
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),

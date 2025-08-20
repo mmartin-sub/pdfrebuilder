@@ -122,9 +122,7 @@ print(json.dumps(packages, indent=2))
         return json.loads(result.stdout)
     except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
         print("Error: The package inspector script failed.", file=sys.stderr)
-        print(
-            f"Stderr: {e.stderr if hasattr(e, 'stderr') else str(e)}", file=sys.stderr
-        )
+        print(f"Stderr: {e.stderr if hasattr(e, 'stderr') else str(e)}", file=sys.stderr)
         sys.exit(1)
 
 
@@ -150,15 +148,9 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
     if only_packages:
         normalized_only_set = {canonicalize_name(p) for p in only_packages}
         print(f"\n--- Filtering to process ONLY: {', '.join(only_packages)} ---")
-        filtered_deps = [
-            dep
-            for dep in unique_deps
-            if canonicalize_name(Requirement(dep).name) in normalized_only_set
-        ]
+        filtered_deps = [dep for dep in unique_deps if canonicalize_name(Requirement(dep).name) in normalized_only_set]
 
-        found_deps_names = {
-            canonicalize_name(Requirement(dep).name) for dep in filtered_deps
-        }
+        found_deps_names = {canonicalize_name(Requirement(dep).name) for dep in filtered_deps}
         not_found = normalized_only_set - found_deps_names
         if not_found:
             print(
@@ -194,9 +186,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
             if canonicalize_name(stub_package_name) in installed_packages:
                 print(f"  -> Found '{stub_package_name}', which is already installed.")
             else:
-                print(
-                    f"  -> Found '{stub_package_name}'. Would recommend adding it as a dependency."
-                )
+                print(f"  -> Found '{stub_package_name}'. Would recommend adding it as a dependency.")
                 stubs_to_install.append(stub_package_name)
         else:
             dist_name_key = req_to_dist_map.get(normalized_pypi_name)
@@ -204,9 +194,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
                 package_info = installed_packages[dist_name_key]
                 pinned_spec = f"{package_info['dist_name']}=={package_info['version']}"
                 import_names = package_info["import_names"]
-                print(
-                    f"  -> Found installed as '{package_info['dist_name']}'. Queued for stub generation."
-                )
+                print(f"  -> Found installed as '{package_info['dist_name']}'. Queued for stub generation.")
                 packages_to_stub[pypi_name] = (import_names, pinned_spec)
             else:
                 print(
@@ -216,9 +204,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
 
     if stubs_to_install and not only_packages:
         print("\n--- Recommended Action ---")
-        print(
-            "Add the following stub packages to your project's development dependencies:"
-        )
+        print("Add the following stub packages to your project's development dependencies:")
         print("-" * 30)
         for stub in sorted(stubs_to_install):
             print(f'  "{stub}",')
@@ -236,9 +222,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
             for import_name in import_names:
                 stub_dir_to_remove = STUBS_DIR / import_name
                 if stub_dir_to_remove.exists():
-                    print(
-                        f"  -> {prefix}Would remove old stubs at '{stub_dir_to_remove}'"
-                    )
+                    print(f"  -> {prefix}Would remove old stubs at '{stub_dir_to_remove}'")
                     if not dry_run:
                         shutil.rmtree(stub_dir_to_remove)
 
@@ -246,9 +230,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
         for pypi_name, (import_names, pinned_spec) in packages_to_stub.items():
             print(f"\nProcessing '{pypi_name}' ({pinned_spec})...")
             if dry_run:
-                print(
-                    f"  -> {prefix}Would generate stubs for import name(s): {import_names}"
-                )
+                print(f"  -> {prefix}Would generate stubs for import name(s): {import_names}")
                 continue
 
             with tempfile.TemporaryDirectory() as temp_dir_str:
@@ -268,9 +250,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
                     pip_executable = str(temp_dir / ".venv" / "bin" / "pip")
                     pyright_executable = str(temp_dir / ".venv" / "bin" / "pyright")
 
-                    print(
-                        f"  -> Installing '{pinned_spec}' and 'pyright' into temporary environment..."
-                    )
+                    print(f"  -> Installing '{pinned_spec}' and 'pyright' into temporary environment...")
                     subprocess.run(
                         [pip_executable, "install", pinned_spec, "pyright"],
                         check=True,
@@ -299,11 +279,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
                         print(f"  -> Successfully generated stubs in '{STUBS_DIR}/'")
 
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                    error_message = (
-                        e.stderr.strip()
-                        if hasattr(e, "stderr") and e.stderr
-                        else str(e)
-                    )
+                    error_message = e.stderr.strip() if hasattr(e, "stderr") and e.stderr else str(e)
                     print(
                         f"  -> ERROR: Failed to create stub for {pypi_name}. Reason: {error_message}",
                         file=sys.stderr,
@@ -328,9 +304,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
 
     print("\n--- All tasks complete! ---")
     if failed_libs:
-        print(
-            "\nCould not generate stubs for the following libraries:", file=sys.stderr
-        )
+        print("\nCould not generate stubs for the following libraries:", file=sys.stderr)
         for lib in set(failed_libs):
             print(f"  - {lib}", file=sys.stderr)
         sys.exit(1)

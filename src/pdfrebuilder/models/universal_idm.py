@@ -691,12 +691,13 @@ class PageUnit(DocumentUnit):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PageUnit":
-        size_val = data.get("size", (612, 792))
-        size_tuple = (
-            (float(size_val[0]), float(size_val[1]))
-            if isinstance(size_val, list | tuple) and len(size_val) == 2
-            else (612, 792)
-        )
+        size_val = data.get("size")
+        size_tuple: tuple[float, float]
+        if isinstance(size_val, list | tuple) and len(size_val) == 2:
+            x, y = size_val
+            size_tuple = (float(x), float(y))
+        else:
+            size_tuple = (612.0, 792.0)
         # This is a simplified version - you'll need to implement proper deserialization
         return cls(
             size=size_tuple,

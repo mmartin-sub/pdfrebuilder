@@ -27,7 +27,7 @@ hatch env create
 hatch shell
 
 # Verify installation
-python main.py --help
+pdfrebuilder --help
 ```
 
 ### 3. Verify Installation
@@ -36,7 +36,7 @@ Test your installation with a simple command:
 
 ```bash
 # Check PyMuPDF version and system info
-python main.py --input input/sample.pdf --mode extract --config test_config.json
+pdfrebuilder --input input/sample.pdf --mode extract --config test_config.json
 ```
 
 You should see output similar to:
@@ -56,16 +56,16 @@ Let's start with a simple PDF extraction and reconstruction:
 
 ```bash
 # Extract layout from a PDF
-python main.py --mode extract --input input/sample.pdf --config layout_config.json
+pdfrebuilder --mode extract --input input/sample.pdf --config layout_config.json
 
 # Recreate PDF from extracted layout
-python main.py --mode generate --config layout_config.json --output output/recreated.pdf
+pdfrebuilder --mode generate --config layout_config.json --output output/recreated.pdf
 
 # Full pipeline (extract + generate + visual comparison)
-python main.py --mode full --input input/sample.pdf --output output/result.pdf
+pdfrebuilder --mode full --input input/sample.pdf --output output/result.pdf
 
 # Debug mode to visualize layers
-python main.py --mode debug --config layout_config.json --debugoutput output/debug_layers.pdf
+pdfrebuilder --mode debug --config layout_config.json --debugoutput output/debug_layers.pdf
 ```
 
 ### Understanding the Modes
@@ -79,14 +79,14 @@ The system supports four main operation modes:
 
 ### Working with Real Documents
 
-Place your PDF file in the `input/` directory and process it:
+Place your PDF file in the `examples/sample/` directory and process it:
 
 ```bash
 # Copy your document
-cp /path/to/your/document.pdf input/my_document.pdf
+cp /path/to/your/document.pdf examples/sample/my_document.pdf
 
 # Process with full pipeline
-python main.py --input input/my_document.pdf --output output/my_document_recreated.pdf
+pdfrebuilder --input examples/sample/my_document.pdf --output output/my_document_recreated.pdf
 
 # Check the results
 ls -la output/
@@ -102,9 +102,10 @@ After processing, you'll find several files and directories:
 
 1. **layout_config.json**: Structured layout data in Universal IDM format
 2. **images/**: Extracted images from the document (auto-generated)
-3. **downloaded_fonts/**: Font files used in the document (auto-generated)
-4. **output/**: Generated PDFs and comparison images
-5. **manual_overrides.json5**: Optional manual corrections file
+3. **fonts/auto/**: Font files downloaded automatically.
+4. **fonts/manual/**: Directory for user-added custom fonts.
+5. **output/**: Generated PDFs and comparison images
+6. **manual_overrides.json5**: Optional manual corrections file
 
 ### Directory Structure After Processing
 
@@ -115,9 +116,11 @@ project_root/
 ├── images/                     # Extracted images
 │   ├── img_abc123.jpeg
 │   └── img_def456.png
-├── downloaded_fonts/           # Downloaded font files
-│   ├── Arial-Bold.ttf
-│   └── Times-Roman.ttf
+├── fonts/                      # Font files
+│   ├── auto/                   # Auto-downloaded fonts
+│   │   └── Arial-Bold.ttf
+│   └── manual/                 # Manually added fonts
+│       └── Times-Roman.ttf
 └── output/                     # Generated outputs
     ├── recreated.pdf           # Recreated document
     ├── diff.png               # Visual comparison
@@ -203,11 +206,11 @@ Extract text content and modify it programmatically:
 
 ```bash
 # Extract text content only
-python main.py --mode extract --input document.pdf --extract-text --no-extract-images --no-extract-drawings
+pdfrebuilder --mode extract --input document.pdf --extract-text --no-extract-images --no-extract-drawings
 
 # Modify text in layout_config.json or use manual overrides
 # Then regenerate
-python main.py --mode generate --config layout_config.json --output modified.pdf
+pdfrebuilder --mode generate --config layout_config.json --output modified.pdf
 ```
 
 **Programmatic Text Modification Example:**
@@ -233,7 +236,7 @@ with open('layout_config.json', 'w') as f:
     json.dump(config, f, indent=2)
 
 # Regenerate PDF
-# python main.py --mode generate --config layout_config.json --output modified.pdf
+# pdfrebuilder --mode generate --config layout_config.json --output modified.pdf
 ```
 
 ### 2. Template Mode for Complex Documents
@@ -258,7 +261,7 @@ For documents with complex graphics, use template mode to preserve visual fideli
 
 ```bash
 # Generate with template mode
-python main.py --mode generate --config layout_config.json --output templated.pdf
+pdfrebuilder --mode generate --config layout_config.json --output templated.pdf
 ```
 
 ### 3. Font Management
@@ -280,8 +283,8 @@ for page in config['document_structure']:
 print('Fonts used:', fonts)
 "
 
-# Add custom fonts to downloaded_fonts/
-cp /path/to/custom-font.ttf downloaded_fonts/
+# Add custom fonts to fonts/manual/
+cp /path/to/custom-font.ttf fonts/manual/
 
 # Override font mappings in manual_overrides.json5
 {
@@ -298,14 +301,14 @@ Compare original and recreated documents:
 
 ```bash
 # Full pipeline includes automatic visual comparison
-python main.py --mode full --input original.pdf --output recreated.pdf
+pdfrebuilder --mode full --input original.pdf --output recreated.pdf
 # Creates diff.png automatically
 
 # Manual visual comparison
-python -m src.compare_pdfs_visual original.pdf recreated.pdf output/comparison.png
+python -m pdfrebuilder.core.compare_pdfs_visual original.pdf recreated.pdf output/comparison.png
 
 # Adjust comparison sensitivity
-python -m src.compare_pdfs_visual original.pdf recreated.pdf output/comparison.png --threshold 0.95
+python -m pdfrebuilder.core.compare_pdfs_visual original.pdf recreated.pdf output/comparison.png --threshold 0.95
 ```
 
 ### 5. Batch Processing Multiple Documents
@@ -314,15 +317,15 @@ Process multiple documents efficiently:
 
 ```bash
 # Process multiple files
-for pdf in input/*.pdf; do
+for pdf in examples/sample/*.pdf; do
     basename=$(basename "$pdf" .pdf)
-    python main.py --input "$pdf" --output "output/${basename}_processed.pdf"
+    pdfrebuilder --input "$pdf" --output "output/${basename}_processed.pdf"
 done
 
 # Or use the batch modification engine
 python -c "
-from src.engine.batch_modifier import BatchModifier
-from src.models.universal_idm import UniversalDocument
+from pdfrebuilder.engine.batch_modifier import BatchModifier
+from pdfrebuilder.models.universal_idm import UniversalDocument
 
 # Load document
 with open('layout_config.json') as f:
@@ -348,13 +351,13 @@ Extract only specific types of content:
 
 ```bash
 # Extract only text (no images or drawings)
-python main.py --mode extract --input document.pdf --extract-text --no-extract-images --no-extract-drawings
+pdfrebuilder --mode extract --input document.pdf --extract-text --no-extract-images --no-extract-drawings
 
 # Extract only images
-python main.py --mode extract --input document.pdf --no-extract-text --extract-images --no-extract-drawings
+pdfrebuilder --mode extract --input document.pdf --no-extract-text --extract-images --no-extract-drawings
 
 # Extract everything including background drawings (for debugging)
-python main.py --mode extract --input document.pdf --extract-raw-backgrounds
+pdfrebuilder --mode extract --input document.pdf --extract-raw-backgrounds
 ```
 
 ## Manual Overrides
@@ -387,7 +390,7 @@ Use `manual_overrides.json5` for corrections:
 For troubleshooting, use debug mode:
 
 ```python
-python main.py --mode debug --config layout_config.json --debugoutput debug_layers.pdf
+pdfrebuilder --mode debug --config layout_config.json --debugoutput debug_layers.pdf
 ```
 
 This creates a multi-page PDF showing each layer separately.

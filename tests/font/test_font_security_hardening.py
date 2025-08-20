@@ -15,7 +15,7 @@ class TestFontSecurityHardening(unittest.TestCase):
     def test_security_flag_prevents_bandit_warning(self):
         """Test that the usedforsecurity=False flag is properly applied."""
         # Read the fixed source code
-        with open("src/font_utils.py") as f:
+        with open("src/pdfrebuilder/font_utils.py") as f:
             source_content = f.read()
 
         # Verify the security flag is present
@@ -39,7 +39,7 @@ class TestFontSecurityHardening(unittest.TestCase):
 
     def test_inline_comment_explains_usage(self):
         """Test that inline comment explains non-cryptographic usage."""
-        with open("src/font_utils.py") as f:
+        with open("src/pdfrebuilder/font_utils.py") as f:
             source_content = f.read()
 
         # Verify explanatory comment is present

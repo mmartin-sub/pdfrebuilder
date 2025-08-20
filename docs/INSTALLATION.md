@@ -4,7 +4,7 @@ This guide provides detailed installation instructions for PDFRebuilder (formerl
 
 ## Prerequisites
 
-- **Python 3.11 or higher** (Python 3.12 recommended)
+- **Python 3.12 or higher**
 - **uv** package manager (recommended) or **pip**
 - **System dependencies** for PDF and image processing
 
@@ -176,7 +176,7 @@ For development work, contributing to the project, or when you need access to th
 
    ```bash
    # Check main application
-   hatch run python main.py --help
+   hatch run pdfrebuilder --help
 
    # Verify PyMuPDF version
    hatch run python -c "import fitz; print(f'PyMuPDF version: {fitz.__version__}')"
@@ -239,68 +239,52 @@ The project supports several optional dependency groups. For detailed installati
 Quick overview:
 
 ```bash
-# For OCR functionality (requires Tesseract OCR system installation)
-pip install "pdfrebuilder[ocr]"
-
 # For PSD file support (experimental)
-pip install "pdfrebuilder[psd]"
+uv add "pdfrebuilder[psd]"
 
-# For Wand/ImageMagick support (includes OCR, requires ImageMagick system installation)
-pip install "pdfrebuilder[wand]"
+# For Wand/ImageMagick support (requires ImageMagick system installation)
+uv add "pdfrebuilder[wand]"
 
 # For enhanced validation features
-pip install "pdfrebuilder[validation]"
+uv add "pdfrebuilder[validation]"
 
-# For CLI enhancements
-pip install "pdfrebuilder[cli]"
-
-# For development tools (includes OCR for testing)
-pip install "pdfrebuilder[dev]"
+# For development tools
+uv add "pdfrebuilder[dev]"
 
 # Install all optional dependencies
-pip install "pdfrebuilder[all]"
+uv add "pdfrebuilder[all]"
 ```
 
-#### OCR Functionality (Optional)
+#### Tesseract OCR for Image Text Extraction
 
-For text extraction from images and PSD files, install Tesseract OCR:
+While the Python package for Tesseract (`pytesseract`) is a core dependency, the Tesseract OCR engine itself must be installed on your system for text extraction from images to work.
 
 **Linux (Ubuntu/Debian):**
-
 ```bash
 sudo apt-get install tesseract-ocr tesseract-ocr-eng
-pip install "pdfrebuilder[ocr]"
 ```
 
 **macOS:**
-
 ```bash
 brew install tesseract
-pip install "pdfrebuilder[ocr]"
 ```
 
 **Windows:**
-
 1. Download Tesseract from [https://github.com/UB-Mannheim/tesseract/wiki](https://github.com/UB-Mannheim/tesseract/wiki)
-2. Install and add to PATH
-3. `pip install "pdfrebuilder[ocr]"`
+2. Install and add its location to your system's PATH.
 
 #### Advanced Image Processing (Optional)
 
 For PSD file support and advanced image processing, install ImageMagick:
 
 **Linux (Ubuntu/Debian):**
-
 ```bash
 sudo apt-get install libmagickwand-dev
-pip install "pdfrebuilder[wand]"
 ```
 
 **macOS:**
-
 ```bash
 brew install imagemagick
-pip install "pdfrebuilder[wand]"
 ```
 
 ## System Dependencies
@@ -440,7 +424,7 @@ wsl --install -d Ubuntu
 
    # Test OCR availability
    python -c "
-   from src.engine.extract_wand_content import check_tesseract_availability
+from pdfrebuilder.engine.extract_wand_content import check_tesseract_availability
    is_available, info = check_tesseract_availability()
    print(f'OCR available: {is_available}')
    if not is_available: print(f'Error: {info[\"error\"]}')
@@ -460,7 +444,7 @@ wsl --install -d Ubuntu
 
    # Test Wand availability
    python -c "
-   from src.engine.extract_wand_content import check_wand_availability
+from pdfrebuilder.engine.extract_wand_content import check_wand_availability
    is_available, info = check_wand_availability()
    print(f'Wand available: {is_available}')
    if not is_available: print(f'Error: {info[\"error\"]}')
@@ -550,9 +534,6 @@ Use the provided verification script to check your installation:
 ```bash
 # For development installations
 hatch run python scripts/verify_installation.py
-
-# For global installations (if you have the source)
-python scripts/verify_installation.py
 ```
 
 This script will check:

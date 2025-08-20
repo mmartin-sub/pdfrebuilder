@@ -117,8 +117,8 @@ class TestFontValidationIntegration(unittest.TestCase):
         self.assertIn("helv", result.fonts_available)
         self.assertIn("NonExistentFont", result.fonts_missing)
 
-    @patch("src.font.font_validator.font_covers_text")
-    @patch("src.font.font_validator.os.path.exists")
+    @patch("pdfrebuilder.font.font_validator.font_covers_text")
+    @patch("pdfrebuilder.font.font_validator.os.path.exists")
     def test_font_coverage_checking(self, mock_exists, mock_covers_text):
         """Test font coverage checking for text elements"""
         validator = FontValidator(self.fonts_dir)
@@ -197,7 +197,7 @@ class TestFontValidationIntegration(unittest.TestCase):
         self.assertIn("substitutions", report)
         self.assertEqual(len(report["substitutions"]), 1)
 
-    @patch("src.engine.validation_report.ValidationReport")
+    @patch("pdfrebuilder.engine.validation_report.ValidationReport")
     def test_validation_report_with_font_data(self, mock_validation_report):
         """Test validation report generation with font validation data"""
         # Create mock validation result

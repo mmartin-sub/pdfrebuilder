@@ -15,12 +15,12 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+# Import security utilities
+from security.subprocess_utils import SecureSubprocessRunner, SecurityError
+
 from docs.api_validator import APIReferenceValidator
 from docs.coverage_reporter import DocumentationCoverageReporter
 from docs.validation import DocumentationValidator, ValidationStatus
-
-# Import security utilities
-from security.subprocess_utils import SecureSubprocessRunner, SecurityError
 
 # Removed _validate_command_components - now handled by SecureSubprocessRunner
 

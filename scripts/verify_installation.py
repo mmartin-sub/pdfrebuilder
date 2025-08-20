@@ -12,18 +12,18 @@ from pathlib import Path
 # Add src to path for secure execution imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from security.secure_execution import SecureExecutionError, execute_secure_command
+from pdfrebuilder.security.secure_execution import SecureExecutionError, execute_secure_command
 
 
 def check_python_version():
     """Check if Python version meets requirements."""
     print("🔍 Checking Python version...")
     version = sys.version_info
-    if version >= (3, 11):
-        print(f"✅ Python {version.major}.{version.minor}.{version.micro} (meets requirement: >=3.11)")
+    if version >= (3, 12):
+        print(f"✅ Python {version.major}.{version.minor}.{version.micro} (meets requirement: >=3.12)")
         return True
     else:
-        print(f"❌ Python {version.major}.{version.minor}.{version.micro} (requires: >=3.11)")
+        print(f"❌ Python {version.major}.{version.minor}.{version.micro} (requires: >=3.12)")
         return False
 
 
