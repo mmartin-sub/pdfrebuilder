@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 import cv2
 from skimage.metrics import structural_similarity as ssim
 
@@ -26,7 +28,7 @@ class ScikitImageValidator(Validator):
                 gray2 = cv2.resize(gray2, (gray1.shape[1], gray1.shape[0]))
 
             # Calculate SSIM
-            score, _ = ssim(gray1, gray2, full=True, gradient=False)
+            score, _ = cast(tuple[float, Any], ssim(gray1, gray2, full=True, gradient=False))
 
             return ValidationResult(passed=score >= threshold, score=score, engine_used="scikit-image")
         except Exception as e:

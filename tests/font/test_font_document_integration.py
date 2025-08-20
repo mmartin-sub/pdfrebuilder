@@ -215,7 +215,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
         # Mock pages for each page in document
         mock_pages = [Mock() for _ in range(2)]
 
-        with patch("src.font_utils.TTFont") as mock_ttfont:
+        with patch("pdfrebuilder.font_utils.TTFont") as mock_ttfont:
 
             def create_mock_font(font_path):
                 mock_font = MagicMock()
@@ -247,7 +247,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
             mock_ttfont.side_effect = create_mock_font
 
             with patch(
-                "src.font_utils.get_config_value",
+                "pdfrebuilder.font_utils.get_config_value",
                 side_effect=lambda key: (
                     self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
                 ),
@@ -287,8 +287,8 @@ class TestDocumentFontIntegration(unittest.TestCase):
         # or if the system falls back to standard fonts without explicit tracking
         self.assertIsInstance(substitutions, list)
 
-    @patch("src.font_utils.download_google_font")
-    @patch("src.font_utils.TTFont")
+    @patch("pdfrebuilder.font_utils.download_google_font")
+    @patch("pdfrebuilder.font_utils.TTFont")
     def test_document_with_google_fonts_integration(self, mock_ttfont, mock_download):
         """Test document processing with Google Fonts integration"""
 
@@ -383,7 +383,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
 
         mock_page = Mock()
 
-        with patch("src.font_utils.os.path.exists") as mock_exists:
+        with patch("pdfrebuilder.font_utils.os.path.exists") as mock_exists:
 
             def exists_side_effect(path):
                 # Return True for font directories but NOT for the specific font files
@@ -414,7 +414,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
             mock_exists.side_effect = exists_side_effect
 
             with patch(
-                "src.font_utils.get_config_value",
+                "pdfrebuilder.font_utils.get_config_value",
                 side_effect=lambda key: (
                     self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
                 ),
@@ -534,7 +534,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
                 return False
             return True
 
-        with patch("src.font_utils.TTFont") as mock_ttfont:
+        with patch("pdfrebuilder.font_utils.TTFont") as mock_ttfont:
 
             def create_mock_font(font_path):
                 mock_font = MagicMock()
@@ -566,7 +566,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
             mock_ttfont.side_effect = create_mock_font
 
             with patch(
-                "src.font.font_validator.font_covers_text",
+                "pdfrebuilder.font.font_validator.font_covers_text",
                 side_effect=coverage_side_effect,
             ):
                 with patch.object(
@@ -638,7 +638,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
 
         mock_page.insert_font.side_effect = insert_font_side_effect
 
-        with patch("src.font_utils.TTFont") as mock_ttfont:
+        with patch("pdfrebuilder.font_utils.TTFont") as mock_ttfont:
 
             def create_mock_font(font_path):
                 mock_font = MagicMock()
@@ -670,11 +670,11 @@ class TestDocumentFontIntegration(unittest.TestCase):
             mock_ttfont.side_effect = create_mock_font
 
             with patch(
-                "src.settings.CONFIG",
+                "pdfrebuilder.settings.CONFIG",
                 {"downloaded_fonts_dir": "/nonexistent", "default_font": "helv"},
             ):
-                with patch("src.font_utils.download_google_font", return_value=None):
-                    with patch("src.font_utils.os.path.exists", return_value=False):  # No fonts exist
+                with patch("pdfrebuilder.font_utils.download_google_font", return_value=None):
+                    with patch("pdfrebuilder.font_utils.os.path.exists", return_value=False):  # No fonts exist
                         # Process all text elements
                         for doc_unit in error_config["document_structure"]:
                             for layer in doc_unit["layers"]:
@@ -729,7 +729,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
         # Process document to generate font data
         mock_page = Mock()
 
-        with patch("src.font_utils.TTFont") as mock_ttfont:
+        with patch("pdfrebuilder.font_utils.TTFont") as mock_ttfont:
 
             def create_mock_font(font_path):
                 mock_font = MagicMock()
@@ -761,10 +761,10 @@ class TestDocumentFontIntegration(unittest.TestCase):
             mock_ttfont.side_effect = create_mock_font
 
             with patch(
-                "src.settings.CONFIG",
+                "pdfrebuilder.settings.CONFIG",
                 {"downloaded_fonts_dir": self.test_fonts_dir, "default_font": "helv"},
             ):
-                with patch("src.font_utils.download_google_font", return_value=None):
+                with patch("pdfrebuilder.font_utils.download_google_font", return_value=None):
                     # Process some fonts to generate substitutions
                     fonts_to_process = ["MissingFont1", "MissingFont2", "helv"]
                     for font_name in fonts_to_process:
@@ -782,7 +782,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
 
         # Generate validation report with font data
         with patch("os.makedirs"):
-            with patch("src.engine.validation_report.ValidationReport") as mock_report_class:
+            with patch("pdfrebuilder.engine.validation_report.ValidationReport") as mock_report_class:
                 mock_report_instance = Mock()
                 mock_report_class.return_value = mock_report_instance
 
@@ -857,7 +857,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
 
         # Font files are already created in setUp via create_controlled_font_environment()
         # Mock TTFont to avoid font validation errors
-        with patch("src.font_utils.TTFont") as mock_ttfont:
+        with patch("pdfrebuilder.font_utils.TTFont") as mock_ttfont:
 
             def create_mock_font(font_path):
                 mock_font = MagicMock()
@@ -928,7 +928,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
         mock_pages = [Mock() for _ in range(50)]
 
         with patch(
-            "src.font_utils.get_config_value",
+            "pdfrebuilder.font_utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),

@@ -8,7 +8,7 @@ proper font embedding, and licensing verification capabilities.
 import logging
 import os
 import sys
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 from reportlab.lib.colors import Color as RLColor
 from reportlab.lib.pagesizes import letter
@@ -92,8 +92,8 @@ class ReportLabEngine(PDFRenderingEngine):
             )
 
             # Store metadata for later use
-            doc._metadata = metadata
-            doc._story = []
+            cast(Any, doc)._metadata = metadata
+            cast(Any, doc)._story = []
 
             return doc
 
@@ -447,8 +447,8 @@ class ReportLabEngine(PDFRenderingEngine):
             y = page_size[1] - bbox.y1  # Convert to ReportLab coordinates
 
             # Set font and color
-            c.setFont(font_name, element.font_details["size"])
-            color = self._convert_color(element.font_details["color"])
+            c.setFont(font_name, element.font_details.size)
+            color = self._convert_color(element.font_details.color)
             c.setFillColor(color)
 
             # Draw text
@@ -527,13 +527,13 @@ class ReportLabEngine(PDFRenderingEngine):
         font_details = element.font_details
 
         # Convert color
-        color = self._convert_color(font_details["color"])
+        color = self._convert_color(font_details.color)
 
         # Create style
         style = ParagraphStyle(
             name=f"style_{element.id}",
-            fontName=font_details["name"],
-            fontSize=font_details["size"],
+            fontName=font_details.name,
+            fontSize=font_details.size,
             textColor=color,
             alignment=1,  # Center alignment
             spaceAfter=0,

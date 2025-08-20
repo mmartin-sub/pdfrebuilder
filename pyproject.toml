@@ -97,6 +97,7 @@ dev = [
     "pyright",
 
     # Type Stubs
+    "pymupdf-stubs>=1.26.1",
     "types-PyYAML",
     "types-requests",
     "types-beautifulsoup4",
@@ -307,6 +308,7 @@ exclude = [
     ".trunk",
     "docs",
     "tests/**/wip_*.py",
+    "tests/wip/",
 ]
 typeCheckingMode = "standard"
 reportMissingImports = true
@@ -363,13 +365,12 @@ ignore_decorators = [
 testpaths = ["tests"]
 addopts = "-ra -q --strict-markers"
 asyncio_mode = "auto"
-norecursedirs = ["tests/utils"]
+norecursedirs = ["tests/utils", "tests/wip"]
 log_cli = false
 log_cli_level = "WARNING"
 log_cli_format = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 log_level = "WARNING"
-log_disable = ["fontTools.ttLib.ttFont", "fontTools.ttLib", "fontTools"]
 markers = [
     "human_review: marks tests requiring human visual review",
     "e2e: marks end-to-end integration tests",
@@ -380,6 +381,7 @@ markers = [
     "validation: marks tests requiring image validation (scikit-image)",
     "ocr: marks tests requiring OCR support (pytesseract)",
     "optional_deps: marks tests requiring any optional dependencies",
+    "slow: marks tests as slow",
 ]
 
 # --- BANDIT ---

@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 import cv2
 from skimage.metrics import structural_similarity as compare_ssim
 
@@ -26,7 +28,7 @@ class LegacyValidator(Validator):
                 gray2 = cv2.resize(gray2, (gray1.shape[1], gray1.shape[0]))
 
             # Calculate SSIM using the legacy method, ensuring score is a float
-            score, _ = compare_ssim(gray1, gray2, full=True)
+            score, _ = cast(tuple[float, Any], compare_ssim(gray1, gray2, full=True))
 
             return ValidationResult(passed=score >= threshold, score=score, engine_used="legacy")
         except Exception as e:

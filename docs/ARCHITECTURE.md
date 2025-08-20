@@ -19,7 +19,7 @@ The Multi-Format Document Engine is designed as a modular, extensible system for
 The Universal Document Model provides a format-agnostic representation of document content:
 
 ```python
-from src.models.universal_idm import UniversalDocument, PageUnit, Layer, TextElement
+from pdfrebuilder.models.universal_idm import UniversalDocument, PageUnit, Layer, TextElement
 
 # All document formats are converted to this unified structure
 document = UniversalDocument.from_json(config_data)
@@ -38,7 +38,7 @@ document = UniversalDocument.from_json(config_data)
 The engine abstraction allows multiple processing backends with consistent interfaces:
 
 ```
-src/engine/
+src/pdfrebuilder/engine/
 ├── document_parser.py           # Base parser interface
 ├── document_renderer.py         # Base renderer interface
 ├── extract_pdf_content_fitz.py  # PyMuPDF PDF implementation
@@ -93,7 +93,7 @@ The system supports multiple processing modes:
 ### Core Modules
 
 ```
-src/
+src/pdfrebuilder/
 ├── models/                    # Data models and validation
 │   ├── universal_idm.py      # Universal Document Model definitions
 │   ├── schema_validator.py   # Document validation logic
@@ -109,13 +109,12 @@ src/
 │   ├── schema_tools.py       # Schema manipulation utilities
 │   └── generic.py            # General-purpose utilities
 ├── font/                      # Font management system
+│   ├── font_utils.py         # Core font registration and substitution logic
 │   ├── font_validator.py     # Font validation and licensing
 │   └── googlefonts.py        # Google Fonts integration
 ├── cli/                       # Command-line interfaces
 │   ├── batch_modifier_cli.py # Batch processing CLI
 │   └── reportlab_test_cli.py # Engine testing CLI
-└── docs/                      # Documentation framework
-    └── validation.py          # Documentation validation tools
 ```
 
 ### Engine Implementations
@@ -124,7 +123,7 @@ Each engine implements standardized interfaces for consistent behavior:
 
 ```python
 from abc import ABC, abstractmethod
-from src.models.universal_idm import UniversalDocument
+from pdfrebuilder.models.universal_idm import UniversalDocument
 
 class DocumentParser(ABC):
     @abstractmethod
@@ -152,7 +151,7 @@ The architecture supports extension through well-defined interfaces:
 ### 1. Custom Document Parsers
 
 ```python
-from src.engine.document_parser import DocumentParser
+from pdfrebuilder.engine.document_parser import DocumentParser
 
 class CustomFormatParser(DocumentParser):
     def parse(self, input_path: str, extraction_flags: dict) -> UniversalDocument:
@@ -167,7 +166,7 @@ class CustomFormatParser(DocumentParser):
 ### 2. Custom Renderers
 
 ```python
-from src.engine.document_renderer import DocumentRenderer
+from pdfrebuilder.engine.document_renderer import DocumentRenderer
 
 class CustomRenderer(DocumentRenderer):
     def render(self, document: dict, output_path: str, original_path: str = None) -> None:
@@ -178,7 +177,7 @@ class CustomRenderer(DocumentRenderer):
 ### 3. Transformation Plugins
 
 ```python
-from src.engine.batch_modifier import BatchModifier
+from pdfrebuilder.engine.batch_modifier import BatchModifier
 
 class CustomTransformation:
     def apply(self, document: UniversalDocument) -> UniversalDocument:
@@ -189,7 +188,7 @@ class CustomTransformation:
 ### 4. Validation Extensions
 
 ```python
-from src.engine.validation_strategy import ValidationStrategy
+from pdfrebuilder.engine.validation_strategy import ValidationStrategy
 
 class CustomValidator(ValidationStrategy):
     def validate(self, original_path: str, rebuilt_path: str) -> ValidationResult:
@@ -249,7 +248,7 @@ class CustomValidator(ValidationStrategy):
 
 ```python
 # Centralized configuration with dynamic resolution
-from src.settings import CONFIG, get_config_value, configure_output_directories
+from pdfrebuilder.settings import CONFIG, get_config_value, configure_output_directories
 
 # Flexible output directory management
 configure_output_directories(

@@ -21,7 +21,7 @@ This project follows a code of conduct that ensures a welcoming environment for 
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.12 or higher
 - [Hatch](https://hatch.pypa.io/) for environment management
 - [uv](https://github.com/astral-sh/uv) for fast package management
 - Git for version control
@@ -42,8 +42,6 @@ This project follows a code of conduct that ensures a welcoming environment for 
    hatch env create
    hatch shell
 
-   # Install development dependencies
-   hatch run pip install -e .
    ```
 
 3. **Verify setup**
@@ -53,7 +51,7 @@ This project follows a code of conduct that ensures a welcoming environment for 
    hatch run test
 
    # Validate documentation
-   python scripts/validate_docs.py --all
+   make docs-validate
    ```
 
 ## Contribution Workflow
@@ -91,11 +89,11 @@ hatch run test
 hatch run pytest tests/test_your_feature.py
 
 # Test documentation
-python scripts/validate_docs.py --all
+make docs-validate
 
 # Run linting and formatting
-hatch run lint:lint
-hatch run style
+hatch run lint
+hatch run format
 ```
 
 ## Coding Standards
@@ -172,7 +170,7 @@ except Exception as e:
 
 ```python
 import pytest
-from src.engine.document_parser import DocumentParser
+from pdfrebuilder.engine.document_parser import DocumentParser
 
 class TestDocumentParser:
     """Test cases for DocumentParser class."""
@@ -227,14 +225,8 @@ class TestDocumentParser:
 All documentation is automatically tested:
 
 ```bash
-# Test code examples
-python scripts/validate_docs.py --examples
-
-# Test API references
-python scripts/validate_docs.py --api-refs
-
-# Test configuration examples
-python scripts/validate_docs.py --config
+# Validate all documentation aspects
+make docs-validate
 ```
 
 ## Submitting Changes

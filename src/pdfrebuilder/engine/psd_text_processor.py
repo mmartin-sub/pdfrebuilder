@@ -5,7 +5,7 @@ This module provides utilities for extracting and processing text from PSD files
 """
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 # Import psd-tools conditionally to handle cases where it's not installed
 try:
@@ -15,6 +15,8 @@ try:
     HAS_PSD_TOOLS = True
 except ImportError:
     HAS_PSD_TOOLS = False
+    PSDImage = Any
+    TextLayer = Any
 
 from pdfrebuilder.models.universal_idm import Color, FontDetails
 
@@ -41,7 +43,7 @@ def extract_text_data(text_layer: Any) -> dict[str, Any]:
     if not HAS_PSD_TOOLS:
         raise PSDTextExtractionError("psd-tools is not installed")
 
-    if not isinstance(text_layer, TextLayer):
+    if not hasattr(text_layer, "kind") or text_layer.kind != "type":
         raise PSDTextExtractionError("Layer is not a text layer")
 
     try:
@@ -179,7 +181,7 @@ def extract_all_text_layers(psd_path: str) -> list[dict[str, Any]]:
 
     try:
         # Open PSD file
-        psd = PSDImage.open(psd_path)
+        psd = cast(Any, PSDImage).open(psd_path)
 
         # Find all text layers
         text_layers: list[dict[str, Any]] = []
@@ -188,7 +190,7 @@ def extract_all_text_layers(psd_path: str) -> list[dict[str, Any]]:
             for layer in layers:
                 layer_path = f"{path}/{layer.name}" if path else layer.name
 
-                if isinstance(layer, TextLayer):
+                if hasattr(layer, "kind") and layer.kind == "type":
                     text_data = extract_text_data(layer)
                     text_layers.append(
                         {
