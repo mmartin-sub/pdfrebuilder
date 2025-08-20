@@ -129,7 +129,7 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
             page_size = page_data.get("size", (595, 842))
             for layer in page_data.get("layers", []):
                 for element_idx, element in enumerate(layer.get("content", [])):
-                    debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])  # type: ignore
+                    debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])
                     effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, CONFIG)
                     debug_font_name = CONFIG.get("debug_font_name", "cour")
                     debug_fontsize = CONFIG.get("debug_fontsize", 8)
@@ -145,14 +145,26 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
                     )
                     final_text_to_render = _wrap_text(debug_text_unwrapped, width=wrap_width)
                     debug_text_margin = 10
-                    page_width, page_height = debug_page.rect.width, debug_page.rect.height
+                    page_width, page_height = (
+                        debug_page.rect.width,
+                        debug_page.rect.height,
+                    )
                     rect_height = page_height / 3
                     rect_y_start = page_height - rect_height - debug_text_margin
                     text_rect = fitz.Rect(
-                        debug_text_margin, rect_y_start, page_width - debug_text_margin, page_height - debug_text_margin
+                        debug_text_margin,
+                        rect_y_start,
+                        page_width - debug_text_margin,
+                        page_height - debug_text_margin,
                     )
 
-                    debug_page.draw_rect(text_rect, fill=(0.1, 0.1, 0.1), fill_opacity=0.8, overlay=True, width=0)
+                    debug_page.draw_rect(
+                        text_rect,
+                        fill=(0.1, 0.1, 0.1),
+                        fill_opacity=0.8,
+                        overlay=True,
+                        width=0,
+                    )
                     debug_page.insert_textbox(
                         text_rect,
                         final_text_to_render,

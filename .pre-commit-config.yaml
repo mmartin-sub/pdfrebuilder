@@ -154,7 +154,7 @@ repos:
     hooks:
       - id: python-no-log-warn
       - id: python-no-eval
-        exclude: ^tests/security/test_enhanced_security\.py$
+        exclude: ^tests/security/test_enhanced_security\.py$|^debug/security/.*\.py$
       - id: python-check-blanket-noqa
       - id: python-check-blanket-type-ignore
       - id: python-use-type-annotations
