@@ -121,7 +121,7 @@ source = "vcs"
 packages = ["src/pdfrebuilder"]
 
 [tool.hatch.build.targets.sdist]
-exclude = [
+extend-exclude = [
     ".trunk/",
     ".git/",
     ".kiro/",
