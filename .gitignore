@@ -156,3 +156,6 @@ tests/sample
 
 images/
 pyproject.toml.backup
+
+# For act - local github actions
+.secrets
