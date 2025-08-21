@@ -11,21 +11,25 @@ The Multi-Format Document Engine is a Python-based system designed for extractin
 The project is managed using `hatch`. All commands should be run through the `hatch` runner.
 
 - **Install dependencies and create the virtual environment**:
+
   ```bash
   hatch env create
   ```
 
 - **Activate the virtual environment**:
+
   ```bash
   hatch shell
   ```
 
 - **Run the test suite**:
+
   ```bash
   hatch run test
   ```
 
 - **Run linters and formatters**:
+
   ```bash
   # Check formatting and linting
   hatch run check
@@ -35,6 +39,7 @@ The project is managed using `hatch`. All commands should be run through the `ha
   ```
 
 - **Build the documentation**:
+
   ```bash
   hatch run docs:build
   ```

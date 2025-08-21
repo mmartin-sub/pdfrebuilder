@@ -71,6 +71,7 @@ venv_pdf_debug/
 
 # OS generated files
 .DS_Store
+._DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
@@ -104,8 +105,6 @@ test*.pdf
 /debug_*.pdf
 /test_*.pdf
 /demo_*.py
-/*_SUMMARY.md
-/*_IMPLEMENTATION*.md
 /*_report.md
 /*_results.json
 /*_audit.json

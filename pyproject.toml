@@ -153,14 +153,14 @@ fix.command = "ruff check --fix {args:.}"
 
 [tool.hatch.envs.docs]
 dependencies = [
-  "sphinx>=7.0.0",
-  "sphinx-rtd-theme>=2.0.0",
-  "sphinx-autobuild>=2021.3.14",
-  "sphinx-autodoc-typehints",
-  "myst-parser",
-  "sphinx-copybutton",
-  "sphinxcontrib-mermaid",
-  "sphinx-design",
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=2.0.0",
+    "sphinx-autobuild>=2021.3.14",
+    "sphinx-autodoc-typehints",
+    "myst-parser",
+    "sphinx-copybutton",
+    "sphinxcontrib-mermaid",
+    "sphinx-design",
 ]
 
 [tool.hatch.envs.docs.scripts]
@@ -384,12 +384,18 @@ ignore_decorators = [
 testpaths = ["tests"]
 addopts = "-ra -q --strict-markers"
 asyncio_mode = "auto"
-norecursedirs = ["tests/utils", "tests/wip"]
-log_cli = false
+norecursedirs = ["tests/utils", "tests-wip"]
+log_cli = true
 log_cli_level = "WARNING"
 log_cli_format = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"
-log_level = "WARNING"
+filterwarnings = [
+    "ignore::pytest.PytestUnknownMarkWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore:builtin type.*has no __module__ attribute:DeprecationWarning",
+    "ignore:defusedxml.cElementTree is deprecated:DeprecationWarning",
+]
 markers = [
     "human_review: marks tests requiring human visual review",
     "e2e: marks end-to-end integration tests",
