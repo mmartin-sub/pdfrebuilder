@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from pdfrebuilder.font_utils import (
+from pdfrebuilder.font.utils import (
     FontFallbackError,
     FontRegistrationError,
     FontRegistrationResult,
@@ -121,13 +121,13 @@ class FontErrorSimulator:
                 return None
             return f"/mock/path/{font_name}.ttf"
 
-        return patch("src.font_utils._find_font_file_for_name", side_effect=mock_find_font_file)
+        return patch("pdfrebuilder.font.utils._find_font_file_for_name", side_effect=mock_find_font_file)
 
     def simulate_font_validation_failure(self, font_names: list[str]):
         """Simulate font validation failure for specific fonts"""
 
         def mock_validate_font_file(font_path: str):
-            from pdfrebuilder.font_utils import ValidationResult
+            from pdfrebuilder.font.utils import ValidationResult
 
             for font_name in font_names:
                 if font_name in font_path:
@@ -138,7 +138,7 @@ class FontErrorSimulator:
             return ValidationResult(valid=True, errors=[], warnings=[])
 
         return patch(
-            "src.font_utils.FontValidator.validate_font_file",
+            "pdfrebuilder.font.utils.FontValidator.validate_font_file",
             side_effect=mock_validate_font_file,
         )
 
@@ -149,7 +149,7 @@ class FontErrorSimulator:
             return False  # All fallbacks fail
 
         return patch(
-            "src.font_utils.FallbackFontManager.validate_fallback_font",
+            "pdfrebuilder.font.utils.FallbackFontManager.validate_fallback_font",
             side_effect=mock_validate_fallback_font,
         )
 

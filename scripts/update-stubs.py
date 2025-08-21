@@ -11,7 +11,7 @@ try:
     import tomllib
 except ImportError:
     try:
-        import tomli as tomllib
+        import tomli as tomllib  # type: ignore
     except ImportError:
         print(
             "Error: 'tomli' is required for this script on Python < 3.11. Please run 'pip install tomli'",

@@ -3,7 +3,7 @@
 import logging
 from typing import Any, ClassVar
 
-import fitz
+import pymupdf as fitz
 
 from pdfrebuilder.models.universal_idm import UniversalDocument
 
@@ -88,12 +88,13 @@ class FitzPDFEngine(PDFEngineBase):
                         continue
                     page_data = doc_unit_data
                     page_idx = page_data.get("page_number", doc_unit_idx)
-                    page = doc.new_page(width=page_data["size"][0], height=page_data["size"][1])
+                    page = doc.new_page(width=page_data["size"][0], height=page_data["size"][1])  # type: ignore[reportAttributeAccessIssue]
                     page_bg_color = page_data.get("page_background_color")
                     if page_bg_color is not None:
                         page.draw_rect(page.rect, fill=page_bg_color)
                     if tpl_doc and page_idx < tpl_doc.page_count:
-                        page.show_pdf_page(page.rect, tpl_doc, page_idx)
+                        # pyright incorrectly reports this method does not exist due to bad stubs
+                        page.show_pdf_page(page.rect, tpl_doc, page_idx)  # type: ignore
                     for layer_data in page_data.get("layers", []):
                         for element in layer_data.get("content", []):
                             _render_element(page, element, page_idx, {}, config)

@@ -16,8 +16,8 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from docs.coverage_reporter import DocumentationCoverageReporter
-from docs.validation import DocumentationValidator, ValidationStatus
+from docs.tools.coverage_reporter import DocumentationCoverageReporter
+from docs.tools.validation import DocumentationValidator, ValidationStatus
 
 
 class DocumentationMaintenanceManager:

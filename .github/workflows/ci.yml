@@ -25,8 +25,5 @@ jobs:
     - name: Install hatch
       run: pip install hatch
 
-    - name: Run linting checks
-      run: hatch run lint:style && hatch run lint:lint && hatch run lint:typing
-
-    - name: Run tests
-      run: hatch run test-cov
+    - name: Run CI script
+      run: ./scripts/ci.sh

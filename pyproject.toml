@@ -36,9 +36,9 @@ classifiers = [
 # ---- pdfrebuilder runtime deps (kept from your 2nd file) ----
 dependencies = [
     "rich>=13.7.0",
-    "fonttools[ufo,lxml,woff,unicode]>=4.47.0",
-    "requests>=2.31.0",
-    "typer>=0.9.0",
+    "fonttools[ufo,lxml,woff,unicode]>=4.59.1",
+    "requests>=2.32.5",
+    "typer>=0.16.1",
     "defusedxml>=0.7.1",
     "reportlab>=4.0.0",
     "plumbum>=1.8.0",
@@ -49,7 +49,7 @@ dependencies = [
     "tomli-w>=1.0.0",
     "psutil>=7.0.0",
     "PyMuPDF>=1.26",
-    "json5>=0.9.14",
+    "json5>=0.12.1",
     "Pillow>=10.2.0",
     "opencv-python>=4.12.0",
     "pytesseract>=0.3.13",
@@ -66,38 +66,38 @@ pdfrebuilder = "pdfrebuilder.cli:main"
 
 [project.optional-dependencies]
 # keep your extras
-psd = ["psd-tools>=1.10.9", "numpy>=1.24.0"]
+psd = ["psd-tools>=1.10.9", "numpy>=2.3.2"]
 wand = ["Wand>=0.6.13"]
-validation = ["scikit-image>=0.25.2", "numpy>=1.24.0"]
+validation = ["scikit-image>=0.25.2", "numpy>=2.3.2"]
 
 # test & dev (mirrors project 1 tooling)
 test = [
     "pytest>=8.4.1",
-    "pytest-cov>=6.2.1",
+    "pytest-cov>=7.10.4",
     "pytest-asyncio>=1.1.0",
-    "jsonschema>=4.19.0",
+    "jsonschema>=4.25.1",
 ]
 dev = [
     "pdfrebuilder[test]",
 
     # Core dev tools (same style as project 1)
-    "ruff>=0.5.0",
+    "ruff>=0.12.9",
     "bandit",
     "detect-secrets",
+    "pre-commit>=3.0.0",
 
     "toml",      # needed to generate the stubs
     "packaging", # Add this line
     "requests",  # part of the std deps but still needed for dev
 
     # Legacy/compat tools
-    "mypy>=1.10.0",
+    "mypy>=1.17.1",
     "vulture>=2.11",
 
     # Future-facing type checker
     "pyright",
 
     # Type Stubs
-    "pymupdf-stubs>=1.26.1",
     "types-PyYAML",
     "types-requests",
     "types-beautifulsoup4",
@@ -150,6 +150,24 @@ format.dependencies = ["ruff>=0.5.0"]
 format.command = "ruff format {args:.}"
 fix.dependencies = ["ruff>=0.5.0"]
 fix.command = "ruff check --fix {args:.}"
+
+[tool.hatch.envs.docs]
+dependencies = [
+  "sphinx>=7.0.0",
+  "sphinx-rtd-theme>=2.0.0",
+  "sphinx-autobuild>=2021.3.14",
+  "sphinx-autodoc-typehints",
+  "myst-parser",
+  "sphinx-copybutton",
+  "sphinxcontrib-mermaid",
+  "sphinx-design",
+]
+
+[tool.hatch.envs.docs.scripts]
+build = "sphinx-build docs/source docs/build/html"
+live = "sphinx-autobuild docs/source docs/build/html --open-browser --watch src/"
+clean = "rm -rf docs/build"
+linkcheck = "sphinx-build -b linkcheck docs/source docs/build/linkcheck"
 
 [tool.hatch.envs.default.scripts]
 check = ["lint-check", "format-check", "types-pyright", "security"]

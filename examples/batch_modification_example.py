@@ -130,7 +130,8 @@ def demonstrate_batch_text_replacement():
     # Show modified content
     text_elements = document.document_structure[0].layers[0].content
     for element in text_elements:
-        print(f"  {element.id}: {element.text}")
+        if isinstance(element, TextElement):
+            print(f"  {element.id}: {element.text}")
 
     print()
 
@@ -166,7 +167,8 @@ def demonstrate_variable_substitution():
     # Show substituted content
     text_elements = document.document_structure[0].layers[0].content
     for element in text_elements:
-        print(f"  {element.id}: {element.text}")
+        if isinstance(element, TextElement):
+            print(f"  {element.id}: {element.text}")
 
     print()
 

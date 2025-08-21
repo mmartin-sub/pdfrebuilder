@@ -7,7 +7,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any
 
-import fitz  # Only for Matrix and types; all I/O should use FitzPDFEngine
+import pymupdf as fitz  # Only for Matrix and types; all I/O should use FitzPDFEngine
 from PIL import Image
 from psd_tools import PSDImage
 
@@ -140,15 +140,15 @@ class PDFRenderer(DocumentRenderer):
 
             # Render each page
             for page_num in page_numbers:
-                page: fitz.Page = doc.load_page(page_num)
+                page: fitz.Page = doc[page_num]
 
                 # Create a pixmap with appropriate colorspace
                 if config.transparent_background and config.color_space == "RGBA":
                     # RGBA pixmap with transparent background
-                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=True)
+                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=True)  # type: ignore[reportAttributeAccessIssue]
                 else:
                     # RGB pixmap with white background
-                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
+                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)  # type: ignore[reportAttributeAccessIssue]
 
                 # Determine output format and file extension
                 if config.output_format == "png":
@@ -165,7 +165,8 @@ class PDFRenderer(DocumentRenderer):
                 output_path = os.path.join(output_dir, f"page_{page_num}.{file_ext}")
 
                 # Save the pixmap
-                pix.save(output_path, **save_args)
+                # pyright incorrectly reports this method does not exist due to bad stubs
+                pix.save(output_path, **save_args)  # type: ignore
                 output_paths.append(output_path)
 
                 logger.info(f"Rendered page {page_num + 1}/{len(page_numbers)} to {output_path}")

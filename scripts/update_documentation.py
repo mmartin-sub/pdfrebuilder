@@ -16,7 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # Import security utilities
-from security.subprocess_utils import SecureSubprocessRunner
+from pdfrebuilder.security.subprocess_utils import SecureSubprocessRunner
 
 
 class DocumentationUpdater:
@@ -38,7 +38,7 @@ class DocumentationUpdater:
 
         try:
             # Run the API generator
-            from docs.api_generator import APIDocumentationGenerator
+            from docs.tools.api_generator import APIDocumentationGenerator
 
             generator = APIDocumentationGenerator()
             generator.generate_all_documentation()
@@ -56,7 +56,7 @@ class DocumentationUpdater:
 
         try:
             # Import settings
-            import settings
+            from pdfrebuilder import settings
 
             config_doc = self._generate_config_documentation(settings.CONFIG)
 

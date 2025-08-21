@@ -4,7 +4,7 @@ import os
 import traceback
 from collections import Counter
 
-import fitz
+import pymupdf as fitz
 
 from pdfrebuilder.models.universal_idm import (
     BlendMode,
@@ -240,7 +240,7 @@ def extract_pdf_content(pdf_path, extraction_flags=None):
     # engine_info = get_engine_info("fitz") # This line is removed as per the edit hint.
 
     # Create document metadata
-    pdf_metadata = doc.metadata or {}
+    pdf_metadata = doc.metadata or {}  # type: ignore
     metadata = DocumentMetadata(
         format="PDF",
         title=pdf_metadata.get("title"),
@@ -281,11 +281,11 @@ def extract_pdf_content(pdf_path, extraction_flags=None):
 
         # Get raw content from the page
         raw_blocks = (
-            page.get_text("dict").get("blocks", [])
+            page.get_text("dict").get("blocks", [])  # type: ignore[reportAttributeAccessIssue]
             if (extraction_flags.get("include_text", True) or extraction_flags.get("include_images", True))
             else []
         )
-        raw_drawings = page.get_drawings() if extraction_flags.get("include_drawings", True) else []
+        raw_drawings = page.get_drawings() if extraction_flags.get("include_drawings", True) else []  # type: ignore
 
         logger.debug(f"[EXTRACTION] page {page_num}: raw_drawings = {raw_drawings}")
 
@@ -340,8 +340,8 @@ def extract_pdf_content(pdf_path, extraction_flags=None):
             for rect_draw in filled_rects:
                 if not rect_draw.get("used_for_background"):
                     bg_rect = fitz.Rect(rect_draw["rect"])
-                    intersection_area = (text_rect & bg_rect).area
-                    if text_rect.contains(bg_rect) or intersection_area > (text_rect.area * 0.8):
+                    intersection_area = (text_rect & bg_rect).get_area()  # type: ignore[reportAttributeAccessIssue]
+                    if text_rect.contains(bg_rect) or intersection_area > (text_rect.get_area() * 0.8):  # type: ignore[reportAttributeAccessIssue]
                         # Set background color for text
                         if rect_draw.get("fill"):
                             text_elem.background_color = Color.from_rgb_tuple(rect_draw["fill"])

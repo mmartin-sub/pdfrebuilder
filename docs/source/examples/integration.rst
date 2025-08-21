@@ -1,5 +1,5 @@
 Integration Examples
-===================
+====================
 
 This section demonstrates how to integrate the Multi-Format Document Engine with various systems and workflows.
 

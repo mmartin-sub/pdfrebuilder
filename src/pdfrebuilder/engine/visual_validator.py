@@ -20,7 +20,7 @@ except ImportError:
     HAS_CV2 = False
 
 try:
-    import fitz
+    import pymupdf as fitz
 
     HAS_FITZ = True
 except ImportError:
@@ -33,12 +33,7 @@ try:
 except ImportError:
     HAS_SKIMAGE = False
 
-from pdfrebuilder.engine.validation_report import (
-    ValidationReport,
-    ValidationResult,
-    create_validation_report,
-    create_validation_result,
-)
+from pdfrebuilder.engine.validation_report import ValidationResult, create_validation_result
 
 logger = logging.getLogger(__name__)
 
@@ -175,10 +170,11 @@ class VisualValidator:
             zoom = self.rendering_dpi / 72.0  # 72 DPI is the PDF default
 
             # Create pixmap
-            pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+            pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))  # type: ignore[reportAttributeAccessIssue]
 
             # Save pixmap as PNG
-            pix.save(tmp_path)
+            # pyright incorrectly reports this method does not exist due to bad stubs
+            pix.save(tmp_path)  # type: ignore
 
             return tmp_path
 
@@ -244,7 +240,8 @@ class VisualValidator:
             # Calculate SSIM using scikit-image if available, otherwise fallback
             if HAS_SKIMAGE:
                 # Use scikit-image's structural_similarity (modern approach)
-                ssim_score, _ = structural_similarity(gray1, gray2, full=True, gradient=False)
+                # pyright incorrectly reports a tuple size mismatch due to bad stubs
+                ssim_score, _ = structural_similarity(gray1, gray2, full=True, gradient=False)  # type: ignore
             else:
                 # Fallback to a simple correlation-based similarity measure
                 logger.warning("scikit-image not available, using correlation-based similarity")
@@ -383,57 +380,3 @@ def validate_documents(
     """
     validator = VisualValidator(config)
     return validator.validate(original_path, generated_path, diff_image_path)
-
-
-def batch_validate_documents(
-    document_pairs: list[tuple[str, str]],
-    output_dir: str,
-    report_name: str = "validation_report",
-    config: dict[str, Any] | None = None,
-    generate_formats: list[str] | None = None,
-) -> ValidationReport:
-    """
-    Validate multiple document pairs and generate a comprehensive report
-
-    Args:
-        document_pairs: List of (original_path, generated_path) tuples
-        output_dir: Directory to save difference images and report
-        report_name: Base name for report files
-        config: Configuration dictionary
-        generate_formats: List of report formats to generate (json, html, junit, markdown)
-                         If None, generates json and html formats
-
-    Returns:
-        ValidationReport object
-    """
-    validator = VisualValidator(config)
-    results = []
-
-    # Default formats if none specified
-    if generate_formats is None:
-        generate_formats = ["json", "html"]
-
-    # Validate each document pair
-    for i, (original_path, generated_path) in enumerate(document_pairs):
-        diff_image_path = os.path.join(output_dir, f"{report_name}_diff_{i}.png")
-        result = validator.validate(original_path, generated_path, diff_image_path)
-        results.append(result)
-
-    # Create validation report
-    report = create_validation_report(
-        document_name=report_name,
-        results=results,
-        metadata={
-            "config": config,
-        },
-    )
-
-    # Save report
-    report_path = os.path.join(output_dir, f"{report_name}.json")
-    report.save_report(report_path)
-
-    # Generate HTML report
-    html_report_path = os.path.join(output_dir, f"{report_name}.html")
-    report.generate_html_report(html_report_path)
-
-    return report

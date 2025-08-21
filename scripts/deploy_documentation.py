@@ -13,7 +13,7 @@ from pathlib import Path
 
 # Add src to path for security utilities
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from security.subprocess_utils import SecureSubprocessRunner, SecurityError
+from pdfrebuilder.security.subprocess_utils import SecureSubprocessRunner, SecurityError
 
 
 def run_command(cmd: list[str], cwd: Path | None = None) -> tuple[int, str, str]:

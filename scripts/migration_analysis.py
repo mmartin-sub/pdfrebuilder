@@ -197,7 +197,9 @@ def main():
 
     # Generate migration plan
     plan = analyzer.generate_migration_plan(results)
-    plan_file = Path("migration_plan.json")
+    output_dir = Path("docs")
+    output_dir.mkdir(exist_ok=True)
+    plan_file = output_dir / "migration_plan.json"
     with open(plan_file, "w") as f:
         json.dump(plan, f, indent=2)
     print(f"  Migration plan saved to: {plan_file}")

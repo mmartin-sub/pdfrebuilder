@@ -68,7 +68,7 @@ Font Management
 
 .. code-block:: python
 
-   from pdfrebuilder.font_utils import download_essential_fonts, check_font_availability
+   from pdfrebuilder.font.utils import download_essential_fonts, check_font_availability
 
    # Download common fonts
    download_essential_fonts()

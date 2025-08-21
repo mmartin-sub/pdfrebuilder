@@ -63,7 +63,7 @@ PDF Extraction Problems
 
 .. code-block:: python
 
-   from pdfrebuilder.font_utils import check_font_availability
+   from pdfrebuilder.font.utils import check_font_availability
 
    missing_fonts = check_font_availability("input.pdf")
    if missing_fonts:
@@ -186,7 +186,7 @@ Missing Fonts
 
 .. code-block:: python
 
-   from pdfrebuilder.font_utils import add_font_directory
+   from pdfrebuilder.font.utils import add_font_directory
 
    add_font_directory("/path/to/custom/fonts")
 
@@ -213,7 +213,7 @@ Font Rendering Issues
 
 .. code-block:: python
 
-   from pdfrebuilder.font_utils import analyze_font_metrics
+   from pdfrebuilder.font.utils import analyze_font_metrics
 
    metrics = analyze_font_metrics("problematic.pdf")
    print(f"Font issues: {metrics.issues}")

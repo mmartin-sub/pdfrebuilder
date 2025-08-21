@@ -240,7 +240,7 @@ Use the batch processing script for multiple files:
   Output directory for processed files (required)
 
 ``--pattern PATTERN``
-  File pattern to match (default: *.pdf)
+  File pattern to match (default: \*.pdf)
 
 ``--recursive / --no-recursive``
   Process subdirectories recursively (default: disabled)
@@ -520,17 +520,17 @@ Exit Codes
 
 The CLI uses the following exit codes:
 
-- ``0``: Success
-- ``1``: General error
-- ``2``: Invalid arguments
-- ``3``: File not found
-- ``4``: Permission denied
-- ``5``: Processing error
-- ``6``: Validation failed
-- ``7``: Quality threshold not met
-- ``8``: Timeout exceeded
-- ``9``: Out of memory
-- ``10``: Configuration error
+* ``0``: Success
+* ``1``: General error
+* ``2``: Invalid arguments
+* ``3``: File not found
+* ``4``: Permission denied
+* ``5``: Processing error
+* ``6``: Validation failed
+* ``7``: Quality threshold not met
+* ``8``: Timeout exceeded
+* ``9``: Out of memory
+* ``10``: Configuration error
 
 Examples by Use Case
 --------------------

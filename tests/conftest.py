@@ -17,7 +17,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pdfrebuilder.font_utils import (
+from pdfrebuilder.font.utils import (
     FontFallbackError,
     FontRegistrationError,
     FontValidationError,

@@ -6,7 +6,7 @@ import textwrap
 import fitz
 import json5
 
-from pdfrebuilder.render import _render_element, json_serializer
+from pdfrebuilder.core.render import _render_element, json_serializer
 from pdfrebuilder.settings import CONFIG
 
 UNFINDABLE_FONT_NAMES = {"Unnamed-T3"}

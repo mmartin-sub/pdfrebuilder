@@ -18,7 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 try:
-    from security.subprocess_compatibility import SecureSubprocessWrapper, run
+    from pdfrebuilder.security.subprocess_compatibility import SecureSubprocessWrapper, run
 
     SECURE_MODULES_AVAILABLE = True
 except ImportError as e:

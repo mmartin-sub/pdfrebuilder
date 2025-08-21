@@ -167,8 +167,8 @@ The manual_overrides.json5 file supports the following structure:
 
      // Image overrides
      "image_bboxes": {
-       "image_1_hash.jpeg": [x1, y1, x2, y2],
-       "image_2_hash.png": [x1, y1, x2, y2]
+       "image_1_hash.jpeg": [50, 50, 150, 150],
+       "image_2_hash.png": [200, 200, 300, 300]
      },
 
      "image_replacements": {

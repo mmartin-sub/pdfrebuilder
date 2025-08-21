@@ -10,7 +10,7 @@ from typing import Any
 
 from pdfrebuilder.engine.extract_pdf_content_fitz import extract_pdf_content
 from pdfrebuilder.models.universal_idm import UniversalDocument
-from pdfrebuilder.tools import detect_file_format
+from pdfrebuilder.tools.generic import detect_file_format
 
 logger = logging.getLogger(__name__)
 

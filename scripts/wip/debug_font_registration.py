@@ -9,7 +9,7 @@ def test_minimal_download_calls():
     """Test minimal download calls to understand the issue"""
 
     # Import the function
-    from pdfrebuilder.font_utils import _FONT_DOWNLOAD_ATTEMPTED, ensure_font_registered
+    from pdfrebuilder.font.utils import _FONT_DOWNLOAD_ATTEMPTED, ensure_font_registered
 
     # Clear the download attempted set
     _FONT_DOWNLOAD_ATTEMPTED.clear()
@@ -23,7 +23,7 @@ def test_minimal_download_calls():
 
     sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-    from security.path_utils import create_secure_temp_dir
+    from pdfrebuilder.security.path_utils import create_secure_temp_dir
 
     # Create secure temporary directory for testing
     temp_base = create_secure_temp_dir("font_debug_test_")
@@ -49,15 +49,15 @@ def test_minimal_download_calls():
         return False
 
     # Mock the functions
-    with patch("src.font_utils.download_google_font", side_effect=download_side_effect) as mock_download:
-        with patch("src.font_utils.os.path.exists", side_effect=exists_side_effect):
+    with patch("pdfrebuilder.font.utils.download_google_font", side_effect=download_side_effect) as mock_download:
+        with patch("pdfrebuilder.font.utils.os.path.exists", side_effect=exists_side_effect):
             with patch(
-                "src.font_utils.get_config_value",
+                "pdfrebuilder.font.utils.get_config_value",
                 side_effect=lambda key: (
                     test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
                 ),
             ):
-                with patch("src.font_utils.TTFont") as mock_ttfont:
+                with patch("pdfrebuilder.font.utils.TTFont") as mock_ttfont:
                     # Mock TTFont
                     def create_mock_font(font_path):
                         mock_font = MagicMock()

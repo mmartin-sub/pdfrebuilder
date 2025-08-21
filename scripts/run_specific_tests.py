@@ -7,13 +7,14 @@ import os
 import sys
 
 # Add the project root to the path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
 
 
 def run_documentation_builder_tests():
     """Run documentation builder tests."""
     print("Running documentation builder tests...")
-    from tests.test_documentation_builder import TestDocumentationBuilder
+    from tests.wip.documentation.test_documentation_builder import TestDocumentationBuilder
 
     t = TestDocumentationBuilder()
     t.setup_method()
@@ -37,7 +38,7 @@ def run_documentation_builder_tests():
 def run_documentation_validation_tests():
     """Run documentation validation tests."""
     print("Running documentation validation tests...")
-    from tests.test_documentation_validation import TestDocumentationValidator
+    from tests.wip.documentation.test_documentation_validation import TestDocumentationValidator
 
     t = TestDocumentationValidator()
     t.setup_method()
@@ -60,7 +61,7 @@ def run_documentation_validation_tests():
 def run_font_cache_tests():
     """Run font cache integration tests."""
     print("Running font cache integration tests...")
-    from tests.test_font_cache_integration import (
+    from tests.font.test_font_cache_integration import (
         TestCacheIntegrationPerformance,
         TestFontDownloadCache,
         TestFontRegistrationCache,
@@ -99,7 +100,7 @@ def run_font_cache_tests():
 def run_e2e_tests():
     """Run E2E PDF regeneration tests."""
     print("Running E2E PDF regeneration tests...")
-    from tests.test_e2e_pdf_regeneration import (
+    from tests.wip.e2e.test_e2e_pdf_regeneration import (
         test_full_pdf_regeneration_pipeline,
         test_generate_debug_pdfs_for_outputs,
     )

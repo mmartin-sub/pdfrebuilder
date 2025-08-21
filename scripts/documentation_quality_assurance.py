@@ -16,8 +16,8 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from docs.coverage_reporter import DocumentationCoverageReporter
-from docs.validation import DocumentationValidator
+from docs.tools.coverage_reporter import DocumentationCoverageReporter
+from docs.tools.validation import DocumentationValidator
 
 
 class DocumentationQualityAssurance:
@@ -169,7 +169,7 @@ class DocumentationQualityAssurance:
 
         try:
             # Import settings to get configuration options
-            from settings import CONFIG
+            from pdfrebuilder.settings import CONFIG
 
             total_options = len(CONFIG)
 

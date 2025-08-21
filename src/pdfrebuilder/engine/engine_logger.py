@@ -134,11 +134,11 @@ class EngineLogger:
         """
         try:
             if engine_name.lower() in ["pymupdf", "fitz"]:
-                import fitz
+                import pymupdf as fitz
 
                 return {
                     "engine": "pymupdf",
-                    "version": fitz.__version__,
+                    "version": getattr(fitz, "pymupdf_version", "unknown"),
                     "load_path": os.path.dirname(fitz.__file__),
                     "python_executable": sys.executable,
                 }
@@ -194,9 +194,9 @@ class EngineLogger:
 
         # Check PyMuPDF
         try:
-            import fitz
+            import pymupdf as fitz
 
-            available_engines.append(f"pymupdf ({fitz.__version__})")
+            available_engines.append(f"pymupdf ({getattr(fitz, 'pymupdf_version', 'unknown')})")
         except ImportError:
             pass
 

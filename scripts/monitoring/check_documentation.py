@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 try:
-    from security.subprocess_compatibility import run
+    from pdfrebuilder.security.subprocess_compatibility import run
 except ImportError:
     # Fallback for development script when secure modules unavailable
     import subprocess  # nosec B404 # Fallback for development script when secure modules unavailable

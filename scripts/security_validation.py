@@ -12,7 +12,7 @@ from pathlib import Path
 
 # Import secure execution module
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from security.secure_execution import SecureExecutor, SecurityContext
+from pdfrebuilder.security.secure_execution import SecureExecutor, SecurityContext
 
 
 def run_bandit_scan() -> dict:

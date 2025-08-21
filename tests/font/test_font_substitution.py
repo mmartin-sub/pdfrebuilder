@@ -12,7 +12,7 @@ import os
 import unittest
 from unittest.mock import Mock, patch
 
-from pdfrebuilder.font_utils import (
+from pdfrebuilder.font.utils import (
     _FONT_DOWNLOAD_ATTEMPTED,
     _FONT_REGISTRATION_CACHE,
     ensure_font_registered,
@@ -44,7 +44,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
 
-    @patch("pdfrebuilder.font_utils.TTFont")
+    @patch("pdfrebuilder.font.utils.TTFont")
     def test_glyph_coverage_basic_latin(self, mock_ttfont):
         """Test glyph coverage for basic Latin characters"""
         mock_font = Mock()
@@ -75,7 +75,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         result = font_covers_text("dummy_path.ttf", "Hello 世界")  # Contains Chinese characters
         self.assertFalse(result)
 
-    @patch("pdfrebuilder.font_utils.TTFont")
+    @patch("pdfrebuilder.font.utils.TTFont")
     def test_glyph_coverage_unicode_characters(self, mock_ttfont):
         """Test glyph coverage for Unicode characters"""
         mock_font = Mock()
@@ -115,10 +115,10 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         result = font_covers_text("dummy_path.ttf", "Hello 🌍")  # Contains emoji
         self.assertFalse(result)
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.scan_available_fonts")
-    @patch("pdfrebuilder.font_utils.font_covers_text")
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.scan_available_fonts")
+    @patch("pdfrebuilder.font.utils.font_covers_text")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_font_substitution_by_coverage(self, mock_exists, mock_covers, mock_scan, mock_download):
         """Test font substitution based on glyph coverage"""
         font_name = "MissingFont"
@@ -145,7 +145,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         mock_covers.side_effect = coverage_side_effect
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -155,10 +155,10 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         self.assertEqual(result, "NotoSans")
         self.mock_page.insert_font.assert_called_once_with(fontfile="/path/to/notosans.ttf", fontname="NotoSans")
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.scan_available_fonts")
-    @patch("pdfrebuilder.font_utils.font_covers_text")
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.scan_available_fonts")
+    @patch("pdfrebuilder.font.utils.font_covers_text")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_font_substitution_no_coverage_fallback(self, mock_exists, mock_covers, mock_scan, mock_download):
         """Test fallback when no available font covers the text"""
         font_name = "MissingFont"
@@ -176,7 +176,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         mock_covers.return_value = False
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -186,10 +186,10 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         # Should fallback to first available fallback font
         self.assertEqual(result, "Courier")
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.scan_available_fonts")
-    @patch("pdfrebuilder.font_utils.font_covers_text")
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.scan_available_fonts")
+    @patch("pdfrebuilder.font.utils.font_covers_text")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_font_substitution_registration_error(self, mock_exists, mock_covers, mock_scan, mock_download):
         """Test handling of font registration errors during substitution"""
         font_name = "MissingFont"
@@ -220,7 +220,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         self.mock_page.insert_font.side_effect = insert_font_side_effect
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -242,7 +242,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         # Removed unused variable: font_name = "CustomFont"
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -251,7 +251,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
             result = ensure_font_registered(self.mock_page, "helv", verbose=False)
             self.assertEqual(result, "helv")
 
-    @patch("pdfrebuilder.font_utils.TTFont")
+    @patch("pdfrebuilder.font.utils.TTFont")
     def test_multiple_cmap_tables_handling(self, mock_ttfont):
         """Test handling of fonts with multiple character map tables"""
         mock_font = Mock()
@@ -299,8 +299,8 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         result = ensure_font_registered(self.mock_page, "Arial", verbose=False, text=None)
         self.assertIsNotNone(result)
 
-    @patch("pdfrebuilder.font_utils.scan_available_fonts")
-    @patch("pdfrebuilder.font_utils.font_covers_text")
+    @patch("pdfrebuilder.font.utils.scan_available_fonts")
+    @patch("pdfrebuilder.font.utils.font_covers_text")
     def test_font_substitution_performance_caching(self, mock_covers, mock_scan):
         """Test that font substitution results are cached for performance"""
         font_name = "Arial"
@@ -312,7 +312,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
             f.write("dummy font content")
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -348,10 +348,10 @@ class TestFontFallbackChain(unittest.TestCase):
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.scan_available_fonts")
-    @patch("pdfrebuilder.font_utils.font_covers_text")
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.scan_available_fonts")
+    @patch("pdfrebuilder.font.utils.font_covers_text")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_complete_fallback_chain(self, mock_exists, mock_covers, mock_scan, mock_download):
         """Test the complete font fallback chain"""
         font_name = "NonExistentFont"
@@ -369,7 +369,7 @@ class TestFontFallbackChain(unittest.TestCase):
 
         # 4. Should fallback to default font
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -388,10 +388,10 @@ class TestFontFallbackChain(unittest.TestCase):
 
         # Mock a scenario where default font also fails
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (self.test_fonts_dir if key == "downloaded_fonts_dir" else "also-nonexistent"),
         ):
-            with patch("pdfrebuilder.font_utils.STANDARD_PDF_FONTS", ["helv", "cour", "tiro"]):
+            with patch("pdfrebuilder.font.utils.STANDARD_PDF_FONTS", ["helv", "cour", "tiro"]):
                 result = ensure_font_registered(self.mock_page, font_name, verbose=False)
 
         # Should fallback to first standard PDF font
@@ -405,15 +405,15 @@ class TestFontFallbackChain(unittest.TestCase):
         font_name = "helv"
 
         # Mock scenario where helv is not in standard fonts (edge case)
-        with patch("pdfrebuilder.font_utils.STANDARD_PDF_FONTS", ["cour", "tiro"]):
+        with patch("pdfrebuilder.font.utils.STANDARD_PDF_FONTS", ["cour", "tiro"]):
             with patch(
-                "pdfrebuilder.font_utils.get_config_value",
+                "pdfrebuilder.font.utils.get_config_value",
                 side_effect=lambda key: (
                     self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
                 ),
             ):
-                with patch("pdfrebuilder.font_utils.os.path.exists", return_value=False):
-                    with patch("pdfrebuilder.font_utils.download_google_font", return_value=None):
+                with patch("pdfrebuilder.font.utils.os.path.exists", return_value=False):
+                    with patch("pdfrebuilder.font.utils.download_google_font", return_value=None):
                         result = ensure_font_registered(self.mock_page, font_name, verbose=False)
 
         # Should fallback to available standard PDF font to avoid circular reference

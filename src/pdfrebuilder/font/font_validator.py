@@ -11,7 +11,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Any
 
-from pdfrebuilder.font_utils import font_covers_text, scan_available_fonts
+from pdfrebuilder.font.utils import font_covers_text, scan_available_fonts
 from pdfrebuilder.settings import STANDARD_PDF_FONTS
 
 logger = logging.getLogger(__name__)

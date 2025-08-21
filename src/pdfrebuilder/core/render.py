@@ -8,7 +8,7 @@ from typing import Any, TypedDict
 import fitz  # Only for types/constants; all I/O should use FitzPDFEngine
 
 from pdfrebuilder.engine.tool_fritz import _convert_color_to_rgb
-from pdfrebuilder.font_utils import ensure_font_registered
+from pdfrebuilder.font.utils import ensure_font_registered
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -90,7 +90,7 @@ def _render_text_with_fallback(
 
     Enhanced with comprehensive font error handling and registration validation.
     """
-    from pdfrebuilder.font_utils import FontRegistrationError, register_font_with_validation
+    from pdfrebuilder.font.utils import FontRegistrationError, register_font_with_validation
 
     # Enhanced font registration with comprehensive error handling
     try:
@@ -455,7 +455,7 @@ def _validate_fonts_before_rendering(page, elements, page_idx, config):
     Returns:
         Dictionary with validation results and font mapping
     """
-    from pdfrebuilder.font_utils import FontRegistrationError, register_font_with_validation
+    from pdfrebuilder.font.utils import FontRegistrationError, register_font_with_validation
 
     logger.info(f"Pre-validating fonts for page {page_idx} with {len(elements)} elements")
 
@@ -644,7 +644,7 @@ def _render_element(page, element, page_idx, page_overrides, config, use_htmlbox
 
             # Enhanced font registration with comprehensive error handling
             try:
-                from pdfrebuilder.font_utils import FontRegistrationError
+                from pdfrebuilder.font.utils import FontRegistrationError
 
                 actual_font = ensure_font_registered(page, requested_font, verbose=True, text=text)
 
@@ -703,7 +703,7 @@ def _render_element(page, element, page_idx, page_overrides, config, use_htmlbox
                 # Try to continue with a fallback approach
                 try:
                     # Use a guaranteed working font as last resort
-                    from pdfrebuilder.font_utils import get_fallback_font_validator
+                    from pdfrebuilder.font.utils import get_fallback_font_validator
 
                     validator = get_fallback_font_validator()
                     guaranteed_font = validator.get_guaranteed_working_font()

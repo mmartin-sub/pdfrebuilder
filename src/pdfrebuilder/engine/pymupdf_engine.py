@@ -10,7 +10,8 @@ import os
 import sys
 from typing import Any, ClassVar
 
-from fitz import Document
+import pymupdf as fitz
+from pymupdf import Document
 
 from pdfrebuilder.engine.pdf_rendering_engine import PDFRenderingEngine, RenderingError
 from pdfrebuilder.models.universal_idm import Color, UniversalDocument
@@ -45,10 +46,8 @@ class PyMuPDFEngine(PDFRenderingEngine):
         """Initialize the engine with configuration."""
         # Import fitz here to avoid module-level import
         try:
-            import fitz
-
             # Set version after successful import
-            self.engine_version = fitz.version[0] if hasattr(fitz, "version") else fitz.__version__
+            self.engine_version = getattr(fitz, "pymupdf_version", "unknown")
         except ImportError as e:
             from pdfrebuilder.engine.engine_logger import EngineLogger
 
@@ -90,8 +89,9 @@ class PyMuPDFEngine(PDFRenderingEngine):
                         doc_metadata[key] = str(value)
 
                 if doc_metadata:
-                    # Use getattr to bypass incorrect type stub
-                    doc.set_metadata(doc_metadata)
+                    # pyright is incorrectly reporting that set_metadata does not exist
+                    # due to outdated/incorrect stubs. The method is correct per documentation.
+                    doc.set_metadata(doc_metadata)  # type: ignore[reportAttributeAccessIssue]
 
             self._current_doc = doc
             return doc
@@ -392,14 +392,12 @@ class PyMuPDFEngine(PDFRenderingEngine):
     def get_version_info(self) -> dict[str, Any]:
         """Get comprehensive version information for PyMuPDF engine."""
         try:
-            import fitz
-
             return {
                 "engine_name": self.engine_name,
                 "engine_version": self.engine_version,
                 "load_path": os.path.dirname(fitz.__file__),
                 "python_executable": sys.executable,
-                "fitz_version": (str(fitz.version) if hasattr(fitz, "version") else fitz.__version__),
+                "fitz_version": getattr(fitz, "pymupdf_version", "unknown"),
             }
         except ImportError:
             return {
@@ -413,9 +411,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
     def get_engine_info(self) -> dict[str, Any]:
         """Get information about the PyMuPDF engine."""
         try:
-            import fitz
-
-            fitz_version = fitz.version
+            fitz_version = getattr(fitz, "pymupdf_version", "unknown")
         except ImportError:
             fitz_version = "not available"
 

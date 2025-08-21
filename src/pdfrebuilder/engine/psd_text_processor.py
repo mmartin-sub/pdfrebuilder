@@ -10,13 +10,11 @@ from typing import Any, cast
 # Import psd-tools conditionally to handle cases where it's not installed
 try:
     from psd_tools import PSDImage
-    from psd_tools.api.layers import TextLayer
 
     HAS_PSD_TOOLS = True
 except ImportError:
     HAS_PSD_TOOLS = False
     PSDImage = Any
-    TextLayer = Any
 
 from pdfrebuilder.models.universal_idm import Color, FontDetails
 

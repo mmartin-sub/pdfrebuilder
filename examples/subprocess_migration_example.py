@@ -12,8 +12,8 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from security.secure_execution import SecureExecutor, SecurityContext
-from security.subprocess_compatibility import MigrationHelper, SecureSubprocessWrapper
+from pdfrebuilder.security.secure_execution import SecureExecutor, SecurityContext
+from pdfrebuilder.security.subprocess_compatibility import MigrationHelper, SecureSubprocessWrapper
 
 
 def demonstrate_old_subprocess_pattern():

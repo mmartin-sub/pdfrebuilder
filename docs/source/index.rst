@@ -11,6 +11,13 @@ Welcome to the Multi-Format Document Engine documentation. This tool provides po
 
 .. toctree::
    :maxdepth: 2
+   :caption: Project Information:
+
+   project/architecture
+   project/security
+
+.. toctree::
+   :maxdepth: 2
    :caption: API Reference:
 
    api/index

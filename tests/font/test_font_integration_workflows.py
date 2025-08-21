@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 from pdfrebuilder.font.font_validator import FontValidator
-from pdfrebuilder.font_utils import (
+from pdfrebuilder.font.utils import (
     _FONT_DOWNLOAD_ATTEMPTED,
     _FONT_REGISTRATION_CACHE,
     ensure_font_registered,
@@ -87,7 +87,7 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
             with open(font_path, "w") as f:
                 f.write(f"dummy font content for {font_file}")
 
-    @patch("pdfrebuilder.font_utils.TTFont")
+    @patch("pdfrebuilder.font.utils.TTFont")
     def test_complete_font_discovery_workflow(self, mock_ttfont):
         """Test complete font discovery from directory scanning to registration"""
         # Mock TTFont for font scanning
@@ -107,7 +107,7 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
         # Test font registration using discovered font
         mock_page = Mock()
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -117,9 +117,9 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
         self.assertEqual(result, "Arial")
         mock_page.insert_font.assert_called_once()
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.TTFont")
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.TTFont")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_font_download_integration_workflow(self, mock_exists, mock_ttfont, mock_download):
         """Test integration of font download with registration workflow"""
         mock_page = Mock()
@@ -171,7 +171,7 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
         mock_ttfont.return_value = mock_font
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -193,7 +193,7 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
         # Font file is already created in setUp via create_controlled_font_environment()
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -239,9 +239,9 @@ class TestFontSubstitutionWorkflow(unittest.TestCase):
         _FONT_DOWNLOAD_ATTEMPTED.clear()
         set_font_validator(None)
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.scan_available_fonts")
-    @patch("pdfrebuilder.font_utils.font_covers_text")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.scan_available_fonts")
+    @patch("pdfrebuilder.font.utils.font_covers_text")
     def test_complete_substitution_workflow(self, mock_covers, mock_scan, mock_download):
         """Test complete font substitution workflow with tracking"""
         mock_page = Mock()
@@ -271,10 +271,10 @@ class TestFontSubstitutionWorkflow(unittest.TestCase):
         mock_validation_result.warnings = []
 
         with (
-            patch("pdfrebuilder.font_utils.FontValidator.validate_font_file", return_value=mock_validation_result),
-            patch("pdfrebuilder.font_utils.FontValidator.validate_font_format", return_value=mock_validation_result),
+            patch("pdfrebuilder.font.utils.FontValidator.validate_font_file", return_value=mock_validation_result),
+            patch("pdfrebuilder.font.utils.FontValidator.validate_font_format", return_value=mock_validation_result),
             patch(
-                "pdfrebuilder.font_utils.get_config_value",
+                "pdfrebuilder.font.utils.get_config_value",
                 side_effect=lambda key: (
                     self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
                 ),
@@ -293,9 +293,9 @@ class TestFontSubstitutionWorkflow(unittest.TestCase):
         # The reason is complex, so we'll just check that one was recorded.
         self.assertIsNotNone(substitution.reason)
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.scan_available_fonts")
-    @patch("pdfrebuilder.font_utils.font_covers_text")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.scan_available_fonts")
+    @patch("pdfrebuilder.font.utils.font_covers_text")
     def test_fallback_chain_workflow(self, mock_covers, mock_scan, mock_download):
         """Test complete fallback chain workflow"""
         mock_page = Mock()
@@ -313,7 +313,7 @@ class TestFontSubstitutionWorkflow(unittest.TestCase):
         mock_covers.return_value = False
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -338,12 +338,12 @@ class TestFontSubstitutionWorkflow(unittest.TestCase):
         fonts_to_test = ["Font1", "Font2", "Font3"]
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
         ):
-            with patch("pdfrebuilder.font_utils.download_google_font", return_value=None):
+            with patch("pdfrebuilder.font.utils.download_google_font", return_value=None):
                 for font_name in fonts_to_test:
                     ensure_font_registered(mock_page, font_name, verbose=False)
 
@@ -541,7 +541,7 @@ class TestFontCachePerformanceWorkflow(unittest.TestCase):
         # Font file is already created in setUp via create_controlled_font_environment()
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -566,11 +566,11 @@ class TestFontCachePerformanceWorkflow(unittest.TestCase):
         mock_page = Mock()
         font_name = "NonExistentFont"
 
-        with patch("pdfrebuilder.font_utils.download_google_font") as mock_download:
+        with patch("pdfrebuilder.font.utils.download_google_font") as mock_download:
             mock_download.return_value = None  # Download fails
 
             with patch(
-                "pdfrebuilder.font_utils.get_config_value",
+                "pdfrebuilder.font.utils.get_config_value",
                 side_effect=lambda key: (
                     self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
                 ),
@@ -681,9 +681,9 @@ class TestEndToEndFontWorkflow(unittest.TestCase):
         _FONT_DOWNLOAD_ATTEMPTED.clear()
         set_font_validator(None)
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.TTFont")
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.TTFont")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_complete_document_processing_workflow(self, mock_exists, mock_ttfont, mock_download):
         """Test complete document processing workflow with font management"""
 
@@ -718,7 +718,7 @@ class TestEndToEndFontWorkflow(unittest.TestCase):
         mock_page = Mock()
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -761,7 +761,7 @@ class TestEndToEndFontWorkflow(unittest.TestCase):
         self.assertIn("substitutions", report)
         self.assertGreater(len(report["substitutions"]), 0)
 
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_font_workflow_error_recovery(self, mock_exists):
         """Test font workflow error recovery and graceful degradation"""
         mock_page = Mock()
@@ -780,7 +780,7 @@ class TestEndToEndFontWorkflow(unittest.TestCase):
         mock_exists.side_effect = exists_side_effect
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -811,7 +811,7 @@ class TestEndToEndFontWorkflow(unittest.TestCase):
                 f.write(f"{font_name} font content")
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),

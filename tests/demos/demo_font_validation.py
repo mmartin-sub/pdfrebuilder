@@ -13,7 +13,7 @@ import tempfile
 
 from pdfrebuilder.engine.validation_report import ValidationResult
 from pdfrebuilder.font.font_validator import FontValidator
-from pdfrebuilder.font_utils import set_font_validator
+from pdfrebuilder.font.utils import set_font_validator
 
 
 def create_sample_layout_config():

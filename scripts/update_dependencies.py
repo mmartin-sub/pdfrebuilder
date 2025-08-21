@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from subprocess import CalledProcessError  # nosec B404 # Required for exception handling only
 
 # Import secure subprocess alternatives
-from security.subprocess_compatibility import run
+from pdfrebuilder.security.subprocess_compatibility import run
 
 
 def get_outdated_packages():

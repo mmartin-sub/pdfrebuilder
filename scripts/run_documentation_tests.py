@@ -15,12 +15,11 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from docs.api_validator import APIReferenceValidator
-from docs.coverage_reporter import DocumentationCoverageReporter
-from docs.validation import DocumentationValidator, ValidationStatus
-
 # Import security utilities
-from security.subprocess_utils import SecureSubprocessRunner, SecurityError
+from docs.tools.api_validator import APIReferenceValidator
+from docs.tools.coverage_reporter import DocumentationCoverageReporter
+from docs.tools.validation import DocumentationValidator, ValidationStatus
+from pdfrebuilder.security.subprocess_utils import SecureSubprocessRunner, SecurityError
 
 # Removed _validate_command_components - now handled by SecureSubprocessRunner
 

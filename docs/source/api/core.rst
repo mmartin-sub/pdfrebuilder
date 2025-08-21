@@ -22,7 +22,7 @@ Settings and Configuration
 Font Utilities
 --------------
 
-.. automodule:: pdfrebuilder.font_utils
+.. automodule:: pdfrebuilder.font.utils
    :members:
    :undoc-members:
    :show-inheritance:

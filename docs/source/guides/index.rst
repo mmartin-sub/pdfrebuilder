@@ -6,11 +6,14 @@ This section contains comprehensive guides for using the Multi-Format Document E
 .. toctree::
    :maxdepth: 2
 
+   installation
+   install-dev
    getting-started
    advanced-usage
    batch-processing
    visual-validation
    troubleshooting
+   publishing
 
 Getting Started
 ---------------

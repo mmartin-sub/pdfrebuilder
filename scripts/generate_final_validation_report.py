@@ -11,8 +11,8 @@ from pathlib import Path
 
 # Add src to path for security utilities
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from security.path_utils import PathSecurityError, SecurePathManager
-from security.subprocess_utils import SecureSubprocessRunner, SecurityError
+from pdfrebuilder.security.path_utils import PathSecurityError, SecurePathManager
+from pdfrebuilder.security.subprocess_utils import SecureSubprocessRunner, SecurityError
 
 
 def count_documentation_files() -> dict:

@@ -18,8 +18,8 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from models.schema_migration import SchemaMigrationError, migrate_schema
-from models.schema_validator import validate_document
+from pdfrebuilder.models.schema_migration import SchemaMigrationError, migrate_schema
+from pdfrebuilder.models.schema_validator import validate_document
 
 
 class ProjectMigrator:

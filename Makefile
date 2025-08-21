@@ -63,6 +63,9 @@ lint:  ## Run linting
 format:  ## Format code
 	hatch run black .
 
+ci:  ## Run all CI checks locally
+	./scripts/ci.sh
+
 # Installation and setup
 install:  ## Install project dependencies
 	hatch env create

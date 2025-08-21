@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 
 from pdfrebuilder.engine.validation_report import generate_validation_report
 from pdfrebuilder.font.font_validator import FontSubstitution, FontValidationResult, FontValidator
-from pdfrebuilder.font_utils import _track_font_substitution, set_font_validator
+from pdfrebuilder.font.utils import _track_font_substitution, set_font_validator
 
 
 class TestFontValidationIntegration(unittest.TestCase):

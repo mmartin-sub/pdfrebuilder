@@ -2,6 +2,20 @@
 
 A Python tool for deconstructing document layouts into human-readable JSON format and rebuilding visually similar documents from that data. The primary purpose is to enable programmatic modification of document content while preserving original layout and visual fidelity.
 
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Batch Modification Engine](#batch-modification-engine)
+- [Multi-Engine Rendering System](#multi-engine-rendering-system)
+- [Font Management and Validation](#font-management-and-validation)
+- [Advanced Features](#advanced-features)
+- [Configuration](#configuration)
+- [Development](#development)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
 ### Core Document Processing
@@ -26,6 +40,22 @@ A Python tool for deconstructing document layouts into human-readable JSON forma
 - **CLI Interface**: Command-line tools for batch processing and automation
 - **Override System**: Manual corrections via `manual_overrides.json5` for extraction errors
 - **Validation Framework**: Comprehensive document and font validation with detailed reporting
+
+## Project Structure
+
+The project is organized into the following main directories:
+
+- `src/pdfrebuilder`: Contains the main source code for the project.
+  - `cli`: Command-line interface logic.
+  - `core`: Core document processing and rendering logic.
+  - `engine`: PDF engine implementations (PyMuPDF, ReportLab).
+  - `font`: Font management, validation, and substitution logic.
+  - `models`: Data models for the universal document representation.
+  - `security`: Security-related utilities.
+- `tests`: Contains all the tests for the project.
+- `docs`: Contains the documentation for the project.
+- `examples`: Contains example scripts and usage demonstrations.
+- `scripts`: Contains utility scripts for development and maintenance.
 
 ## Quick Start
 
@@ -70,7 +100,7 @@ hatch env create
 hatch shell
 
 # Verify installation
-hatch run python main.py --help
+pdfrebuilder --help
 ```
 
 #### Method 4: Library Installation
@@ -95,9 +125,7 @@ For detailed installation instructions and troubleshooting, see [INSTALLATION.md
 To ensure sensible defaults for font fallback and reduce first-run warnings, download essential fonts:
 
 ```bash
-hatch run python scripts/download_essential_fonts.py
-# or
-python scripts/download_essential_fonts.py
+pdfrebuilder download-fonts
 ```
 
 This will populate `fonts/auto/` (configured via `downloaded_fonts_dir`) with commonly used families like `Noto Sans`.
@@ -105,21 +133,19 @@ This will populate `fonts/auto/` (configured via `downloaded_fonts_dir`) with co
 ### Basic Usage
 
 ```bash
-# Using the global tool (after uv tool install pdfrebuilder)
-pdfrebuilder --mode extract --input input/document.pdf --config layout.json
-pdfrebuilder --mode generate --config layout.json --output output/rebuilt.pdf
-pdfrebuilder --mode full --input input/document.pdf --output output/rebuilt.pdf
+# Extract layout from a PDF
+pdfrebuilder extract --input input/document.pdf --config layout.json
 
-# Using uvx (isolated execution)
-uvx pdfrebuilder --mode extract --input input/document.pdf --config layout.json
+# Generate a new PDF from the layout file
+pdfrebuilder generate --config layout.json --output output/rebuilt.pdf
 
-# Development usage (from source)
-hatch run python main.py --mode extract --input input/document.pdf --config layout.json
+# Perform a full extract and generate cycle
+pdfrebuilder full --input input/document.pdf --output output/rebuilt.pdf
 
 # Configuration management
-pdfrebuilder --generate-config  # Create sample configuration
-pdfrebuilder --show-config      # Show current settings
-pdfrebuilder --config-file myconfig.toml --mode extract --input document.pdf
+pdfrebuilder generate-config  # Create sample configuration
+pdfrebuilder show-config      # Show current settings
+pdfrebuilder --config-file myconfig.toml extract --input document.pdf
 ```
 
 ## Batch Modification Engine
@@ -138,19 +164,19 @@ The Multi-Format Document Engine includes a powerful batch modification system f
 
 ```bash
 # Variable substitution
-hatch run python -m src.cli.batch_modifier_cli substitute \
+pdfrebuilder substitute \
   --input templates/invoice_template.json \
   --variables "COMPANY_NAME:Acme Corp" "INVOICE_NUMBER:INV-001" \
   --output output/personalized_invoice.json
 
 # Batch text replacement
-hatch run python -m src.cli.batch_modifier_cli replace \
+pdfrebuilder replace \
   --input input/document.json \
   --replacements "old text:new text" "another:replacement" \
   --output output/modified_document.json
 
 # Font validation
-hatch run python -m src.cli.batch_modifier_cli validate \
+pdfrebuilder validate-fonts \
   --input input/document.json \
   --output validation_report.json \
   --detailed-report
@@ -159,8 +185,8 @@ hatch run python -m src.cli.batch_modifier_cli validate \
 ### Python API
 
 ```python
-from src.engine.batch_modifier import BatchModifier, VariableSubstitution
-from src.models.universal_idm import UniversalDocument
+from pdfrebuilder.engine.batch_modifier import BatchModifier, VariableSubstitution
+from pdfrebuilder.models.universal_idm import UniversalDocument
 
 # Load template document
 with open("templates/invoice_template.json", "r") as f:
@@ -199,7 +225,7 @@ The Multi-Format Document Engine supports multiple rendering engines for differe
 ### Engine Selection
 
 ```python
-from src.engine.pdf_engine_selector import get_pdf_engine
+from pdfrebuilder.engine.pdf_engine_selector import get_pdf_engine
 
 # Use ReportLab engine for enhanced precision
 engine = get_pdf_engine("reportlab")
@@ -213,7 +239,7 @@ engine.generate(document_config, "output.pdf")
 ### Engine Comparison
 
 ```python
-from src.engine.pdf_engine_selector import get_engine_selector
+from pdfrebuilder.engine.pdf_engine_selector import get_engine_selector
 
 selector = get_engine_selector()
 comparison = selector.compare_engines("reportlab", "pymupdf")
@@ -238,12 +264,6 @@ hatch run test-cov
 
 # Verbose mode for debugging
 hatch run test-verbose
-
-# Using the convenience script
-python tests/run_tests.py                    # Default quiet mode
-python tests/run_tests.py --verbose         # Verbose mode
-python tests/run_tests.py --debug           # Full debug mode
-python tests/run_tests.py --coverage        # Run with coverage
 ```
 
 To keep logs minimal during tests, configure pytest logging to show WARNING and above only (INFO/DEBUG hidden):
@@ -266,9 +286,9 @@ log_cli = false
 
 ```bash
 # Test ReportLab engine capabilities
-hatch run python -m src.cli.reportlab_test_cli info
-hatch run python -m src.cli.reportlab_test_cli generate --output test.pdf
-hatch run python -m src.cli.reportlab_test_cli compare
+pdfrebuilder test-engine reportlab --info
+pdfrebuilder test-engine reportlab --generate --output test.pdf
+pdfrebuilder test-engine reportlab --compare
 ```
 
 ### Example Workflow
@@ -276,13 +296,13 @@ hatch run python -m src.cli.reportlab_test_cli compare
 1. **Extract Template**: Convert document to JSON template
 
    ```bash
-   hatch run python main.py --mode extract --input invoice_template.pdf --config templates/invoice.json
+   pdfrebuilder extract --input invoice_template.pdf --config templates/invoice.json
    ```
 
 2. **Personalize Content**: Apply variable substitutions
 
    ```bash
-   hatch run python -m src.cli.batch_modifier_cli substitute \
+   pdfrebuilder substitute \
      --input templates/invoice.json \
      --variables "COMPANY_NAME:Acme Corp" "INVOICE_NUMBER:INV-001" \
      --output output/personalized_invoice.json
@@ -291,7 +311,7 @@ hatch run python -m src.cli.reportlab_test_cli compare
 3. **Generate Document**: Convert back to PDF
 
    ```bash
-   hatch run python main.py --mode generate --config output/personalized_invoice.json --output final_invoice.pdf
+   pdfrebuilder generate --config output/personalized_invoice.json --output final_invoice.pdf
    ```
 
 ## Font Management and Validation
@@ -301,7 +321,7 @@ The system includes comprehensive font management with validation, licensing che
 ### Font Validation
 
 ```python
-from src.engine.batch_modifier import BatchModifier
+from pdfrebuilder.engine.batch_modifier import BatchModifier
 
 modifier = BatchModifier()
 
@@ -332,7 +352,7 @@ fonts/
 The system includes automated visual comparison between original and reconstructed documents:
 
 ```python
-from src.compare_pdfs_visual import compare_pdfs_visual
+from pdfrebuilder.core.compare_pdfs_visual import compare_pdfs_visual
 
 # Compare original and rebuilt documents
 compare_pdfs_visual(
@@ -347,8 +367,8 @@ compare_pdfs_visual(
 Create reusable templates from extracted documents:
 
 ```python
-from src.engine.document_parser import parse_document
-from src.models.universal_idm import UniversalDocument
+from pdfrebuilder.engine.document_parser import parse_document
+from pdfrebuilder.models.universal_idm import UniversalDocument
 
 # Extract document to template
 document = parse_document("input/invoice_template.pdf")
@@ -382,16 +402,16 @@ for doc_file in input/*.pdf; do
     filename=$(basename "$doc_file" .pdf)
 
     # Extract to JSON
-    hatch run python main.py --mode extract --input "$doc_file" --config "configs/${filename}.json"
+    pdfrebuilder extract --input "$doc_file" --config "configs/${filename}.json"
 
     # Apply modifications
-    hatch run python -m src.cli.batch_modifier_cli replace \
+    pdfrebuilder replace \
       --input "configs/${filename}.json" \
       --replacements "old company:new company" \
       --output "configs/${filename}_modified.json"
 
     # Generate modified document
-    hatch run python main.py --mode generate \
+    pdfrebuilder generate \
       --config "configs/${filename}_modified.json" \
       --output "output/${filename}_modified.pdf"
 done
@@ -425,7 +445,7 @@ Configure output directories for organized file management:
 
 ```bash
 # Configure custom output directories
-hatch run python main.py \
+pdfrebuilder \
   --output-dir ./custom_output \
   --test-output-dir ./test_results \
   --reports-output-dir ./reports \
@@ -455,6 +475,17 @@ hatch run test-cov
 hatch run lint:style
 hatch run lint:lint
 hatch run lint:typing
+
+### Running CI Checks Locally
+
+To run the same checks that are executed in the CI pipeline, you can use the `make ci` command:
+
+```bash
+make ci
+```
+
+This will run all linting and testing checks, ensuring that your changes will pass the CI pipeline on GitHub.
+
 ```
 
 ### Running Examples
@@ -467,7 +498,7 @@ hatch run python examples/batch_modification_example.py
 hatch run python examples/extract_sample.py
 
 # Test full pipeline with visual comparison
-hatch run python main.py --mode full --input input/sample.pdf --output output/rebuilt.pdf
+pdfrebuilder full --input input/sample.pdf --output output/rebuilt.pdf
 ```
 
 ## Documentation

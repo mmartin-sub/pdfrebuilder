@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, Mock, patch
 from pdfrebuilder.font.googlefonts import download_google_font
 
 # Import the modules we're testing
-from pdfrebuilder.font_utils import (
+from pdfrebuilder.font.utils import (
     _FONT_DOWNLOAD_ATTEMPTED,
     _FONT_REGISTRATION_CACHE,
     ensure_font_registered,
@@ -43,9 +43,9 @@ class TestFontDiscovery(unittest.TestCase):
     def test_scan_available_fonts_empty_directory(self):
         """Test scanning an empty fonts directory"""
         # Mock the function at the module level where it's defined
-        with patch("pdfrebuilder.font_utils.scan_available_fonts", return_value={}) as mock_scan:
+        with patch("pdfrebuilder.font.utils.scan_available_fonts", return_value={}) as mock_scan:
             # Import and call the function after patching
-            from pdfrebuilder.font_utils import scan_available_fonts
+            from pdfrebuilder.font.utils import scan_available_fonts
 
             result = scan_available_fonts(self.test_fonts_dir)
             self.assertEqual(result, {})
@@ -55,16 +55,16 @@ class TestFontDiscovery(unittest.TestCase):
         """Test scanning a non-existent directory"""
         nonexistent_dir = os.path.join(self.temp_dir, "nonexistent")
         # Mock the function at the module level where it's defined
-        with patch("pdfrebuilder.font_utils.scan_available_fonts", return_value={}) as mock_scan:
+        with patch("pdfrebuilder.font.utils.scan_available_fonts", return_value={}) as mock_scan:
             # Import and call the function after patching
-            from pdfrebuilder.font_utils import scan_available_fonts
+            from pdfrebuilder.font.utils import scan_available_fonts
 
             result = scan_available_fonts(nonexistent_dir)
             self.assertEqual(result, {})
             mock_scan.assert_called_once_with(nonexistent_dir)
 
-    @patch("pdfrebuilder.font_utils.TTFont")
-    @patch("pdfrebuilder.font_utils.glob.glob")
+    @patch("pdfrebuilder.font.utils.TTFont")
+    @patch("pdfrebuilder.font.utils.glob.glob")
     def test_scan_available_fonts_with_valid_fonts(self, mock_glob, mock_ttfont):
         """Test scanning directory with valid font files"""
         # Mock font files
@@ -92,8 +92,8 @@ class TestFontDiscovery(unittest.TestCase):
         expected = {"Arial": mock_font_files[0], "Times New Roman": mock_font_files[1]}
         self.assertEqual(result, expected)
 
-    @patch("pdfrebuilder.font_utils.TTFont")
-    @patch("pdfrebuilder.font_utils.glob.glob")
+    @patch("pdfrebuilder.font.utils.TTFont")
+    @patch("pdfrebuilder.font.utils.glob.glob")
     def test_scan_available_fonts_with_corrupted_font(self, mock_glob, mock_ttfont):
         """Test scanning directory with corrupted font file"""
         mock_font_files = [os.path.join(self.test_fonts_dir, "corrupted.ttf")]
@@ -102,7 +102,7 @@ class TestFontDiscovery(unittest.TestCase):
         # Mock TTFont to raise exception for corrupted font
         mock_ttfont.side_effect = Exception("Corrupted font file")
 
-        with patch("pdfrebuilder.font_utils.logger") as mock_logger:
+        with patch("pdfrebuilder.font.utils.logger") as mock_logger:
             result = scan_available_fonts(self.test_fonts_dir)
 
             self.assertEqual(result, {})
@@ -113,7 +113,7 @@ class TestFontDiscovery(unittest.TestCase):
 class TestFontCoverage(unittest.TestCase):
     """Test font glyph coverage functionality"""
 
-    @patch("pdfrebuilder.font_utils.TTFont")
+    @patch("pdfrebuilder.font.utils.TTFont")
     def test_font_covers_text_full_coverage(self, mock_ttfont):
         """Test font that covers all characters in text"""
         mock_font = MagicMock()
@@ -133,7 +133,7 @@ class TestFontCoverage(unittest.TestCase):
         result = font_covers_text("dummy_path.ttf", "Hello")
         self.assertTrue(result)
 
-    @patch("pdfrebuilder.font_utils.TTFont")
+    @patch("pdfrebuilder.font.utils.TTFont")
     def test_font_covers_text_partial_coverage(self, mock_ttfont):
         """Test font that doesn't cover all characters in text"""
         mock_font = MagicMock()
@@ -147,7 +147,7 @@ class TestFontCoverage(unittest.TestCase):
         result = font_covers_text("dummy_path.ttf", "Hello")
         self.assertFalse(result)
 
-    @patch("pdfrebuilder.font_utils.TTFont")
+    @patch("pdfrebuilder.font.utils.TTFont")
     def test_font_covers_text_with_whitespace(self, mock_ttfont):
         """Test font coverage ignoring whitespace-only characters"""
         mock_font = MagicMock()
@@ -161,12 +161,12 @@ class TestFontCoverage(unittest.TestCase):
         result = font_covers_text("dummy_path.ttf", "Hi   ")  # Trailing spaces
         self.assertTrue(result)
 
-    @patch("pdfrebuilder.font_utils.TTFont")
+    @patch("pdfrebuilder.font.utils.TTFont")
     def test_font_covers_text_exception_handling(self, mock_ttfont):
         """Test font coverage when TTFont raises exception"""
         mock_ttfont.side_effect = Exception("Font loading error")
 
-        with patch("pdfrebuilder.font_utils.logger") as mock_logger:
+        with patch("pdfrebuilder.font.utils.logger") as mock_logger:
             result = font_covers_text("dummy_path.ttf", "Hello")
 
             self.assertFalse(result)
@@ -224,7 +224,7 @@ class TestFontRegistration(unittest.TestCase):
         self.assertEqual(result, font_name)
         self.mock_page.insert_font.assert_not_called()
 
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_ensure_font_registered_local_ttf_font(self, mock_exists):
         """Test registering a local TTF font file"""
         font_name = "CustomFont"
@@ -240,7 +240,7 @@ class TestFontRegistration(unittest.TestCase):
         mock_exists.side_effect = exists_side_effect
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -250,7 +250,7 @@ class TestFontRegistration(unittest.TestCase):
         self.assertEqual(result, font_name)
         self.mock_page.insert_font.assert_called_once()
 
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_ensure_font_registered_local_otf_font(self, mock_exists):
         """Test registering a local OTF font file"""
         font_name = "CustomFont"
@@ -266,7 +266,7 @@ class TestFontRegistration(unittest.TestCase):
         mock_exists.side_effect = exists_side_effect
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -276,8 +276,8 @@ class TestFontRegistration(unittest.TestCase):
         self.assertEqual(result, font_name)
         self.mock_page.insert_font.assert_called_once()
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_ensure_font_registered_download_success(self, mock_exists, mock_download):
         """Test successful font download from Google Fonts"""
         font_name = "Roboto"
@@ -285,20 +285,20 @@ class TestFontRegistration(unittest.TestCase):
         mock_download.return_value = ["downloaded_file.ttf"]
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
         ):
             # Mock the recursive call after download
-            with patch("pdfrebuilder.font_utils.ensure_font_registered", side_effect=[font_name]) as _:
+            with patch("pdfrebuilder.font.utils.ensure_font_registered", side_effect=[font_name]) as _:
                 _ = ensure_font_registered(self.mock_page, font_name, verbose=False)
 
         mock_download.assert_called_once_with(font_name, self.test_fonts_dir)
         self.assertIn(font_name, _FONT_DOWNLOAD_ATTEMPTED)
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_ensure_font_registered_download_failure(self, mock_exists, mock_download):
         """Test font download failure from Google Fonts"""
         font_name = "Roboto"
@@ -306,7 +306,7 @@ class TestFontRegistration(unittest.TestCase):
         mock_download.return_value = []  # Download failed
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -316,10 +316,10 @@ class TestFontRegistration(unittest.TestCase):
         # Should fallback to the default font from the mock config
         self.assertEqual(result, "helv")
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.scan_available_fonts")
-    @patch("pdfrebuilder.font_utils.font_covers_text")
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.scan_available_fonts")
+    @patch("pdfrebuilder.font.utils.font_covers_text")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_ensure_font_registered_with_text_coverage(self, mock_exists, mock_covers, mock_scan, mock_download):
         """Test font registration with text coverage checking"""
         font_name = "Roboto"
@@ -337,7 +337,7 @@ class TestFontRegistration(unittest.TestCase):
         mock_download.return_value = []
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),
@@ -353,9 +353,9 @@ class TestFontRegistration(unittest.TestCase):
         # Mock page.insert_font to raise an exception
         self.mock_page.insert_font.side_effect = Exception("Font loading error")
 
-        with patch("pdfrebuilder.font_utils.os.path.exists", return_value=True):
+        with patch("pdfrebuilder.font.utils.os.path.exists", return_value=True):
             with patch(
-                "pdfrebuilder.font_utils.get_config_value",
+                "pdfrebuilder.font.utils.get_config_value",
                 side_effect=lambda key: (
                     self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
                 ),
@@ -514,8 +514,8 @@ class TestFontManagerIntegration(unittest.TestCase):
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
 
-    @patch("pdfrebuilder.font_utils.download_google_font")
-    @patch("pdfrebuilder.font_utils.os.path.exists")
+    @patch("pdfrebuilder.font.utils.download_google_font")
+    @patch("pdfrebuilder.font.utils.os.path.exists")
     def test_font_workflow_local_to_download_to_fallback(self, mock_exists, mock_download):
         """Test complete font resolution workflow"""
         mock_page = Mock()
@@ -528,7 +528,7 @@ class TestFontManagerIntegration(unittest.TestCase):
         mock_download.return_value = None
 
         with patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: (
                 self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
             ),

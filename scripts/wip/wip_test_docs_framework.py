@@ -30,7 +30,7 @@ from typing import Any
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from docs.validation import DocumentationBuilder, DocumentationValidator, ValidationResult, ValidationStatus
+from docs.tools.validation import DocumentationBuilder, DocumentationValidator, ValidationResult, ValidationStatus
 
 
 class DocumentationTestFramework:

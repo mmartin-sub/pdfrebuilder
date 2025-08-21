@@ -1066,7 +1066,7 @@ class FallbackFontValidator:
         from fitz import Document
 
         temp_doc: Document = fitz.open()
-        temp_page = temp_doc.new_page()
+        temp_page = temp_doc.new_page()  # type: ignore[reportAttributeAccessIssue]
 
         validation_results: dict[str, Any] = {
             "total_fonts_tested": 0,
@@ -1511,6 +1511,17 @@ def _check_font_text_coverage(
             if font_covers_text(available_font_path, text_content):
                 if verbose:
                     logger.info(f"Found font '{available_font_name}' that covers the text")
+
+                # Track the substitution
+                _track_font_substitution(
+                    original_font=font_name,
+                    substituted_font=available_font_name,
+                    reason="Glyph coverage",
+                    text_content=text_content,
+                    element_id=None,  # Not available here
+                    page_number=id(page),
+                )
+
                 return (available_font_name, available_font_path)
 
         # No font found that covers the text, return None to continue with normal fallback

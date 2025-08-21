@@ -4,8 +4,8 @@ import os
 import textwrap
 from typing import Any
 
-import fitz
 import json5
+import pymupdf as fitz
 
 from pdfrebuilder.core.render import _render_element, json_serializer
 from pdfrebuilder.settings import CONFIG
@@ -129,11 +129,10 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
             page_size = page_data.get("size", (595, 842))
             for layer in page_data.get("layers", []):
                 for element_idx, element in enumerate(layer.get("content", [])):
-                    debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])
+                    debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])  # type: ignore[reportAttributeAccessIssue]
                     effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, CONFIG)
                     debug_font_name = CONFIG.get("debug_font_name", "cour")
                     debug_fontsize = CONFIG.get("debug_fontsize", 8)
-                    debug_line_height = CONFIG.get("debug_line_height", 1.2)
                     wrap_width = CONFIG.get("debug_text_wrap_width", 100)
                     debug_text_unwrapped = (
                         f"Source Page {source_page_idx} / Element Index {element_idx} (ID: {element.get('id', 'N/A')})\n"
@@ -170,9 +169,8 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
                         final_text_to_render,
                         fontsize=debug_fontsize,
                         fontname=debug_font_name,
-                        lineheight=debug_line_height,
                         color=(0.95, 0.95, 0.95),
-                        align=fitz.TEXT_ALIGN_LEFT,
+                        align=fitz.TEXT_ALIGN_LEFT,  # type: ignore
                         overlay=True,
                     )
                     logger.debug(f"Debug page added for Element {element_idx}.")

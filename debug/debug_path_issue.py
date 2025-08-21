@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 # Add src directory to path to allow imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-from pdfrebuilder.font_utils import (
+from pdfrebuilder.font.utils import (
     _FONT_DOWNLOAD_ATTEMPTED,
     _FONT_REGISTRATION_CACHE,
     FontValidator,
@@ -51,11 +51,11 @@ def run_debug_scenario():
 
     # 5. Apply patches
     with (
-        patch("pdfrebuilder.font_utils.download_google_font", return_value=None) as mock_download,
-        patch("pdfrebuilder.font_utils.scan_available_fonts", return_value=available_fonts) as mock_scan,
-        patch("pdfrebuilder.font_utils.font_covers_text", side_effect=coverage_side_effect) as mock_covers,
+        patch("pdfrebuilder.font.utils.download_google_font", return_value=None) as mock_download,
+        patch("pdfrebuilder.font.utils.scan_available_fonts", return_value=available_fonts) as mock_scan,
+        patch("pdfrebuilder.font.utils.font_covers_text", side_effect=coverage_side_effect) as mock_covers,
         patch(
-            "pdfrebuilder.font_utils.get_config_value",
+            "pdfrebuilder.font.utils.get_config_value",
             side_effect=lambda key: test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv",
         ),
         patch("os.path.exists", return_value=True),
