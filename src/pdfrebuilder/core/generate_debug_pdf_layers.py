@@ -123,13 +123,14 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
         return False
 
     with fitz.open() as debug_doc:
+        debug_doc: fitz.Document
         for source_page_idx, page_data in enumerate(pages):
             logger.info(f"Generating debug pages for source page {source_page_idx} ...")
             page_overrides = overrides.get("text_block_overrides", {}).get(str(source_page_idx), {})
             page_size = page_data.get("size", (595, 842))
             for layer in page_data.get("layers", []):
                 for element_idx, element in enumerate(layer.get("content", [])):
-                    debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])  # type: ignore[reportAttributeAccessIssue]
+                    debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])
                     effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, CONFIG)
                     debug_font_name = CONFIG.get("debug_font_name", "cour")
                     debug_fontsize = CONFIG.get("debug_fontsize", 8)
@@ -170,7 +171,7 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
                         fontsize=debug_fontsize,
                         fontname=debug_font_name,
                         color=(0.95, 0.95, 0.95),
-                        align=fitz.TEXT_ALIGN_LEFT,  # type: ignore
+                        align=fitz.TEXT_ALIGN_LEFT,  # type: ignore  # fitz.TEXT_ALIGN_LEFT is a valid int constant, but mypy stubs may be incomplete
                         overlay=True,
                     )
                     logger.debug(f"Debug page added for Element {element_idx}.")

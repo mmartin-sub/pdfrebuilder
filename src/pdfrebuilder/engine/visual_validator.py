@@ -160,7 +160,7 @@ class VisualValidator:
                 tmp_path = tmp.name
 
             # Open PDF
-            doc = fitz.open(pdf_path)
+            doc: fitz.Document = fitz.open(pdf_path)
 
             # For now, we only render the first page
             # TODO: Support multi-page validation
@@ -170,11 +170,10 @@ class VisualValidator:
             zoom = self.rendering_dpi / 72.0  # 72 DPI is the PDF default
 
             # Create pixmap
-            pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))  # type: ignore[reportAttributeAccessIssue]
+            pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
 
             # Save pixmap as PNG
-            # pyright incorrectly reports this method does not exist due to bad stubs
-            pix.save(tmp_path)  # type: ignore
+            pix.save(tmp_path)
 
             return tmp_path
 
@@ -240,8 +239,8 @@ class VisualValidator:
             # Calculate SSIM using scikit-image if available, otherwise fallback
             if HAS_SKIMAGE:
                 # Use scikit-image's structural_similarity (modern approach)
-                # pyright incorrectly reports a tuple size mismatch due to bad stubs
-                ssim_score, _ = structural_similarity(gray1, gray2, full=True, gradient=False)  # type: ignore
+                # scikit-image stubs are incorrect for structural_similarity with full=True, hence the ignore.
+                ssim_score, _ = structural_similarity(gray1, gray2, full=True, gradient=False)  # type: ignore[misc]
             else:
                 # Fallback to a simple correlation-based similarity measure
                 logger.warning("scikit-image not available, using correlation-based similarity")

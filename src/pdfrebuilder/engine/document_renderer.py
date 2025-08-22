@@ -124,7 +124,7 @@ class PDFRenderer(DocumentRenderer):
 
         try:
             # Open the PDF
-            doc = fitz.open(file_path)
+            doc: fitz.Document = fitz.open(file_path)
 
             # Determine which pages to render
             if config.page_numbers is None:
@@ -145,10 +145,10 @@ class PDFRenderer(DocumentRenderer):
                 # Create a pixmap with appropriate colorspace
                 if config.transparent_background and config.color_space == "RGBA":
                     # RGBA pixmap with transparent background
-                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=True)  # type: ignore[reportAttributeAccessIssue]
+                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=True)
                 else:
                     # RGB pixmap with white background
-                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)  # type: ignore[reportAttributeAccessIssue]
+                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
 
                 # Determine output format and file extension
                 if config.output_format == "png":
@@ -165,8 +165,7 @@ class PDFRenderer(DocumentRenderer):
                 output_path = os.path.join(output_dir, f"page_{page_num}.{file_ext}")
 
                 # Save the pixmap
-                # pyright incorrectly reports this method does not exist due to bad stubs
-                pix.save(output_path, **save_args)  # type: ignore
+                pix.save(output_path, **save_args)
                 output_paths.append(output_path)
 
                 logger.info(f"Rendered page {page_num + 1}/{len(page_numbers)} to {output_path}")

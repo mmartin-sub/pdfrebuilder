@@ -21,6 +21,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar
 
+import pymupdf as fitz
 from fontTools.ttLib import TTFont
 
 from pdfrebuilder.font.googlefonts import download_google_font
@@ -1062,11 +1063,8 @@ class FallbackFontValidator:
         self.logger.info("Initializing fallback font validation system...")
 
         # Create a temporary page for testing font registration
-        import fitz
-        from fitz import Document
-
-        temp_doc: Document = fitz.open()
-        temp_page = temp_doc.new_page()  # type: ignore[reportAttributeAccessIssue]
+        temp_doc: fitz.Document = fitz.open()
+        temp_page = temp_doc.new_page()
 
         validation_results: dict[str, Any] = {
             "total_fonts_tested": 0,

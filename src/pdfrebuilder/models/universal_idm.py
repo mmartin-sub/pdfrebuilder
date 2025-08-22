@@ -208,10 +208,11 @@ class FontDetails:
         if isinstance(color_val, int):
             color_obj = Color.from_int(color_val)
         elif isinstance(color_val, list | tuple):
-            if len(color_val) == 4:
-                color_obj = Color.from_rgba_tuple(tuple(color_val))  # type: ignore[arg-type]
-            elif len(color_val) == 3:
-                color_obj = Color.from_rgb_tuple(tuple(color_val))  # type: ignore[arg-type]
+            if all(isinstance(c, int | float) for c in color_val):
+                if len(color_val) == 4:
+                    color_obj = Color.from_rgba_tuple(tuple(float(c) for c in color_val))
+                elif len(color_val) == 3:
+                    color_obj = Color.from_rgb_tuple(tuple(float(c) for c in color_val))
 
         return cls(
             name=data.get("name", "Arial"),

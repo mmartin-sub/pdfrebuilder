@@ -82,13 +82,14 @@ class FitzPDFEngine(PDFEngineBase):
         """
         try:
             with fitz.open() as doc:
+                doc: fitz.Document
                 tpl_doc = fitz.open(original_pdf_for_template) if original_pdf_for_template else None
                 for doc_unit_idx, doc_unit_data in enumerate(config.get("document_structure", [])):
                     if doc_unit_data.get("type") != "page":
                         continue
                     page_data = doc_unit_data
                     page_idx = page_data.get("page_number", doc_unit_idx)
-                    page = doc.new_page(width=page_data["size"][0], height=page_data["size"][1])  # type: ignore[reportAttributeAccessIssue]
+                    page = doc.new_page(width=page_data["size"][0], height=page_data["size"][1])
                     page_bg_color = page_data.get("page_background_color")
                     if page_bg_color is not None:
                         page.draw_rect(page.rect, fill=page_bg_color)

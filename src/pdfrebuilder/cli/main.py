@@ -1,13 +1,16 @@
-import argparse
+import logging
 import os
-from typing import Any
+from types import SimpleNamespace
+from typing import Annotated, Any
 
+import typer
+
+from pdfrebuilder.cli.app import app
 from pdfrebuilder.settings import CONFIG
 
 # Rich console output for better CLI experience
 try:
     from rich.console import Console
-    from rich.panel import Panel  # noqa: F401 # Used for future CLI enhancements
 
     rich_console: Console | None = Console()
     HAS_RICH = True
@@ -19,155 +22,81 @@ except ImportError:
 def console_print(message: str, style: str = "default", log_level: int | None = None) -> None:
     """
     Print message with rich formatting if available, otherwise plain text.
-
-    Args:
-        message: Message to print
-        style: Style for the message (success, error, warning, info, config, default)
-        log_level: Optional log level to check against current logging level
     """
-    import logging
-
-    # Check if message should be displayed based on log level
     if log_level is not None:
         root_logger = logging.getLogger()
         if not root_logger.isEnabledFor(log_level):
             return
 
     if HAS_RICH and rich_console:
-        if style == "success":
-            rich_console.print(f"✅ {message}", style="green")
-        elif style == "error":
-            rich_console.print(f"❌ {message}", style="red")
-        elif style == "warning":
-            rich_console.print(f"⚠️  {message}", style="yellow")
-        elif style == "info":
-            rich_console.print(f"ℹ️  {message}", style="blue")
-        elif style == "config":
-            rich_console.print(f"⚙️  {message}", style="cyan")
-        elif style == "debug":
-            rich_console.print(f"🔧 {message}", style="dim")
-        else:
-            rich_console.print(message)
+        style_map = {
+            "success": ("✅", "green"),
+            "error": ("❌", "red"),
+            "warning": ("⚠️ ", "yellow"),
+            "info": ("ℹ️ ", "blue"),
+            "config": ("⚙️ ", "cyan"),
+            "debug": ("🔧", "dim"),
+        }
+        icon, color = style_map.get(style, ("", "default"))
+        rich_console.print(f"{icon}{message}", style=color)
     else:
-        # Fallback to plain print
-        if style == "success":
-            print(f"✅ {message}")
-        elif style == "error":
-            print(f"❌ {message}")
-        elif style == "warning":
-            print(f"⚠️  {message}")
-        elif style == "info":
-            print(f"ℹ️  {message}")
-        elif style == "config":
-            print(f"⚙️  {message}")
-        elif style == "debug":
-            print(f"🔧 {message}")
-        else:
-            print(message)
+        print(message)
 
 
-# Ensure no argparse usage at the top level; all CLI logic is inside main()
+def _version_callback(value: bool):
+    if value:
+        try:
+            from pdfrebuilder import __version__
+
+            version = __version__
+        except ImportError:
+            try:
+                import toml
+
+                with open("pyproject.toml") as f:
+                    version = toml.load(f)["project"]["version"]
+            except (ImportError, FileNotFoundError):
+                version = "unknown"
+        typer.echo(f"pdfrebuilder version: {version}")
+        raise typer.Exit()
 
 
-def run_pipeline(args):
-    import logging
-
-    # Load configuration from all sources
+def _setup_environment(args: SimpleNamespace) -> Any:
+    """Shared setup logic for commands."""
     from pdfrebuilder.config.manager import ConfigManager
 
     config_manager = ConfigManager()
 
-    # Prepare CLI overrides
-    cli_overrides: dict[str, Any] = {}
-    if args.output_dir:
-        cli_overrides.setdefault("paths", {})["output_dir"] = args.output_dir
-    if args.temp_dir:
-        cli_overrides.setdefault("paths", {})["temp_dir"] = args.temp_dir
-    if args.test_output_dir:
-        cli_overrides.setdefault("paths", {})["test_output_dir"] = args.test_output_dir
-    if args.reports_output_dir:
-        cli_overrides.setdefault("paths", {})["reports_output_dir"] = args.reports_output_dir
-    if (
-        hasattr(args, "log_level") and args.log_level and args.log_level != "INFO"
-    ):  # Only override if different from default
-        cli_overrides.setdefault("logging", {})["level"] = args.log_level.upper()
-    if hasattr(args, "log_file") and args.log_file:
-        cli_overrides.setdefault("logging", {})["log_file"] = args.log_file
+    cli_overrides: dict[str, Any] = {
+        "paths": {
+            "output_dir": args.output_dir,
+            "temp_dir": args.temp_dir,
+            "test_output_dir": args.test_output_dir,
+            "reports_output_dir": args.reports_output_dir,
+        },
+        "logging": {
+            "level": args.log_level.upper(),
+            "log_file": args.log_file,
+        },
+    }
+    # Filter out None values
+    cli_overrides["paths"] = {k: v for k, v in cli_overrides["paths"].items() if v is not None}
+    cli_overrides["logging"] = {k: v for k, v in cli_overrides["logging"].items() if v is not None}
 
-    # Load configuration
-    try:
-        # In extract mode, we don't require an existing config file
-        if args.mode == "extract" and args.config_file and not os.path.exists(args.config_file):
-            # Create a minimal config for extract mode
-            config = config_manager.load_config(config_file=None, cli_overrides=cli_overrides)
-        elif args.mode == "generate":
-            # In generate mode, we don't load a PDFRebuilderConfig, just use defaults
-            config = config_manager.load_config(config_file=None, cli_overrides=cli_overrides)
-        else:
-            config = config_manager.load_config(config_file=args.config_file, cli_overrides=cli_overrides)
-    except Exception as e:
-        console_print(f"Configuration error: {e}", "error")
-        raise
+    config = config_manager.load_config(config_file=args.config_file, cli_overrides=cli_overrides)
 
-    # Configure output directories first (backward compatibility)
-    from pdfrebuilder.settings import configure_output_directories, get_config_value
+    from pdfrebuilder.settings import configure_logging, configure_output_directories, get_config_value
 
     if config.paths.output_dir:
         configure_output_directories(base_dir=str(config.paths.output_dir))
-    if hasattr(config.paths, "test_output_dir") and config.paths.test_output_dir:
-        configure_output_directories(test_dir=str(config.paths.test_output_dir))
-    if hasattr(config.paths, "reports_output_dir") and config.paths.reports_output_dir:
-        configure_output_directories(reports_dir=str(config.paths.reports_output_dir))
 
-    # Resolve default output paths if not provided
-    if args.output is None:
-        args.output = get_config_value("rebuilt_pdf")
-    if args.debugoutput is None:
-        args.debugoutput = get_config_value("debug_pdf")
-
-    # Set up logging configuration using new config system
-    from pdfrebuilder.settings import configure_logging
-
-    # Use configuration values, with CLI args taking precedence
-    log_level = getattr(logging, config.logging.level.value, logging.INFO)
+    log_level_val = getattr(logging, config.logging.level.value, logging.INFO)
     log_file_path = str(config.logging.log_file) if config.logging.log_file else None
-
-    # Create log file directory if specified
     if log_file_path:
-        log_dir = os.path.dirname(log_file_path)
-        if log_dir and not os.path.exists(log_dir):
-            os.makedirs(log_dir, exist_ok=True)
-        console_print(f"Logging to file: {log_file_path}", "config")
+        os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
 
-    configure_logging(
-        log_file=log_file_path,
-        log_level=log_level,
-        log_format="%(levelname)s %(name)s: %(message)s",
-    )
+    configure_logging(log_file=log_file_path, log_level=log_level_val, log_format="%(levelname)s %(name)s: %(message)s")
 
-    from pdfrebuilder.core.compare_pdfs_visual import compare_pdfs_visual
-    from pdfrebuilder.core.generate_debug_pdf_layers import generate_debug_pdf_layers
-    from pdfrebuilder.core.pdf_engine import FitzPDFEngine
-    from pdfrebuilder.engine.document_parser import parse_document
-    from pdfrebuilder.tools import serialize_pdf_content_to_config
-
-    # Use configuration values, with CLI args taking precedence
-    extraction_flags = {
-        "include_text": (args.extract_text if hasattr(args, "extract_text") else config.extraction.include_text),
-        "include_images": (
-            args.extract_images if hasattr(args, "extract_images") else config.extraction.include_images
-        ),
-        "include_drawings_non_background": (
-            args.extract_drawings if hasattr(args, "extract_drawings") else config.extraction.include_drawings
-        ),
-        "include_raw_background_drawings": (
-            args.extract_raw_backgrounds
-            if hasattr(args, "extract_raw_backgrounds")
-            else config.extraction.include_raw_backgrounds
-        ),
-    }
-
-    # Create necessary directories using the configured paths
     image_dir = get_config_value("image_dir")
     auto_fonts_dir = get_config_value("downloaded_fonts_dir")
     manual_fonts_dir = get_config_value("manual_fonts_dir")
@@ -175,354 +104,215 @@ def run_pipeline(args):
     os.makedirs(image_dir, exist_ok=True)
     os.makedirs(auto_fonts_dir, exist_ok=True)
     os.makedirs(manual_fonts_dir, exist_ok=True)
-    if args.output:
-        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+
+    console_print(f"Output directory: {get_config_value('base_output_dir')}", "config")
+
+    return config
+
+
+def _run_extract(args: SimpleNamespace, config: Any):
+    from pdfrebuilder.engine.document_parser import parse_document
+    from pdfrebuilder.tools import serialize_pdf_content_to_config
+
+    if not os.path.exists(args.input):
+        console_print(f"Input file not found: {args.input}", "error")
+        raise typer.Exit(1)
+
+    console_print("Entering extract mode...", "info")
+    extraction_flags = {
+        "include_text": args.extract_text,
+        "include_images": args.extract_images,
+        "include_drawings_non_background": args.extract_drawings,
+        "include_raw_background_drawings": args.extract_raw_backgrounds,
+    }
+    content = parse_document(args.input, extraction_flags, engine=args.input_engine)
+    serialize_pdf_content_to_config(content, args.config)
+    console_print(f"Extraction complete for {args.input}", "success")
+
+
+def _run_generate(args: SimpleNamespace, config: Any):
+    from pdfrebuilder.engine.config_loader import load_engine_config
+    from pdfrebuilder.engine.pdf_engine_selector import get_pdf_engine
+
+    console_print("Entering generate mode...", "info")
+    cli_args = {"output_engine": args.output_engine}
+    engine_config = load_engine_config(cli_args=cli_args)
+    engine_name = args.output_engine or engine_config.get("default_engine", "reportlab")
+
+    console_print(f"Using output engine: {engine_name}", "info")
+    engine = get_pdf_engine(engine_name, engine_config)
+
+    if not os.path.exists(args.config):
+        console_print(f"Config file not found: {args.config}", "error")
+        raise typer.Exit(1)
+
+    with open(args.config) as f:
+        config_data = f.read()
+
+    engine.generate(config_data, args.output, args.input)
+    console_print("PDF generation complete.", "success")
+
+
+def _run_debug(args: SimpleNamespace, config: Any):
+    from pdfrebuilder.core.generate_debug_pdf_layers import generate_debug_pdf_layers
+
+    if not os.path.exists(args.config):
+        console_print(f"Config file not found: {args.config}", "error")
+        raise typer.Exit(1)
+
+    console_print("Generating debug PDF layers...", "info")
+    generate_debug_pdf_layers(args.config, args.debugoutput)
+    console_print("Debug PDF layers generated.", "success")
+
+
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    version: Annotated[
+        bool, typer.Option("--version", callback=_version_callback, is_eager=True, help="Show the version and exit.")
+    ] = False,
+    config_file: Annotated[
+        str | None, typer.Option("--config-file", help="Path to configuration file (TOML or JSON format).")
+    ] = None,
+    output_dir: Annotated[str | None, typer.Option(help="Base output directory for all generated files.")] = None,
+    temp_dir: Annotated[str | None, typer.Option(help="Temporary directory for processing files.")] = None,
+    log_level: Annotated[str, typer.Option(help="Set the logging level.")] = "INFO",
+    log_file: Annotated[str | None, typer.Option(help="Path to log file.")] = None,
+):
+    """PDFRebuilder CLI"""
+    ctx.meta["args"] = SimpleNamespace(
+        config_file=config_file,
+        output_dir=output_dir,
+        temp_dir=temp_dir,
+        log_level=log_level,
+        log_file=log_file,
+        test_output_dir=None,
+        reports_output_dir=None,  # These are not global
+    )
+    if ctx.invoked_subcommand is None:
+        typer.echo("No command specified. Use --help for available commands.")
+
+
+@app.command()
+def full(
+    ctx: typer.Context,
+    input_file: Annotated[str, typer.Option("--input", help="Input PDF file path.")] = "input/sample.pdf",
+    output_file: Annotated[str | None, typer.Option("--output", help="Output PDF file path.")] = None,
+    config_file: Annotated[str | None, typer.Option("--config", help="Layout config JSON file path.")] = None,
+    debug_output_file: Annotated[str | None, typer.Option("--debugoutput", help="Debug output PDF file path.")] = None,
+    input_engine: Annotated[str, typer.Option(help="Input processing engine.")] = "auto",
+    output_engine: Annotated[str, typer.Option(help="Output rendering engine.")] = "auto",
+    extract_text: Annotated[bool, typer.Option(help="Include text blocks in extraction.")] = True,
+    extract_images: Annotated[bool, typer.Option(help="Include image blocks in extraction.")] = True,
+    extract_drawings: Annotated[bool, typer.Option(help="Include non-background vector drawings.")] = True,
+    extract_raw_backgrounds: Annotated[bool, typer.Option(help="Include raw background drawings.")] = False,
+):
+    """Runs the full pipeline: extract, generate, and optionally compare."""
+    args = ctx.meta["args"]
+    args.input = input_file
+    args.output = output_file or os.path.join(args.output_dir or "output", os.path.basename(input_file))
+    args.config = config_file or CONFIG.get("config_path", "layout_config.json")
+    args.debugoutput = debug_output_file
+    args.input_engine = input_engine
+    args.output_engine = output_engine
+    args.extract_text = extract_text
+    args.extract_images = extract_images
+    args.extract_drawings = extract_drawings
+    args.extract_raw_backgrounds = extract_raw_backgrounds
+
+    config = _setup_environment(args)
+    _run_extract(args, config)
+    _run_generate(args, config)
     if args.debugoutput:
-        os.makedirs(os.path.dirname(args.debugoutput) or ".", exist_ok=True)
+        _run_debug(args, config)
 
-    # Print output directory configuration for user feedback
-    console_print(
-        f"Output directory: {get_config_value('base_output_dir') if callable(get_config_value('base_output_dir')) else args.output_dir or './output'}",
-        "config",
-    )
-    console_print(f"Images directory: {image_dir}", "config")
-    console_print(f"Auto fonts directory: {auto_fonts_dir}", "config")
-    console_print(f"Manual fonts directory: {manual_fonts_dir}", "config")
-    if args.test_output_dir:
-        console_print(f"Test output directory: {get_config_value('test_output_dir')}", "config")
-    if args.reports_output_dir:
-        console_print(f"Reports directory: {get_config_value('reports_output_dir')}", "config")
+    from pdfrebuilder.core.compare_pdfs_visual import compare_pdfs_visual
 
-    is_extract_mode = args.mode in ["full", "extract"]
-    if is_extract_mode and not os.path.exists(args.input):
-        console_print(f"Input file not found for extraction: {args.input}", "error")
-        return
-
-    try:
-        # file_format is no longer used
-        if args.mode == "extract":
-            console_print("Entering extract mode...", "info")
-            console_print(f"Parsing document: {args.input}", "info")
-            console_print(f"Using input engine: {args.input_engine}", "info")
-            # Log engine version info at DEBUG level if using fitz
-            if args.input_engine.lower() in ["fitz", "auto"]:
-                console_print(
-                    f"Input engine selected: {args.input_engine}",
-                    "debug",
-                    logging.DEBUG,
-                )
-            try:
-                content = parse_document(args.input, extraction_flags, engine=args.input_engine)
-                console_print("Document parsed. Serializing to config...", "info")
-                serialize_pdf_content_to_config(content, args.config)
-                console_print(f"Extraction complete for {args.input}", "success")
-            except ValueError as e:
-                console_print(str(e), "error")
-                raise
-            except NotImplementedError as e:
-                console_print(str(e), "error")
-                console_print(
-                    "Check installation instructions for the required dependencies.",
-                    "warning",
-                )
-                raise
-            console_print("Exiting extract mode.", "info")
-        if args.mode == "generate":
-            console_print("Entering generate mode...", "info")
-            # Prepare engine configuration args
-            from pdfrebuilder.engine.config_loader import load_engine_config
-            from pdfrebuilder.engine.pdf_engine_selector import get_pdf_engine
-
-            # Prepare CLI args for config loading
-            cli_args: dict[str, Any] = {"output_engine": args.output_engine}
-
-            # Load complete engine configuration
-            engine_config = load_engine_config(cli_args=cli_args)
-
-            engine_name = args.output_engine
-            if engine_name == "auto":
-                engine_name = engine_config.get("default_engine", "reportlab")
-
-            console_print(f"Using output engine: {engine_name}", "info")
-
-            engine: Any | None = None
-            try:
-                engine = get_pdf_engine(engine_name, engine_config)
-                if engine:
-                    original_file = args.input if args.input and os.path.exists(args.input) else None
-                    # Ensure config is a dictionary before passing to the engine
-                    config_dict = config.dict(exclude_unset=True) if hasattr(config, "dict") else dict(config)
-                    engine.generate(config_dict, args.output, original_file)
-                    console_print("PDF generation complete.", "success")
-            except Exception as e:
-                console_print(f"Engine error: {e}", "error")
-                # Fallback to old engine for compatibility
-                console_print("Falling back to legacy engine...", "warning")
-                engine = FitzPDFEngine()
-                # Ensure config is a dictionary for the fallback engine too
-                config_dict = config.dict(exclude_unset=True) if hasattr(config, "dict") else dict(config)
-                engine.generate(config_dict, args.output, original_file)
-                console_print("PDF generation complete (using fallback).", "success")
-
-            console_print("Exiting generate mode.", "info")
-        elif args.mode == "full":
-            console_print("Entering full mode...", "info")
-            try:
-                console_print(f"Parsing document: {args.input}", "info")
-                console_print(f"Using input engine: {args.input_engine}", "info")
-                # Log engine version info at DEBUG level if using fitz
-                if args.input_engine.lower() in ["fitz", "auto"]:
-                    console_print(
-                        f"Input engine selected: {args.input_engine}",
-                        "debug",
-                        logging.DEBUG,
-                    )
-                content = parse_document(args.input, extraction_flags, engine=args.input_engine)
-                console_print("Document parsed. Serializing to config...", "info")
-                serialize_pdf_content_to_config(content, args.config)
-                console_print("Config serialized. Recreating PDF...", "info")
-
-                # Load the config that was just serialized
-                import json
-
-                with open(args.config) as f:
-                    config = json.load(f)
-
-            except ValueError as e:
-                console_print(str(e), "error")
-                raise
-
-            # Load engine configuration
-            from pdfrebuilder.engine.config_loader import load_engine_config
-            from pdfrebuilder.engine.pdf_engine_selector import get_pdf_engine
-
-            # Prepare CLI args for config loading
-            cli_args = {"output_engine": args.output_engine}
-
-            # Load complete engine configuration
-            engine_config = load_engine_config(cli_args=cli_args)
-
-            engine_name = args.output_engine
-            if engine_name == "auto":
-                engine_name = engine_config.get("default_engine", "reportlab")
-
-            console_print(f"Using output engine: {engine_name}", "info")
-
-            engine: Any | None = None
-            try:
-                engine = get_pdf_engine(engine_name, engine_config)
-                if engine:
-                    engine.generate(config, args.output, args.input)
-            except Exception as e:
-                console_print(f"Engine error: {e}", "error")
-                # Fallback to old engine for compatibility
-                console_print("Falling back to legacy engine...", "warning")
-                engine = FitzPDFEngine()
-                engine.generate(config, args.output, args.input)
-                console_print("PDF generation complete (using fallback).", "success")
-
-            console_print("PDF recreated. Comparing PDFs visually...", "info")
-            output_dir = os.path.dirname(args.output) or "."
-            from pdfrebuilder.settings import get_config_value
-
-            diff_basename = os.path.basename(get_config_value("diff_image") or "diff.png")
-            diff_image_path = os.path.join(output_dir, diff_basename)
-            compare_pdfs_visual(args.input, args.output, diff_image_path)
-            console_print("Visual comparison complete.", "success")
-            if args.debugoutput:
-                console_print("Generating debug PDF layers...", "info")
-                generate_debug_pdf_layers(args.config, args.debugoutput)
-                console_print("Debug PDF layers generated.", "success")
-            console_print("Exiting full mode.", "info")
-        elif args.mode == "debug":
-            console_print("Entering debug mode...", "info")
-            if not os.path.exists(args.config):
-                console_print(f"Config file not found to debug: {args.config}", "error")
-                raise FileNotFoundError(f"Config file not found to debug: {args.config}")
-            generate_debug_pdf_layers(args.config, args.debugoutput)
-            console_print("Debug PDF layers generated.", "success")
-            console_print("Exiting debug mode.", "info")
-    except Exception as e:
-        console_print(f"An unhandled error occurred during the pipeline: {e}", "error")
-        import traceback
-
-        traceback.print_exc()
-        # Re-raise the exception so tests can catch it
-        raise
+    console_print("Comparing PDFs visually...", "info")
+    diff_image_path = os.path.join(os.path.dirname(args.output), "diff.png")
+    compare_pdfs_visual(args.input, args.output, diff_image_path)
+    console_print("Visual comparison complete.", "success")
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Extract and rebuild PDF layouts.")
+@app.command()
+def extract(
+    ctx: typer.Context,
+    input_file: Annotated[str, typer.Option("--input", help="Input PDF file path.")] = "input/sample.pdf",
+    config_output_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = CONFIG.get(
+        "config_path", "layout_config.json"
+    ),
+    input_engine: Annotated[str, typer.Option(help="Input processing engine.")] = "auto",
+    extract_text: Annotated[bool, typer.Option(help="Include text blocks in extraction.")] = True,
+    extract_images: Annotated[bool, typer.Option(help="Include image blocks in extraction.")] = True,
+    extract_drawings: Annotated[bool, typer.Option(help="Include non-background vector drawings.")] = True,
+    extract_raw_backgrounds: Annotated[bool, typer.Option(help="Include raw background drawings.")] = False,
+):
+    """Extracts content and layout from a document into a JSON config file."""
+    args = ctx.meta["args"]
+    args.input = input_file
+    args.config = config_output_file
+    args.input_engine = input_engine
+    args.extract_text = extract_text
+    args.extract_images = extract_images
+    args.extract_drawings = extract_drawings
+    args.extract_raw_backgrounds = extract_raw_backgrounds
 
-    # Configuration file support
-    parser.add_argument(
-        "--config-file",
-        default=None,
-        help="Path to configuration file (TOML or JSON format). Overrides default configuration.",
-    )
-    parser.add_argument(
-        "--generate-config",
-        action="store_true",
-        help="Generate a sample configuration file and exit.",
-    )
-    parser.add_argument(
-        "--show-config",
-        action="store_true",
-        help="Show current effective configuration and exit.",
-    )
+    config = _setup_environment(args)
+    _run_extract(args, config)
 
-    parser.add_argument(
-        "--log-level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level. Use DEBUG to see engine version information (default: INFO)",
-    )
-    parser.add_argument(
-        "--log-file",
-        default=None,
-        help="Path to log file. If not specified, logs are written to console. Directory will be created if it doesn't exist.",
-    )
-    parser.add_argument(
-        "--mode",
-        choices=["full", "extract", "generate", "debug"],
-        default="full",
-        help="Operation: 'extract' only, 'generate' only, 'debug' drawing layers, or 'full' pipeline.",
-    )
-    parser.add_argument("--input", default="input/sample.pdf", help="Input PDF file path.")
-    parser.add_argument(
-        "--config",
-        default=CONFIG.get("config_path", "layout_config.json"),
-        help="Layout config JSON file path.",
-    )
-    parser.add_argument(
-        "--output",
-        default=None,  # Will be resolved from CONFIG after output dir is set
-        help="Output PDF file path.",
-    )
-    parser.add_argument(
-        "--debugoutput",
-        default=None,  # Will be resolved from CONFIG after output dir is set
-        help="Debug output PDF file path.",
-    )
-    # Output directory configuration
-    parser.add_argument(
-        "--output-dir",
-        default=None,
-        help="Base output directory for all generated files (default: ./output)",
-    )
-    parser.add_argument(
-        "--test-output-dir",
-        default=None,
-        help="Output directory for test files and reports (default: <output-dir>/tests)",
-    )
-    parser.add_argument(
-        "--reports-output-dir",
-        default=None,
-        help="Output directory for reports and logs (default: <output-dir>/reports)",
-    )
-    parser.add_argument(
-        "--temp-dir",
-        default=None,
-        help="Temporary directory for processing files (default: system temp + pdfrebuilder)",
-    )
-    parser.add_argument(
-        "--extract-text",
-        action="store_true",
-        default=True,
-        help="Include text blocks in extraction (default: True).",
-    )
-    parser.add_argument(
-        "--no-extract-text",
-        dest="extract_text",
-        action="store_false",
-        help="Exclude text blocks from extraction.",
-    )
-    parser.add_argument(
-        "--extract-images",
-        action="store_true",
-        default=True,
-        help="Include image blocks in extraction (default: True).",
-    )
-    parser.add_argument(
-        "--no-extract-images",
-        dest="extract_images",
-        action="store_false",
-        help="Exclude image blocks from extraction.",
-    )
-    parser.add_argument(
-        "--extract-drawings",
-        action="store_true",
-        default=True,
-        help="Include non-background vector drawings in extraction (default: True).",
-    )
-    parser.add_argument(
-        "--no-extract-drawings",
-        dest="extract_drawings",
-        action="store_false",
-        help="Exclude non-background vector drawings from extraction.",
-    )
-    parser.add_argument(
-        "--extract-raw-backgrounds",
-        action="store_true",
-        default=False,
-        help="Include raw background drawings identified (for debugging) (default: False).",
-    )
-    parser.add_argument(
-        "--no-extract-raw-backgrounds",
-        dest="extract_raw_backgrounds",
-        action="store_false",
-        help="Exclude raw background drawings identified.",
-    )
-    # Engine selection arguments
-    parser.add_argument(
-        "--input-engine",
-        choices=["auto", "fitz", "psd-tools", "wand"],
-        default="auto",
-        help="Input processing engine: 'auto' (auto-detect based on file format), 'fitz' (PyMuPDF for PDF files), 'psd-tools' (psd-tools library for PSD files), or 'wand' (Python-Wand/ImageMagick for PSD and various image formats).",
-    )
-    parser.add_argument(
-        "--output-engine",
-        choices=["auto", "reportlab", "pymupdf", "fitz"],
-        default="auto",
-        help="Output rendering engine: 'auto' (use default), 'reportlab' (ReportLab), 'pymupdf' (PyMuPDF), or 'fitz' (alias for PyMuPDF).",
-    )
-    args = parser.parse_args()
 
-    # Handle configuration file operations first
-    if args.generate_config or args.show_config:
-        from pdfrebuilder.config.manager import ConfigManager
+@app.command()
+def generate(
+    ctx: typer.Context,
+    config_input_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = CONFIG.get(
+        "config_path", "layout_config.json"
+    ),
+    output_file: Annotated[str | None, typer.Option("--output", help="Output PDF file path.")] = None,
+    input_file: Annotated[str | None, typer.Option("--input", help="Original input PDF file path (optional).")] = None,
+    output_engine: Annotated[str, typer.Option(help="Output rendering engine.")] = "auto",
+):
+    """Generates a PDF from a JSON config file."""
+    args = ctx.meta["args"]
+    args.input = input_file
+    args.config = config_input_file
+    args.output = output_file or os.path.join(args.output_dir or "output", "rebuilt.pdf")
+    args.output_engine = output_engine
 
-        config_manager = ConfigManager()
+    config = _setup_environment(args)
+    _run_generate(args, config)
 
-        if args.generate_config:
-            sample_file = config_manager.generate_sample_config()
-            console_print(f"Sample configuration file generated: {sample_file}", "success")
-            console_print(
-                "Edit this file to customize your settings, then use --config-file to load it.",
-                "info",
-            )
-            return
 
-        if args.show_config:
-            try:
-                # Prepare CLI overrides for show-config too
-                cli_overrides: dict[str, Any] = {}
-                if hasattr(args, "log_level") and args.log_level and args.log_level != "INFO":
-                    cli_overrides.setdefault("logging", {})["level"] = args.log_level.upper()
-                if hasattr(args, "log_file") and args.log_file:
-                    cli_overrides.setdefault("logging", {})["log_file"] = args.log_file
+@app.command()
+def debug(
+    ctx: typer.Context,
+    config_input_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = CONFIG.get(
+        "config_path", "layout_config.json"
+    ),
+    debug_output_file: Annotated[str | None, typer.Option("--debugoutput", help="Debug output PDF file path.")] = None,
+):
+    """Generates a debug PDF with drawing layers from a JSON config file."""
+    args = ctx.meta["args"]
+    args.config = config_input_file
+    args.debugoutput = debug_output_file or os.path.join(args.output_dir or "output", "debug.pdf")
 
-                # Load configuration with any provided config file and CLI overrides
-                config_manager.load_config(config_file=args.config_file, cli_overrides=cli_overrides)
-                config_output = config_manager.show_config()
-                print(config_output)
-                return
-            except Exception as e:
-                console_print(f"Error loading configuration: {e}", "error")
-                return
+    config = _setup_environment(args)
+    _run_debug(args, config)
 
-    run_pipeline(args)
+
+@app.command(name="download-fonts")
+def download_fonts(
+    priority: Annotated[
+        str | None, typer.Option(help="Download only fonts of specified priority level ('high', 'medium', 'low').")
+    ] = None,
+    force: Annotated[bool, typer.Option(help="Force redownload of existing fonts.")] = False,
+    verbose: Annotated[bool, typer.Option("-v", "--verbose", help="Enable verbose output.")] = False,
+):
+    """Downloads essential fonts for pdfrebuilder."""
+    from scripts.download_essential_fonts import download_essential_fonts
+
+    console_print("Downloading essential fonts...", "info")
+    download_essential_fonts(priority_filter=priority, force_redownload=force, verbose=verbose)
 
 
 if __name__ == "__main__":
-    main()
+    app()

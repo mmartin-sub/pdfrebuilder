@@ -51,7 +51,7 @@ dependencies = [
     "PyMuPDF>=1.26",
     "json5>=0.12.1",
     "Pillow>=10.2.0",
-    "opencv-python>=4.12.0",
+    "opencv-python>=4.11.0",
     "pytesseract>=0.3.13",
 ]
 
@@ -62,13 +62,13 @@ Repository = "https://github.com/mmartin-sub/pdfrebuilder"
 Issues = "https://github.com/mmartin-sub/pdfrebuilder/issues"
 
 [project.scripts]
-pdfrebuilder = "pdfrebuilder.cli:main"
+pdfrebuilder = "pdfrebuilder.cli.main:app"
 
 [project.optional-dependencies]
 # keep your extras
-psd = ["psd-tools>=1.10.9", "numpy>=2.3.2"]
+psd = ["psd-tools>=1.10.9", "numpy>=2.2"]
 wand = ["Wand>=0.6.13"]
-validation = ["scikit-image>=0.25.2", "numpy>=2.3.2"]
+validation = ["scikit-image>=0.25.2", "numpy>=2.2"]
 
 # test & dev (mirrors project 1 tooling)
 test = [
@@ -171,7 +171,7 @@ linkcheck = "sphinx-build -b linkcheck docs/source docs/build/linkcheck"
 
 [tool.hatch.envs.default.scripts]
 check = ["lint-check", "format-check", "types-pyright", "security"]
-test = "pytest {args:tests/}"
+test = "pytest {args:--ignore=tests/wip tests/}"
 test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src {args:tests/}"
 
 # --- Formatting & Linting (Ruff) ---
@@ -381,6 +381,7 @@ ignore_decorators = [
 ]
 
 [tool.pytest.ini_options]
+pythonpath = "src"
 testpaths = ["tests"]
 addopts = "-ra -q --strict-markers"
 asyncio_mode = "auto"

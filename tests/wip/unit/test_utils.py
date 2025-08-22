@@ -16,7 +16,7 @@ from typing import Any
 from pdfrebuilder.settings import get_config_value
 
 
-class TestFileManager:
+class _TestFileManager:
     """Manages test files and directories with automatic cleanup."""
 
     def __init__(self, test_name: str):

@@ -37,7 +37,7 @@ class RenderingMetrics:
     element_count: int
     success: bool
     error_message: str | None = None
-    warnings: list[str] = None  # type: ignore[assignment]
+    warnings: list[str] | None = None
 
     def __post_init__(self):
         if self.warnings is None:
