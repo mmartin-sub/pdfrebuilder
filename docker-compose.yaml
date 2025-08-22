@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  pdfrebuilder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/app/data
+    stdin_open: true
+    tty: true

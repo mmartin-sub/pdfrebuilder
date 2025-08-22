@@ -94,8 +94,9 @@ class FitzPDFEngine(PDFEngineBase):
                     if page_bg_color is not None:
                         page.draw_rect(page.rect, fill=page_bg_color)
                     if tpl_doc and page_idx < tpl_doc.page_count:
-                        # pyright incorrectly reports this method does not exist due to bad stubs
-                        page.show_pdf_page(page.rect, tpl_doc, page_idx)  # type: ignore
+                        # The 'show_pdf_page' method is valid in PyMuPDF, but the library's type
+                        # stubs are incomplete, causing mypy/pyright to raise a false positive.
+                        page.show_pdf_page(page.rect, tpl_doc, page_idx)  # type: ignore[attr-defined]
                     for layer_data in page_data.get("layers", []):
                         for element in layer_data.get("content", []):
                             _render_element(page, element, page_idx, {}, config)

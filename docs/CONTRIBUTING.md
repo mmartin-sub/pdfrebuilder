@@ -316,7 +316,6 @@ Before submitting a feature PR, ensure:
 - [ ] **Implementation**: Code follows project standards
 - [ ] **Tests**: Comprehensive test coverage (unit, integration, e2e)
 - [ ] **Documentation**: API docs, user guides, and examples updated
-- [ ] **Migration**: Migration guide if breaking changes
 - [ ] **Performance**: Performance impact assessed
 - [ ] **Security**: Security implications reviewed
 - [ ] **Backward Compatibility**: Existing functionality preserved
@@ -346,27 +345,7 @@ class NewFormatParser(DocumentParserBase):
 
 ### Configuration Changes
 
-When modifying configuration formats:
-
-1. **Maintain Backward Compatibility**: Support old formats
-   - Implement configuration migration utilities
-   - Provide clear deprecation warnings
-   - Support old formats for at least 2 major versions
-
-2. **Provide Migration Tools**: Create migration utilities
-   - Add migration scripts to `scripts/` directory
-   - Include migration examples in documentation
-   - Test migration with real-world configurations
-
-3. **Update Schema**: Update the Universal Document Structure Schema
-   - Increment schema version appropriately
-   - Document schema changes in MIGRATION.md
-   - Validate new schema with existing documents
-
-4. **Document Changes**: Update migration guide
-   - Add migration instructions to MIGRATION.md
-   - Update configuration reference documentation
-   - Provide before/after examples
+When modifying configuration formats, ensure that changes are backward compatible whenever possible. If breaking changes are necessary, they must be clearly documented in the release notes.
 
 ### Feature Lifecycle Management
 
@@ -537,8 +516,7 @@ Every bug fix should include:
 2. **Root Cause Analysis**: Explanation of what caused the bug
 3. **Fix Description**: What was changed and why
 4. **Test Coverage**: New tests added to prevent regression
-5. **Migration Notes**: If fix affects existing behavior
-6. **Performance Impact**: If fix affects performance
+5. **Performance Impact**: If fix affects performance
 
 ### Bug Reporting Guidelines
 

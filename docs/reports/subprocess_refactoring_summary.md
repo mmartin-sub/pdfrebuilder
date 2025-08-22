@@ -1,6 +1,6 @@
-# Subprocess Migration Audit Summary
+# Subprocess Refactoring Audit Summary
 
-## Task 7.1 Completion: Identify and Prioritize Subprocess Usage for Migration
+## Task 7.1 Completion: Identify and Prioritize Subprocess Usage for Refactoring
 
 ### Audit Results
 
@@ -9,7 +9,7 @@
 - ✅ **154 Python files scanned** across the entire codebase
 - ✅ **18 files identified** with subprocess usage
 - ✅ **Risk assessment completed** with detailed categorization
-- ✅ **Migration priority established** based on security impact
+- ✅ **Refactoring priority established** based on security impact
 
 ### Risk Categorization
 
@@ -41,13 +41,13 @@
 - `scripts/validate_bandit_config.py` - 1 subprocess call
 - `src/docs/validation.py` - Import only (for exception handling)
 
-#### 🟢 **Already Secure Files (No Migration Needed)**
+#### 🟢 **Already Secure Files (No Refactoring Needed)**
 
 10 files already use secure subprocess alternatives:
 
 - All files in `src/security/` module
 - Security test files
-- Migration example files
+- Refactoring example files
 
 ### Nosec Suppressions Audit
 
@@ -59,7 +59,7 @@
 - `# nosec B605` - shell injection suppressions
 - `# nosec B607` - partial shell injection suppressions
 
-### Migration Timeline and Effort Assessment
+### Refactoring Timeline and Effort Assessment
 
 | Priority | Files | Effort Level | Timeline | Security Impact |
 |----------|-------|--------------|----------|-----------------|
@@ -84,14 +84,14 @@
 ### Key Findings
 
 1. **Shell=True Usage**: Only 1 critical instance found in `tests/run_human_review.py`
-2. **Volume Distribution**: Most files have 1-4 subprocess calls, manageable migration
+2. **Volume Distribution**: Most files have 1-4 subprocess calls, manageable refactoring
 3. **Security Infrastructure**: Robust secure alternatives already exist in `src/security/`
 4. **Test Coverage**: Comprehensive test files exist for validation
-5. **Documentation**: Extensive security guidelines and migration examples available
+5. **Documentation**: Extensive security guidelines and refactoring examples available
 
-### Migration Strategy Validation
+### Refactoring Strategy Validation
 
-**✅ Migration Approach Confirmed:**
+**✅ Refactoring Approach Confirmed:**
 
 - Phased approach with priority-based scheduling
 - Secure alternatives already implemented and tested
@@ -106,19 +106,19 @@
 
 ### Next Steps for Task 7.2
 
-Based on this audit, the migration can proceed with confidence:
+Based on this audit, the refactoring can proceed with confidence:
 
 1. **Immediate**: Fix shell=True usage in `tests/run_human_review.py`
-2. **Phase 1**: Migrate high-volume files with comprehensive testing
-3. **Phase 2**: Migrate remaining standard usage files
+2. **Phase 1**: Refactor high-volume files with comprehensive testing
+3. **Phase 2**: Refactor remaining standard usage files
 4. **Phase 3**: Remove all nosec suppressions
 5. **Validation**: Run comprehensive security and functionality tests
 
 ### Deliverables Completed
 
-- ✅ **Comprehensive audit report** (`subprocess_migration_audit.json`)
-- ✅ **Detailed migration plan** (`subprocess_migration_plan.md`)
-- ✅ **Compatibility testing framework** (`test_subprocess_migration_compatibility.py`)
+- ✅ **Comprehensive audit report** (`subprocess_refactoring_audit.json`)
+- ✅ **Detailed refactoring plan** (`subprocess_refactoring_plan.md`)
+- ✅ **Compatibility testing framework** (`test_subprocess_refactoring_compatibility.py`)
 - ✅ **Risk assessment and prioritization** (this document)
 - ✅ **Timeline and effort estimates** established
 
@@ -127,9 +127,9 @@ Based on this audit, the migration can proceed with confidence:
 Task 7.1 is **COMPLETE**. The audit has successfully:
 
 1. **Identified all subprocess usage** across 154 files
-2. **Prioritized migration targets** based on security risk
-3. **Created detailed migration plan** with timeline
+2. **Prioritized refactoring targets** based on security risk
+3. **Created detailed refactoring plan** with timeline
 4. **Established compatibility testing** framework
-5. **Validated migration approach** and risk mitigation
+5. **Validated refactoring approach** and risk mitigation
 
-The codebase is ready for systematic migration to secure subprocess alternatives, with clear priorities and comprehensive planning in place.
+The codebase is ready for systematic refactoring to secure subprocess alternatives, with clear priorities and comprehensive planning in place.

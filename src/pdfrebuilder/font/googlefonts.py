@@ -4,17 +4,13 @@ import re
 
 import requests
 
-from pdfrebuilder.settings import get_config_value
+from pdfrebuilder.settings import settings
 
 
 def download_google_font(font_family: str, dest_dir: str | None = None) -> list[str] | None:
     """Downloads a Google Font family using the Google Fonts API."""
     if dest_dir is None:
-        dest_dir_from_config = get_config_value("downloaded_fonts_dir")
-        if isinstance(dest_dir_from_config, str):
-            dest_dir = dest_dir_from_config
-        else:
-            dest_dir = "downloaded_fonts"  # Default fallback
+        dest_dir = settings.font_management.downloaded_fonts_dir
 
     if not os.path.exists(dest_dir):
         os.makedirs(dest_dir, exist_ok=True)

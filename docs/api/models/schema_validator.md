@@ -1,6 +1,6 @@
 # schema_validator
 
-Schema validation and migration utilities for Universal IDM
+Schema validation utilities for Universal IDM
 
 ## Classes
 
@@ -10,7 +10,7 @@ Raised when schema validation fails
 
 ### SchemaValidator
 
-Validates and migrates Universal IDM schemas
+Validates Universal IDM schemas
 
 #### Methods
 
@@ -55,20 +55,6 @@ Validate bounding box format
 
 Validate metadata structure
 
-##### migrate_document(data, target_version)
-
-Migrate document to target version
-
-Args:
-    data: Document data to migrate
-    target_version: Target schema version (defaults to current)
-
-Returns:
-    Migrated document data
-
-Raises:
-    SchemaMigrationError: If migration fails
-
 ##### load_and_validate_document(file_path)
 
 Load and validate a document from file
@@ -90,10 +76,3 @@ Validate a document file
 
 Returns:
     Tuple of (is_valid, list_of_errors)
-
-### migrate_document_file(input_path, output_path, target_version)
-
-Migrate a document file to target version
-
-Returns:
-    True if successful, False otherwise

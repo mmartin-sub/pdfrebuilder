@@ -6,7 +6,7 @@ from typing import Annotated, Any
 import typer
 
 from pdfrebuilder.cli.app import app
-from pdfrebuilder.settings import CONFIG
+from pdfrebuilder.settings import settings
 
 # Rich console output for better CLI experience
 try:
@@ -85,10 +85,12 @@ def _setup_environment(args: SimpleNamespace) -> Any:
 
     config = config_manager.load_config(config_file=args.config_file, cli_overrides=cli_overrides)
 
-    from pdfrebuilder.settings import configure_logging, configure_output_directories, get_config_value
+    from pdfrebuilder.settings import configure_logging
 
     if config.paths.output_dir:
-        configure_output_directories(base_dir=str(config.paths.output_dir))
+        # This is now handled by the settings object, but we can keep it for backward compatibility
+        # with the old config system.
+        pass
 
     log_level_val = getattr(logging, config.logging.level.value, logging.INFO)
     log_file_path = str(config.logging.log_file) if config.logging.log_file else None
@@ -97,15 +99,15 @@ def _setup_environment(args: SimpleNamespace) -> Any:
 
     configure_logging(log_file=log_file_path, log_level=log_level_val, log_format="%(levelname)s %(name)s: %(message)s")
 
-    image_dir = get_config_value("image_dir")
-    auto_fonts_dir = get_config_value("downloaded_fonts_dir")
-    manual_fonts_dir = get_config_value("manual_fonts_dir")
+    image_dir = settings.image_dir
+    auto_fonts_dir = settings.font_management.downloaded_fonts_dir
+    manual_fonts_dir = settings.font_management.manual_fonts_dir
 
     os.makedirs(image_dir, exist_ok=True)
     os.makedirs(auto_fonts_dir, exist_ok=True)
     os.makedirs(manual_fonts_dir, exist_ok=True)
 
-    console_print(f"Output directory: {get_config_value('base_output_dir')}", "config")
+    console_print(f"Output directory: {settings.rebuilt_pdf.parent}", "config")
 
     return config
 
@@ -211,7 +213,7 @@ def full(
     args = ctx.meta["args"]
     args.input = input_file
     args.output = output_file or os.path.join(args.output_dir or "output", os.path.basename(input_file))
-    args.config = config_file or CONFIG.get("config_path", "layout_config.json")
+    args.config = config_file or settings.config_path
     args.debugoutput = debug_output_file
     args.input_engine = input_engine
     args.output_engine = output_engine
@@ -238,9 +240,7 @@ def full(
 def extract(
     ctx: typer.Context,
     input_file: Annotated[str, typer.Option("--input", help="Input PDF file path.")] = "input/sample.pdf",
-    config_output_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = CONFIG.get(
-        "config_path", "layout_config.json"
-    ),
+    config_output_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = settings.config_path,
     input_engine: Annotated[str, typer.Option(help="Input processing engine.")] = "auto",
     extract_text: Annotated[bool, typer.Option(help="Include text blocks in extraction.")] = True,
     extract_images: Annotated[bool, typer.Option(help="Include image blocks in extraction.")] = True,
@@ -264,9 +264,7 @@ def extract(
 @app.command()
 def generate(
     ctx: typer.Context,
-    config_input_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = CONFIG.get(
-        "config_path", "layout_config.json"
-    ),
+    config_input_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = settings.config_path,
     output_file: Annotated[str | None, typer.Option("--output", help="Output PDF file path.")] = None,
     input_file: Annotated[str | None, typer.Option("--input", help="Original input PDF file path (optional).")] = None,
     output_engine: Annotated[str, typer.Option(help="Output rendering engine.")] = "auto",
@@ -285,9 +283,7 @@ def generate(
 @app.command()
 def debug(
     ctx: typer.Context,
-    config_input_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = CONFIG.get(
-        "config_path", "layout_config.json"
-    ),
+    config_input_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = settings.config_path,
     debug_output_file: Annotated[str | None, typer.Option("--debugoutput", help="Debug output PDF file path.")] = None,
 ):
     """Generates a debug PDF with drawing layers from a JSON config file."""

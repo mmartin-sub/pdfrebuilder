@@ -886,17 +886,13 @@ class UniversalDocument:
 
 
 def validate_schema_version(data: dict[str, Any]) -> None:
-    """Validate that the schema version is supported"""
+    """
+    Validates that the document's schema version is supported.
+    Currently, only version 1.0 is supported.
+    """
     version = data.get("version", "1.0")
     if version != UNIVERSAL_IDM_VERSION:
         raise ValueError(f"Unsupported schema version: {version}")
-
-
-def migrate_schema(data: dict[str, Any], target_version: str = UNIVERSAL_IDM_VERSION) -> dict[str, Any]:
-    """Migrate schema to target version (placeholder for future migrations)"""
-    # For now, just validate the version
-    validate_schema_version(data)
-    return data
 
 
 # Aliases for backward compatibility with tests

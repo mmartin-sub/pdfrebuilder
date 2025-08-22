@@ -5,7 +5,7 @@ import traceback
 from pdfrebuilder.engine.validation_report import generate_validation_report
 from pdfrebuilder.engine.visual_validator import validate_documents
 from pdfrebuilder.font.font_validator import FontValidator
-from pdfrebuilder.settings import CONFIG
+from pdfrebuilder.settings import settings
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -46,9 +46,9 @@ def compare_pdfs_visual(original_path, generated_path, diff_image_base_path, vis
         return ERROR_CODES["REBUILT_PDF_NOT_FOUND"]
 
     try:
-        # Get threshold from CONFIG if not specified
+        # Get threshold from settings if not specified
         if visual_diff_threshold is None:
-            visual_diff_threshold = CONFIG.get("visual_diff_threshold", 5)
+            visual_diff_threshold = settings.validation.visual_diff_threshold
 
         # Convert pixel threshold to SSIM threshold (inverse relationship)
         # Higher pixel threshold = lower SSIM threshold

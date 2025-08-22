@@ -73,7 +73,7 @@ validation = ["scikit-image>=0.25.2", "numpy>=2.2"]
 # test & dev (mirrors project 1 tooling)
 test = [
     "pytest>=8.4.1",
-    "pytest-cov>=7.10.4",
+    "pytest-cov>6.0.0",
     "pytest-asyncio>=1.1.0",
     "jsonschema>=4.25.1",
 ]
@@ -168,11 +168,14 @@ build = "sphinx-build docs/source docs/build/html"
 live = "sphinx-autobuild docs/source docs/build/html --open-browser --watch src/"
 clean = "rm -rf docs/build"
 linkcheck = "sphinx-build -b linkcheck docs/source docs/build/linkcheck"
+validate = "python scripts/validate_docs.py --all --verbose"
+test = "pytest tests/test_documentation_validation.py tests/test_documentation_builder.py -v"
+workflow = ["docs:validate", "docs:test", "docs:build"]
 
 [tool.hatch.envs.default.scripts]
 check = ["lint-check", "format-check", "types-pyright", "security"]
 test = "pytest {args:--ignore=tests/wip tests/}"
-test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src {args:tests/}"
+test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src {args:--ignore=tests/wip tests/}"
 
 # --- Formatting & Linting (Ruff) ---
 format = "ruff format {args:.}"
@@ -186,8 +189,13 @@ types-pyright = "pyright {args:.}"
 types-mypy = "mypy src"
 
 # --- Other checks ---
-security = "bandit -c pyproject.toml ."
+"security:scan" = "bandit -c pyproject.toml ."
+"security:test" = "pytest tests/security/"
+"security:validate" = "python scripts/validate_bandit_config.py"
+"security:report" = "mkdir -p reports && bandit -f json -o reports/bandit_results.json -c pyproject.toml ."
+"security:all" = ["security:scan", "security:test", "security:validate"]
 dead-code = "vulture src tests"
+clean = "find . -type d -name '__pycache__' -exec rm -rf {} + && find . -type f -name '*.pyc' -delete && find . -type f -name '*.pyo' -delete && find . -type d -name '*.egg-info' -exec rm -rf {} + && rm -rf build/ && rm -rf dist/"
 
 # --- Package management helpers ---
 check-updates = "uv pip list --outdated"

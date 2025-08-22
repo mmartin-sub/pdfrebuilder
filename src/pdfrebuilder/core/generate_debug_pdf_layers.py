@@ -8,7 +8,7 @@ import json5
 import pymupdf as fitz
 
 from pdfrebuilder.core.render import _render_element, json_serializer
-from pdfrebuilder.settings import CONFIG
+from pdfrebuilder.settings import settings
 
 UNFINDABLE_FONT_NAMES = {"Unnamed-T3"}
 
@@ -110,7 +110,7 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
     logger.info(f"Config statistics: pages={len(pages)}, layers={total_layers}, elements={total_elements}")
 
     overrides: dict[str, Any] = {}
-    override_path_obj = CONFIG.get("override_config_path")
+    override_path_obj = settings.override_config_path
     if isinstance(override_path_obj, str) and os.path.exists(override_path_obj):
         try:
             with open(override_path_obj) as f_override:
@@ -119,7 +119,7 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
             logger.error(f"Error decoding overrides file '{override_path_obj}': {e}")
             return False
     elif not isinstance(override_path_obj, str):
-        logger.error("CONFIG['override_config_path'] must be a string path")
+        logger.error("settings.override_config_path must be a string path")
         return False
 
     with fitz.open() as debug_doc:
@@ -131,10 +131,10 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
             for layer in page_data.get("layers", []):
                 for element_idx, element in enumerate(layer.get("content", [])):
                     debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])
-                    effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, CONFIG)
-                    debug_font_name = CONFIG.get("debug_font_name", "cour")
-                    debug_fontsize = CONFIG.get("debug_fontsize", 8)
-                    wrap_width = CONFIG.get("debug_text_wrap_width", 100)
+                    effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, settings)
+                    debug_font_name = settings.debug.font_name
+                    debug_fontsize = settings.debug.fontsize
+                    wrap_width = settings.debug.text_wrap_width
                     debug_text_unwrapped = (
                         f"Source Page {source_page_idx} / Element Index {element_idx} (ID: {element.get('id', 'N/A')})\n"
                         f"Type: {element.get('type', 'N/A')}\n\n"

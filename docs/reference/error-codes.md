@@ -54,7 +54,6 @@ The Multi-Format Document Engine uses structured error codes to help identify an
 | `CONFIG_PARSE_002` | Missing required configuration | Required configuration keys are missing | Add missing configuration keys |
 | `CONFIG_VALIDATE_001` | Invalid configuration value | Configuration value is out of range or invalid | Check configuration documentation |
 | `CONFIG_SCHEMA_001` | Schema validation failed | Configuration doesn't match expected schema | Update configuration to match schema |
-| `CONFIG_MIGRATE_001` | Configuration migration failed | Unable to migrate old configuration | Manual migration may be required |
 
 ### Validation Errors (VALID_*) {#validation-errors-valid_}
 

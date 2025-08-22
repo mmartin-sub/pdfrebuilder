@@ -10,7 +10,6 @@ This directory contains comprehensive documentation for the Multi-Format Documen
 - [INSTALLATION.md](INSTALLATION.md) - Detailed installation guide
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and design
 - [SECURITY.md](SECURITY.md) - Security considerations and guidelines
-- [MIGRATION.md](MIGRATION.md) - Version migration guides
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 
 ### API Documentation
@@ -55,27 +54,23 @@ This documentation includes automated validation and generation tools to ensure 
 
 ### Documentation Management
 
-See [MAKEFILE_GUIDE.md](MAKEFILE_GUIDE.md) for complete instructions on:
-
-- Using Makefile targets for documentation management
-- Setting up git hooks for automatic validation
-- CI/CD integration examples
-- Troubleshooting and best practices
+All documentation management tasks can be run using `hatch`. See the `[tool.hatch.envs.docs.scripts]`
+section of `pyproject.toml` for a full list of available commands.
 
 ### Quick Commands
 
 ```bash
 # Show all available documentation commands
-make help
+hatch run docs --help
 
 # Run complete documentation workflow
-make docs-workflow
+hatch run docs:workflow
 
 # Validate documentation accuracy
-make docs-validate
+hatch run docs:validate
 
 # Build complete documentation
-make docs-build
+hatch run docs:build
 ```
 
 ## Contributing to Documentation

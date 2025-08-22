@@ -25,7 +25,7 @@ import pymupdf as fitz
 from fontTools.ttLib import TTFont
 
 from pdfrebuilder.font.googlefonts import download_google_font
-from pdfrebuilder.settings import STANDARD_PDF_FONTS, get_config_value
+from pdfrebuilder.settings import STANDARD_PDF_FONTS, settings
 
 # Global caches
 _FONT_REGISTRATION_CACHE: dict[int, set[str]] = {}
@@ -469,7 +469,7 @@ def is_test_environment() -> bool:
 def get_guaranteed_fallback_font() -> str:
     """Get a font that is guaranteed to work in all scenarios."""
     # Return the configured default font or fall back to 'Helvetica' if not set
-    return get_config_value("default_font") or "Helvetica"
+    return settings.font_management.default_font or "Helvetica"
 
 
 class FallbackFontManager:
@@ -514,9 +514,7 @@ class FallbackFontManager:
     def _ensure_fallback_consistency(self):
         """Ensure the fallback fonts list prioritizes the configured default font"""
         try:
-            from pdfrebuilder.settings import get_config_value
-
-            default_font = get_config_value("default_font")
+            default_font = settings.font_management.default_font
 
             if default_font and default_font in FallbackFontManager.FALLBACK_FONTS:
                 # Move the default font to the front of the list
@@ -772,8 +770,8 @@ class FallbackFontManager:
 
     def _find_font_file(self, font_name: str) -> str | None:
         """Find font file for the given font name"""
-        manual_fonts_dir = get_config_value("manual_fonts_dir")
-        auto_fonts_dir = get_config_value("downloaded_fonts_dir")
+        manual_fonts_dir = settings.font_management.manual_fonts_dir
+        auto_fonts_dir = settings.font_management.downloaded_fonts_dir
 
         for fonts_dir in [manual_fonts_dir, auto_fonts_dir]:
             if not fonts_dir or not os.path.exists(fonts_dir):
@@ -878,8 +876,8 @@ class FallbackFontManager:
 
             # For other fonts, we need to check if they exist in the system
             # Try to find the font file first
-            manual_fonts_dir = get_config_value("manual_fonts_dir")
-            auto_fonts_dir = get_config_value("downloaded_fonts_dir")
+            manual_fonts_dir = settings.font_management.manual_fonts_dir
+            auto_fonts_dir = settings.font_management.downloaded_fonts_dir
 
             font_file = None
             for fonts_dir in [manual_fonts_dir, auto_fonts_dir]:
@@ -1197,8 +1195,8 @@ class FallbackFontValidator:
 
     def _find_font_file(self, font_name: str) -> str | None:
         """Find font file for the given font name"""
-        manual_fonts_dir = get_config_value("manual_fonts_dir")
-        auto_fonts_dir = get_config_value("downloaded_fonts_dir")
+        manual_fonts_dir = settings.font_management.manual_fonts_dir
+        auto_fonts_dir = settings.font_management.downloaded_fonts_dir
 
         for fonts_dir in [manual_fonts_dir, auto_fonts_dir]:
             if not fonts_dir or not os.path.exists(fonts_dir):
@@ -1503,7 +1501,7 @@ def _check_font_text_coverage(
                 logger.info(f"Font '{font_name}' doesn't cover text, scanning for alternatives")
 
         # Get available fonts and check their coverage
-        manual_fonts_dir = get_config_value("manual_fonts_dir")
+        manual_fonts_dir = settings.font_management.manual_fonts_dir
         available_fonts = scan_available_fonts(manual_fonts_dir)
         for available_font_name, available_font_path in available_fonts.items():
             if font_covers_text(available_font_path, text_content):
@@ -1786,8 +1784,8 @@ def _attempt_fallback_font_registration(
 
 def _find_font_file_for_name(font_name: str) -> str | None:
     """Find font file for the given font name"""
-    manual_fonts_dir = get_config_value("manual_fonts_dir")
-    auto_fonts_dir = get_config_value("downloaded_fonts_dir")
+    manual_fonts_dir = settings.font_management.manual_fonts_dir
+    auto_fonts_dir = settings.font_management.downloaded_fonts_dir
 
     for fonts_dir in [manual_fonts_dir, auto_fonts_dir]:
         if not fonts_dir or not os.path.exists(fonts_dir):
@@ -2591,7 +2589,7 @@ def scan_available_fonts(fonts_dir):
 
     # Add manual fonts directory if different
     try:
-        manual_fonts_dir = get_config_value("manual_fonts_dir")
+        manual_fonts_dir = settings.font_management.manual_fonts_dir
         if manual_fonts_dir and manual_fonts_dir != fonts_dir:
             font_dirs.append(manual_fonts_dir)
     except Exception as e:
@@ -2674,7 +2672,7 @@ def ensure_font_registered(page, font_name, verbose=True, text=None):
     """
     # Special case: never try to register or download 'Unnamed-T3', always fallback
     if font_name == "Unnamed-T3":
-        default_font = get_config_value("default_font")
+        default_font = settings.font_management.default_font
         if default_font != font_name:
             _track_font_substitution(font_name, default_font, "Unnamed-T3 font not supported", text)
             return ensure_font_registered(page, default_font, verbose, text)
@@ -2693,7 +2691,7 @@ def ensure_font_registered(page, font_name, verbose=True, text=None):
                 logger.info(f"[font_utils] Attempting Google Fonts download for '{font_name}'")
 
             _FONT_DOWNLOAD_ATTEMPTED.add(font_name)
-            auto_fonts_dir = get_config_value("downloaded_fonts_dir")
+            auto_fonts_dir = settings.font_management.downloaded_fonts_dir
             downloaded = download_google_font(font_name, auto_fonts_dir)
             print(".", end="", flush=True)
 
@@ -2758,7 +2756,7 @@ def ensure_font_registered(page, font_name, verbose=True, text=None):
                 )
 
         # Non-critical failure - return a default font
-        default_font = get_config_value("default_font")
+        default_font = settings.font_management.default_font
         if verbose:
             logger.warning(f"[font_utils] Font registration failed for '{font_name}', using default: '{default_font}'")
 

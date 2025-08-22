@@ -7,7 +7,7 @@ import os
 
 import pytest
 
-from pdfrebuilder.settings import get_nested_config_value
+from pdfrebuilder.settings import settings
 
 # Try to import psutil, skip tests if not available
 try:
@@ -33,12 +33,12 @@ class TestMemoryUsage:
     def test_memory_limits_configuration(self):
         """Test that memory limits are properly configured"""
         # Test Wand memory limit
-        wand_memory_limit = get_nested_config_value("engines.input.wand.memory_limit_mb")
+        wand_memory_limit = settings.engines.input.wand.memory_limit_mb
         assert isinstance(wand_memory_limit, int)
         assert wand_memory_limit > 0
 
         # Test processing memory limit
-        processing_memory_limit = get_nested_config_value("processing.max_memory_mb")
+        processing_memory_limit = settings.processing.max_memory_mb
         assert isinstance(processing_memory_limit, int)
         assert processing_memory_limit > 0
 
@@ -113,7 +113,7 @@ class TestMemoryUsage:
         # This would test memory usage with large documents
         # to ensure streaming and efficient processing
 
-        max_memory_mb = get_nested_config_value("processing.max_memory_mb")
+        max_memory_mb = settings.processing.max_memory_mb
         current_memory = self.get_memory_usage()
 
         # Ensure we're not already using too much memory
@@ -121,7 +121,7 @@ class TestMemoryUsage:
 
     def test_parallel_processing_memory(self):
         """Test memory usage with parallel processing enabled"""
-        parallel_enabled = get_nested_config_value("processing.enable_parallel_processing")
+        parallel_enabled = settings.processing.enable_parallel_processing
 
         if parallel_enabled:
             # Test that parallel processing doesn't cause excessive memory usage

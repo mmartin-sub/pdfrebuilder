@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from pdfrebuilder.settings import get_nested_config_value
+from pdfrebuilder.settings import settings
 
 
 class TestProcessingSpeed:
@@ -47,21 +47,19 @@ class TestProcessingSpeed:
 
     def test_configuration_access_speed(self):
         """Test speed of configuration access"""
-        from pdfrebuilder.settings import get_nested_config_value
-
         # Test multiple configuration accesses
-        config_paths = [
-            "engines.input.wand.density",
-            "engines.output.reportlab.compression",
-            "font_management.font_directory",
-            "validation.ssim_threshold",
-            "debug.font_name",
+        access_functions = [
+            lambda: settings.engines.input.wand.density,
+            lambda: settings.engines.output.reportlab.compression,
+            lambda: settings.font_management.font_directory,
+            lambda: settings.validation.ssim_threshold,
+            lambda: settings.debug.font_name,
         ]
 
         start_time = time.time()
         for _ in range(1000):  # Test 1000 accesses
-            for path in config_paths:
-                get_nested_config_value(path)
+            for func in access_functions:
+                func()
         total_time = time.time() - start_time
 
         # Should be very fast (less than 0.1 seconds for 5000 accesses)
@@ -122,7 +120,7 @@ class TestProcessingSpeed:
 
     def test_parallel_processing_speedup(self):
         """Test that parallel processing provides speedup"""
-        parallel_enabled = get_nested_config_value("processing.enable_parallel_processing")
+        parallel_enabled = settings.processing.enable_parallel_processing
 
         if not parallel_enabled:
             pytest.skip("Parallel processing not enabled")

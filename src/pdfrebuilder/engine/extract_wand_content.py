@@ -563,14 +563,14 @@ def _extract_multi_page_tiff(img, extraction_flags: dict[str, bool]) -> list[Can
 def _extract_tiff_page_as_image(img, page_index: int, bbox: list[float]) -> ImageElement | None:
     """Extract a TIFF page as an image element."""
     try:
-        from pdfrebuilder.settings import get_config_value
+        from pdfrebuilder.settings import settings
 
         # Get configuration
         config = get_wand_config()
         image_format = config.get("image_format", "png")
 
         # Create output directory for images
-        image_dir = get_config_value("image_dir")
+        image_dir = settings.image_dir
         os.makedirs(image_dir, exist_ok=True)
 
         # Generate filename for this page
@@ -685,14 +685,14 @@ def _create_single_image_structure(
 def _extract_single_image_content(img, file_format: str, bbox: list[float]) -> ImageElement | None:
     """Extract content from a single-layer image format."""
     try:
-        from pdfrebuilder.settings import get_config_value
+        from pdfrebuilder.settings import settings
 
         # Get configuration
         config = get_wand_config()
         output_format = config.get("image_format", "png")
 
         # Create output directory for images
-        image_dir = get_config_value("image_dir")
+        image_dir = settings.image_dir
         os.makedirs(image_dir, exist_ok=True)
 
         # Generate filename for the image
@@ -1221,7 +1221,7 @@ def _extract_layer_as_image(
 ) -> ImageElement | None:
     """Extract a layer as an image element."""
     try:
-        from pdfrebuilder.settings import get_config_value
+        from pdfrebuilder.settings import settings
 
         if layer_info is None:
             layer_info = {}
@@ -1231,7 +1231,7 @@ def _extract_layer_as_image(
         image_format = config.get("image_format", "png")
 
         # Create output directory for images
-        image_dir = get_config_value("image_dir")
+        image_dir = settings.image_dir
         os.makedirs(image_dir, exist_ok=True)
 
         # Generate consistent filename for this layer
@@ -1565,21 +1565,9 @@ def get_wand_config() -> dict[str, Any]:
         >>> config = get_wand_config()
         >>> print(f"Density: {config['density']} DPI")
     """
-    from pdfrebuilder.settings import get_nested_config_value
+    from pdfrebuilder.settings import settings
 
-    return {
-        "density": get_nested_config_value("engines.input.wand.density", 300),
-        "use_ocr": get_nested_config_value("engines.input.wand.use_ocr", False),
-        "tesseract_lang": get_nested_config_value("engines.input.wand.tesseract_lang", "eng"),
-        "image_format": get_nested_config_value("engines.input.wand.image_format", "png"),
-        "color_management": get_nested_config_value("engines.input.wand.color_management", True),
-        "memory_limit_mb": get_nested_config_value("engines.input.wand.memory_limit_mb", 1024),
-        "enhance_images": get_nested_config_value("engines.input.wand.enhance_images", False),
-        "auto_level": get_nested_config_value("engines.input.wand.auto_level", False),
-        "auto_gamma": get_nested_config_value("engines.input.wand.auto_gamma", False),
-        "sharpen": get_nested_config_value("engines.input.wand.sharpen", False),
-        "noise_reduction": get_nested_config_value("engines.input.wand.noise_reduction", False),
-    }
+    return settings.engines.input.wand.model_dump()
 
 
 def validate_wand_config(config: dict[str, Any]) -> tuple[bool, list[str]]:
@@ -1628,14 +1616,14 @@ def validate_wand_config(config: dict[str, Any]) -> tuple[bool, list[str]]:
 def _extract_base_image(img, width: int, height: int) -> ImageElement | None:
     """Extract the base/flattened image as an image element."""
     try:
-        from pdfrebuilder.settings import get_config_value
+        from pdfrebuilder.settings import settings
 
         # Get configuration
         config = get_wand_config()
         image_format = config.get("image_format", "png")
 
         # Create output directory for images
-        image_dir = get_config_value("image_dir")
+        image_dir = settings.image_dir
         os.makedirs(image_dir, exist_ok=True)
 
         # Generate consistent filename for the base image

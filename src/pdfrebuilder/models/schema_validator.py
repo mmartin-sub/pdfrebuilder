@@ -6,7 +6,6 @@ import json
 import logging
 from typing import Any
 
-from .schema_migration import SchemaMigrationError, migrate_schema
 from .universal_idm import UNIVERSAL_IDM_VERSION, UniversalDocument, validate_schema_version
 
 logger = logging.getLogger(__name__)
@@ -14,9 +13,6 @@ logger = logging.getLogger(__name__)
 
 class SchemaValidationError(Exception):
     """Raised when schema validation fails"""
-
-
-# SchemaMigrationError is already imported from schema_migration.py
 
 
 class SchemaValidator:
@@ -283,46 +279,6 @@ class SchemaValidator:
 
         return errors
 
-    def migrate_document(self, data: dict[str, Any], target_version: str | None = None) -> dict[str, Any]:
-        """
-        Migrate document to target version
-
-        Args:
-            data: Document data to migrate
-            target_version: Target schema version (defaults to current)
-
-        Returns:
-            Migrated document data
-
-        Raises:
-            SchemaMigrationError: If migration fails
-        """
-        if target_version is None:
-            target_version = self.current_version
-
-        try:
-            current_version = data.get("version", "1.0")
-
-            if current_version == target_version:
-                logger.info(f"Document already at target version {target_version}")
-                return data
-
-            logger.info(f"Migrating document from version {current_version} to {target_version}")
-
-            # Perform migration
-            migrated_data = migrate_schema(data, target_version)
-
-            # Validate migrated data
-            is_valid, errors = self.validate_document(migrated_data)
-            if not is_valid:
-                raise SchemaMigrationError(f"Migration validation failed: {errors}")
-
-            logger.info(f"Successfully migrated document to version {target_version}")
-            return migrated_data
-
-        except Exception as e:
-            raise SchemaMigrationError(f"Migration failed: {e!s}")
-
     def load_and_validate_document(self, file_path: str) -> UniversalDocument:
         """
         Load and validate a document from file
@@ -344,10 +300,6 @@ class SchemaValidator:
             is_valid, errors = self.validate_document(data)
             if not is_valid:
                 raise SchemaValidationError(f"Schema validation failed: {errors}")
-
-            # Migrate if necessary
-            if not validate_schema_version(data):
-                data = self.migrate_document(data)
 
             # Create UniversalDocument instance
             return UniversalDocument.from_dict(data)
@@ -376,26 +328,3 @@ def validate_document_file(file_path: str) -> tuple[bool, list[str]]:
         return True, []
     except SchemaValidationError as e:
         return False, [str(e)]
-
-
-def migrate_document_file(input_path: str, output_path: str, target_version: str | None = None) -> bool:
-    """
-    Migrate a document file to target version
-
-    Returns:
-        True if successful, False otherwise
-    """
-    validator = SchemaValidator()
-    try:
-        with open(input_path, encoding="utf-8") as f:
-            data = json.load(f)
-
-        migrated_data = validator.migrate_document(data, target_version)
-
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(migrated_data, f, indent=2, ensure_ascii=False)
-
-        return True
-    except Exception as e:
-        logger.error(f"Migration failed: {e!s}")
-        return False

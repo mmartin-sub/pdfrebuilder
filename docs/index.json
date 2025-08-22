@@ -314,12 +314,6 @@
               "size": 1232,
               "modified": "2025-07-31T10:36:53.589516"
             },
-            "schema_migration.md": {
-              "type": "file",
-              "path": "api/models/schema_migration.md",
-              "size": 1746,
-              "modified": "2025-07-31T10:36:53.597516"
-            },
             "schema_validator.md": {
               "type": "file",
               "path": "api/models/schema_validator.md",

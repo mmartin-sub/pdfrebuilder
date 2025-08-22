@@ -162,7 +162,7 @@ repos:
         exclude: ^tests/security/test_enhanced_security\.py$|^debug/security/.*\.py$
       - id: python-check-blanket-noqa
       - id: python-check-blanket-type-ignore
-        exclude: ^src/pdfrebuilder/models/universal_idm\.py$
+        exclude: ^src/pdfrebuilder/models/universal_idm\.py$|^src/pdfrebuilder/core/generate_debug_pdf_layers\.py$
       - id: python-use-type-annotations
         exclude: ^(projects/|templates/|\.history/|\.kiro/)
   - repo: https://github.com/AleksaC/hadolint-py

@@ -111,7 +111,6 @@ Core Modules
     ├── models/                    # Data models and validation
     │   ├── universal_idm.py      # Universal Document Model definitions
     │   ├── schema_validator.py   # Document validation logic
-    │   ├── schema_migration.py   # Version migration support
     │   └── psd_effects.py        # PSD-specific effect models
     ├── engine/                    # Processing engines and interfaces
     │   ├── document_parser.py    # Base parser interface

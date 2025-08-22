@@ -80,11 +80,11 @@ class FontValidator:
         """Initialize the font validator
 
         Args:
-            fonts_dir: Directory containing font files. If None, uses CONFIG setting.
+            fonts_dir: Directory containing font files. If None, uses settings.
         """
-        from pdfrebuilder.settings import get_config_value
+        from pdfrebuilder.settings import settings
 
-        self.fonts_dir = fonts_dir or get_config_value("downloaded_fonts_dir") or "downloaded_fonts"
+        self.fonts_dir = fonts_dir or settings.font_management.downloaded_fonts_dir or "downloaded_fonts"
         self.available_fonts: dict[str, str] = {}
         self.substitution_tracker: list[FontSubstitution] = []
         self._refresh_available_fonts()
