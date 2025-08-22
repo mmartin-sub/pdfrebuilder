@@ -12,7 +12,8 @@ import logging
 import os
 import shutil
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 from typing import Any
 from unittest.mock import patch
 

@@ -26,23 +26,23 @@ tests/
 └── config.py                       # Test-specific configurations
 ```
 
--   **`font/`**: Contains all tests related to font processing, including validation, substitution, and Google Fonts integration.
--   **`performance/`**: Houses tests for benchmarking, memory usage, and processing speed.
--   **`wip/`**: A directory for work-in-progress tests that are not yet ready to be included in the main test suite. These tests are excluded from the default `pytest` run.
-    -   **`unit/`**: Unit tests for individual modules, classes, and functions.
-    -   **`integration/`**: Tests that verify the interaction between different components of the application.
-    -   **`e2e/`**: End-to-end tests that simulate real-world usage scenarios.
-    -   **`security/`**: Tests focused on security aspects, such as input sanitization and vulnerability checks.
-    -   **`documentation/`**: Tests for validating the accuracy and completeness of the documentation.
--   **`demos/`**: Contains scripts that demonstrate specific features of the `pdfrebuilder` tool.
--   **`fixtures/`**: Stores test data, configuration files, and other artifacts needed for the tests.
--   **`sample/`**: Contains sample PDF and other documents used as input for tests.
+- **`font/`**: Contains all tests related to font processing, including validation, substitution, and Google Fonts integration.
+- **`performance/`**: Houses tests for benchmarking, memory usage, and processing speed.
+- **`wip/`**: A directory for work-in-progress tests that are not yet ready to be included in the main test suite. These tests are excluded from the default `pytest` run.
+  - **`unit/`**: Unit tests for individual modules, classes, and functions.
+  - **`integration/`**: Tests that verify the interaction between different components of the application.
+  - **`e2e/`**: End-to-end tests that simulate real-world usage scenarios.
+  - **`security/`**: Tests focused on security aspects, such as input sanitization and vulnerability checks.
+  - **`documentation/`**: Tests for validating the accuracy and completeness of the documentation.
+- **`demos/`**: Contains scripts that demonstrate specific features of the `pdfrebuilder` tool.
+- **`fixtures/`**: Stores test data, configuration files, and other artifacts needed for the tests.
+- **`sample/`**: Contains sample PDF and other documents used as input for tests.
 
 ### Naming Conventions
 
--   **Test files**: `test_*.py`
--   **Demo scripts**: `demo_*.py` (located in `tests/demos/`)
--   **Configuration files**: `*.json`, `*.py` (located in `tests/fixtures/`)
+- **Test files**: `test_*.py`
+- **Demo scripts**: `demo_*.py` (located in `tests/demos/`)
+- **Configuration files**: `*.json`, `*.py` (located in `tests/fixtures/`)
 
 ### Pre-commit Hooks
 
@@ -98,8 +98,8 @@ This will run the tests and print a coverage report to the console.
 
 When adding new tests, please adhere to the following guidelines:
 
-1.  **File Naming**: Name your test file starting with `test_`.
-2.  **Location**: Place the test file in the appropriate directory based on its category (e.g., `font`, `performance`, `wip/unit`).
-3.  **Fixtures**: If you need to add new test data or configuration, place it in the `tests/fixtures/` directory.
-4.  **Demos**: If you are adding a demonstration for a new feature, place it in the `tests/demos/` directory.
-5.  **README**: If you add a new top-level test directory, please update this `README.md` file to include it in the directory structure.
+1. **File Naming**: Name your test file starting with `test_`.
+2. **Location**: Place the test file in the appropriate directory based on its category (e.g., `font`, `performance`, `wip/unit`).
+3. **Fixtures**: If you need to add new test data or configuration, place it in the `tests/fixtures/` directory.
+4. **Demos**: If you are adding a demonstration for a new feature, place it in the `tests/demos/` directory.
+5. **README**: If you add a new top-level test directory, please update this `README.md` file to include it in the directory structure.
