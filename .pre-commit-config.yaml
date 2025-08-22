@@ -19,7 +19,7 @@ repos:
         pass_filenames: false
         args: [src/]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         exclude: ^(projects/|templates/|\.history/|downloaded_fonts/|\.kiro/)
@@ -55,7 +55,7 @@ repos:
           - --no-sort-keys
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.7
+    rev: v0.12.10
     hooks:
       - id: ruff-format
         name: Format with Ruff
@@ -144,7 +144,7 @@ repos:
         language_version: 22.2.0
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.1
     hooks:
       - id: isort
         language_version: python3.12
@@ -154,6 +154,7 @@ repos:
           - --line-length
           - "120"
         exclude: ^(projects/|templates/|\.history/|\.kiro/)
+
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
@@ -165,6 +166,7 @@ repos:
         exclude: ^src/pdfrebuilder/models/universal_idm\.py$
       - id: python-use-type-annotations
         exclude: ^(projects/|templates/|\.history/|\.kiro/)
+
   - repo: https://github.com/AleksaC/hadolint-py
     rev: v2.12.1b3
     hooks:
@@ -181,13 +183,15 @@ repos:
           - DL3009
           - --ignore
           - DL3015
+
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
         files: \.(sh|bash)$
+
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
+    rev: v1.37.1
     hooks:
       - id: yamllint
         args:
@@ -196,3 +200,15 @@ repos:
         verbose: true
         stages:
           - manual
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: "0.8.13"
+    hooks:
+      # Update the uv lockfile
+      - id: uv-lock
+        name: Check that uv.lock is up-to-date
+        # These arguments MUST match the command you use to generate the lock file
+        # args: [--all-extras]
+        # This hook should only run when the files that affect dependencies change
+        files: ^(pyproject\.toml|uv\.lock)$
+        # language_version: python3.12

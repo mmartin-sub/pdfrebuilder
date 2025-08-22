@@ -73,7 +73,7 @@ validation = ["scikit-image>=0.25.2", "numpy>=2.2"]
 # test & dev (mirrors project 1 tooling)
 test = [
     "pytest>=8.4.1",
-    "pytest-cov>=7.10.4",
+    "pytest-cov>=6.0.0",
     "pytest-asyncio>=1.1.0",
     "jsonschema>=4.25.1",
 ]

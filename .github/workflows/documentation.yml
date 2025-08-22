@@ -1,3 +1,4 @@
+---
 name: Documentation Validation and Maintenance
 
 on:
@@ -6,19 +7,21 @@ on:
     paths:
       - 'docs/**'
       - 'src/**'
-      - 'scripts/validate_docs.py'
-      - 'scripts/documentation_maintenance.py'
+      - 'scripts/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
       - '.github/workflows/documentation.yml'
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'docs/**'
       - 'src/**'
-      - 'scripts/validate_docs.py'
-      - 'scripts/documentation_maintenance.py'
+      - 'scripts/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
       - '.github/workflows/documentation.yml'
   schedule:
-    # Run daily documentation maintenance at 2 AM UTC
+    # Run daily at 2 AM UTC
     - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
@@ -35,611 +38,158 @@ on:
 
 jobs:
   validate-documentation:
+    name: Validate Docs (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [3.8, 3.9, "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+    - name: Set up Python ${{ matrix.python-version }} and uv
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        # This automatically installs and caches uv and its virtual environment
+        cache: 'uv'
 
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install hatch
-        hatch env create
-
-    - name: Install project dependencies
-      run: |
-        hatch run pip install -e .
+      # 'uv sync' installs dependencies from pyproject.toml/uv.lock
+      # '--extra all' ensures test/dev dependencies like pytest are included
+      run: uv sync --extra all
 
     - name: Run comprehensive documentation tests
-      run: |
-        hatch run pytest tests/test_comprehensive_documentation.py -v --tb=short
+      run: uv run pytest tests/test_comprehensive_documentation.py -v --tb=short
 
-    - name: Validate code examples
-      run: |
-        hatch run python scripts/validate_docs.py --examples --verbose
-
-    - name: Validate API references
-      run: |
-        hatch run python scripts/validate_docs.py --api-refs --verbose
-
-    - name: Validate configuration examples
-      run: |
-        hatch run python scripts/validate_docs.py --config --verbose
+    - name: Validate code examples, API references, and configs
+      run: uv run python scripts/validate_docs.py --all --verbose
 
     - name: Generate documentation coverage report
-      run: |
-        hatch run python scripts/validate_docs.py --coverage --export docs_coverage_report.json
-
-    - name: Run documentation validation tests
-      run: |
-        hatch run pytest tests/test_documentation_validation.py tests/test_documentation_builder.py -v
-
-    - name: Run comprehensive documentation testing framework
-      run: |
-        hatch run python scripts/test_docs_framework.py --export docs_test_results.json
+      run: uv run python scripts/validate_docs.py --coverage --export docs_coverage_report.json
 
     - name: Generate complete validation report
       if: always()
-      run: |
-        hatch run python scripts/validate_docs.py --all --coverage --verbose --export docs_complete_report.json > docs_validation_report.txt 2>&1 || true
+      run: uv run python scripts/validate_docs.py --all --coverage --verbose --export docs_complete_report.json > docs_validation_report.txt 2>&1 || true
 
-    - name: Upload validation report
+    - name: Upload validation artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: documentation-validation-report-py${{ matrix.python-version }}
-        path: docs_validation_report.txt
+        name: validation-artifacts-py${{ matrix.python-version }}
+        path: |
+          docs_validation_report.txt
+          docs_coverage_report.json
+          docs_complete_report.json
+        retention-days: 7
 
-    - name: Upload comprehensive test results
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: documentation-test-results-py${{ matrix.python-version }}
-        path: docs_test_results.json
-
-    - name: Upload coverage report
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: documentation-coverage-report-py${{ matrix.python-version }}
-        path: docs_coverage_report.json
-
-    - name: Upload complete validation report
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: documentation-complete-report-py${{ matrix.python-version }}
-        path: docs_complete_report.json
-
-    - name: Run documentation maintenance audit
-      if: github.event_name == 'schedule' || github.event.inputs.maintenance_type == 'audit'
-      run: |
-        hatch run python scripts/documentation_maintenance.py --audit --export docs_maintenance_audit.json
-
-    - name: Generate maintenance report
-      if: github.event_name == 'schedule' || github.event.inputs.maintenance_type == 'report'
-      run: |
-        hatch run python scripts/documentation_maintenance.py --report --export docs_maintenance_report.json
-
-    - name: Upload maintenance audit
-      if: always() && (github.event_name == 'schedule' || github.event.inputs.maintenance_type == 'audit')
-      uses: actions/upload-artifact@v3
-      with:
-        name: documentation-maintenance-audit-py${{ matrix.python-version }}
-        path: docs_maintenance_audit.json
-
-    - name: Upload maintenance report
-      if: always() && (github.event_name == 'schedule' || github.event.inputs.maintenance_type == 'report')
-      uses: actions/upload-artifact@v3
-      with:
-        name: documentation-maintenance-report-py${{ matrix.python-version }}
-        path: docs_maintenance_report.json
-
-  check-documentation-coverage:
+  check-quality:
+    name: Check Quality (Coverage & Links)
     runs-on: ubuntu-latest
     needs: validate-documentation
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up Python and uv
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.11"
+        cache: 'uv'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install hatch
-        hatch env create
+    - name: Install quality tools
+      # Assuming 'interrogate' is part of your 'all' extra in pyproject.toml
+      run: uv sync --extra all
 
-    - name: Check documentation coverage
-      run: |
-        # Count total Python files in src/
-        total_files=$(find src/ -name "*.py" | wc -l)
-        echo "Total Python files: $total_files"
-
-        # Count files with docstrings (basic check)
-        documented_files=$(find src/ -name "*.py" -exec grep -l '"""' {} \; | wc -l)
-        echo "Files with docstrings: $documented_files"
-
-        # Calculate coverage percentage
-        if [ $total_files -gt 0 ]; then
-          coverage=$((documented_files * 100 / total_files))
-          echo "Documentation coverage: $coverage%"
-
-          # Fail if coverage is too low (adjust threshold as needed)
-          if [ $coverage -lt 50 ]; then
-            echo "Documentation coverage is below 50%"
-            exit 1
-          fi
-        fi
+    - name: Check docstring coverage
+      # interrogate checks for docstring coverage. -v is verbose, --fail-under is your quality gate.
+      run: uv run interrogate -v --fail-under 80 src/
 
     - name: Check for broken links
-      run: |
-        # Simple check for broken internal links in markdown files
-        find docs/ -name "*.md" -exec grep -H '\[.*\](.*\.md)' {} \; | while read -r line; do
-          file=$(echo "$line" | cut -d: -f1)
-          link=$(echo "$line" | grep -o '\[.*\](.*\.md)' | sed 's/.*](\(.*\))/\1/')
-
-          # Convert relative links to absolute paths
-          if [[ "$link" == /* ]]; then
-            link_path="$link"
-          else
-            link_path="$(dirname "$file")/$link"
-          fi
-
-          if [ ! -f "$link_path" ]; then
-            echo "Broken link in $file: $link -> $link_path"
-            exit 1
-          fi
-        done
+      uses: lycheeverse/lychee-action@v1
+      with:
+        args: --verbose --max-concurrency 10 "./**/*.md" "./**/*.html"
 
   automated-documentation-updates:
+    name: Automated Documentation Updates
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: validate-documentation
+    needs: [validate-documentation, check-quality]
 
     steps:
     - uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up Python and uv
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.11"
+        cache: 'uv'
 
     - name: Install dependencies
+      run: uv sync --extra all
+
+    - name: Generate all documentation
       run: |
-        python -m pip install --upgrade pip
-        pip install hatch
-        hatch env create
-
-    - name: Generate API documentation
-      run: |
-        hatch run python src/docs/api_generator.py --output docs/api/ --format markdown
-
-    - name: Update configuration reference
-      run: |
-        # Generate configuration reference from settings.py
-        hatch run python -c "
-        import sys
-        sys.path.insert(0, 'src')
-        from settings import CONFIG
-        import json
-
-        # Generate configuration documentation
-        config_doc = '# Configuration Reference\n\n'
-        config_doc += 'This document describes all available configuration options.\n\n'
-
-        for key, value in CONFIG.items():
-            config_doc += f'## {key}\n\n'
-            config_doc += f'**Default value:** \`{value}\`\n\n'
-            config_doc += f'**Type:** \`{type(value).__name__}\`\n\n'
-
-        with open('docs/reference/configuration.md', 'w') as f:
-            f.write(config_doc)
-        "
-
-    - name: Update CLI reference
-      run: |
-        # Generate CLI reference from main.py
-        hatch run python main.py --help > cli_help.txt 2>&1 || true
-
-        # Convert to markdown format
-        hatch run python -c "
-        import re
-
-        with open('cli_help.txt', 'r') as f:
-            help_text = f.read()
-
-        # Convert to markdown
-        cli_doc = '# CLI Reference\n\n'
-        cli_doc += 'This document describes the command-line interface.\n\n'
-        cli_doc += '## Usage\n\n'
-        cli_doc += '```\n' + help_text + '\n```\n'
-
-        with open('docs/reference/cli.md', 'w') as f:
-            f.write(cli_doc)
-        "
-
-        rm -f cli_help.txt
-
-    - name: Check for documentation changes
-      id: check_changes
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-
-        if git diff --quiet; then
-          echo "changes=false" >> $GITHUB_OUTPUT
-        else
-          echo "changes=true" >> $GITHUB_OUTPUT
-        fi
+        uv run python src/docs/api_generator.py --output docs/api/ --format markdown
+        # Add your other documentation generation scripts here
 
     - name: Commit and push documentation updates
-      if: steps.check_changes.outputs.changes == 'true'
-      run: |
-        git add docs/
-        git commit -m "docs: automated documentation updates [skip ci]"
-        git push
-
-  weekly-maintenance:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install hatch
-        hatch env create
-
-    - name: Run comprehensive maintenance audit
-      run: |
-        hatch run python scripts/documentation_maintenance.py --report --export weekly_maintenance_report.json
-
-    - name: Create maintenance issue if needed
-      run: |
-        # Check if maintenance report indicates critical issues
-        hatch run python -c "
-        import json
-        import os
-
-        with open('weekly_maintenance_report.json', 'r') as f:
-            report = json.load(f)
-
-        maintenance_status = report.get('maintenance_info', {}).get('maintenance_status', 'unknown')
-        urgent_actions = report.get('maintenance_info', {}).get('urgent_actions', 0)
-
-        if maintenance_status == 'critical' or urgent_actions > 5:
-            print('CRITICAL_MAINTENANCE_NEEDED=true')
-
-            # Create issue body
-            issue_body = f'''
-        # Documentation Maintenance Required
-
-        The weekly documentation maintenance audit has identified critical issues that require attention.
-
-        ## Status: {maintenance_status.upper()}
-        ## Urgent Actions: {urgent_actions}
-
-        ## Quality Metrics
-        '''
-
-            quality_metrics = report.get('quality_metrics', {})
-            for metric, value in quality_metrics.items():
-                issue_body += f'- **{metric}**: {value}\n'
-
-            issue_body += '\n## Recommendations\n'
-            for rec in report.get('recommendations', [])[:5]:
-                issue_body += f'- {rec}\n'
-
-            issue_body += '\n## Action Items\n'
-            for item in report.get('action_items', [])[:10]:
-                issue_body += f'- **{item.get(\"priority\", \"medium\").upper()}**: {item.get(\"description\", \"\")}\n'
-
-            with open('maintenance_issue_body.md', 'w') as f:
-                f.write(issue_body)
-        else:
-            print('CRITICAL_MAINTENANCE_NEEDED=false')
-        " >> $GITHUB_ENV
-
-    - name: Create maintenance issue
-      if: env.CRITICAL_MAINTENANCE_NEEDED == 'true'
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const fs = require('fs');
-          const issueBody = fs.readFileSync('maintenance_issue_body.md', 'utf8');
-
-          github.rest.issues.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: 'Critical Documentation Maintenance Required',
-            body: issueBody,
-            labels: ['documentation', 'maintenance', 'critical']
-          });
-
-    - name: Upload weekly maintenance report
-      uses: actions/upload-artifact@v3
-      with:
-        name: weekly-maintenance-report
-        path: weekly_maintenance_report.json
-
-  monthly-maintenance:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install hatch
-        hatch env create
-
-    - name: Run monthly comprehensive audit
-      run: |
-        hatch run python scripts/documentation_maintenance.py --audit --export monthly_audit_report.json
-
-    - name: Generate maintenance metrics
-      run: |
-        hatch run python -c "
-        import json
-        from datetime import datetime, timedelta
-
-        # Load audit report
-        with open('monthly_audit_report.json', 'r') as f:
-            report = json.load(f)
-
-        # Generate monthly metrics summary
-        metrics = {
-            'audit_date': datetime.now().isoformat(),
-            'quality_score': report.get('quality_metrics', {}).get('composite_quality_score', 0),
-            'quality_grade': report.get('quality_metrics', {}).get('quality_grade', 'F'),
-            'total_action_items': len(report.get('action_items', [])),
-            'high_priority_items': len([
-                item for item in report.get('action_items', [])
-                if item.get('priority') == 'high'
-            ]),
-            'recommendations_count': len(report.get('recommendations', [])),
-            'maintenance_status': report.get('maintenance_info', {}).get('maintenance_status', 'unknown')
-        }
-
-        with open('monthly_metrics.json', 'w') as f:
-            json.dump(metrics, f, indent=2)
-        "
-
-    - name: Update documentation metrics
-      run: |
-        # Create or update documentation metrics file
-        mkdir -p docs/metrics
-        cp monthly_metrics.json docs/metrics/latest_monthly_metrics.json
-
-        # Archive monthly metrics with timestamp
-        timestamp=$(date +%Y-%m)
-        cp monthly_metrics.json docs/metrics/monthly_metrics_$timestamp.json
-
-    - name: Check for documentation debt
-      run: |
-        hatch run python -c "
-        import json
-
-        with open('monthly_audit_report.json', 'r') as f:
-            report = json.load(f)
-
-        quality_score = report.get('quality_metrics', {}).get('composite_quality_score', 0)
-        high_priority_items = len([
-            item for item in report.get('action_items', [])
-            if item.get('priority') == 'high'
-        ])
-
-        # Check for documentation debt
-        debt_threshold = 75  # Quality score below this indicates debt
-        critical_items_threshold = 10  # High priority items above this indicates debt
-
-        has_debt = quality_score < debt_threshold or high_priority_items > critical_items_threshold
-
-        if has_debt:
-            print('DOCUMENTATION_DEBT=true')
-
-            debt_report = f'''
-        # Documentation Debt Report
-
-        The monthly audit has identified significant documentation debt that requires attention.
-
-        ## Current Status
-        - **Quality Score**: {quality_score:.1f}/100
-        - **High Priority Items**: {high_priority_items}
-        - **Debt Level**: {'Critical' if quality_score < 60 else 'Moderate'}
-
-        ## Recommended Actions
-        1. Address high-priority action items immediately
-        2. Allocate dedicated time for documentation improvement
-        3. Consider documentation sprint or focused effort
-        4. Review and update documentation processes
-
-        ## Next Steps
-        - Create documentation improvement plan
-        - Assign resources for debt reduction
-        - Set target dates for improvement
-        - Schedule follow-up review
-        '''
-
-            with open('debt_report.md', 'w') as f:
-                f.write(debt_report)
-        else:
-            print('DOCUMENTATION_DEBT=false')
-        " >> $GITHUB_ENV
-
-    - name: Create documentation debt issue
-      if: env.DOCUMENTATION_DEBT == 'true'
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const fs = require('fs');
-          const debtReport = fs.readFileSync('debt_report.md', 'utf8');
-
-          github.rest.issues.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: 'Documentation Debt Requires Attention',
-            body: debtReport,
-            labels: ['documentation', 'debt', 'maintenance', 'high-priority']
-          });
-
-    - name: Commit metrics updates
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-
-        if [ -d "docs/metrics" ]; then
-          git add docs/metrics/
-          if ! git diff --cached --quiet; then
-            git commit -m "docs: update monthly documentation metrics [skip ci]"
-            git push
-          fi
+        if ! git diff --quiet docs/; then
+          git add docs/
+          git commit -m "docs: automated documentation updates [skip ci]"
+          git push
+        else
+          echo "No documentation changes to commit."
         fi
 
-    - name: Upload monthly audit report
-      uses: actions/upload-artifact@v3
-      with:
-        name: monthly-audit-report
-        path: monthly_audit_report.json
-
-  quarterly-maintenance:
+  run-maintenance-tasks:
+    name: Run Maintenance Tasks
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.maintenance_type == 'quarterly'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: [validate-documentation, check-quality]
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up Python and uv
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.11"
+        cache: 'uv'
 
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install hatch
-        hatch env create
+      run: uv sync --extra all
 
-    - name: Run quarterly comprehensive review
-      run: |
-        hatch run python scripts/documentation_maintenance.py --audit --report --export quarterly_review.json
+    - name: Run Maintenance Audit
+      run: uv run python scripts/documentation_maintenance.py --audit --export maintenance_audit.json
 
-    - name: Generate quarterly summary
-      run: |
-        hatch run python -c "
-        import json
-        from datetime import datetime
-
-        with open('quarterly_review.json', 'r') as f:
-            report = json.load(f)
-
-        # Generate comprehensive quarterly summary
-        summary = {
-            'review_date': datetime.now().isoformat(),
-            'quarter': f'Q{((datetime.now().month - 1) // 3) + 1} {datetime.now().year}',
-            'overall_assessment': {
-                'quality_score': report.get('quality_metrics', {}).get('composite_quality_score', 0),
-                'quality_grade': report.get('quality_metrics', {}).get('quality_grade', 'F'),
-                'maintenance_status': report.get('maintenance_info', {}).get('maintenance_status', 'unknown')
-            },
-            'key_metrics': report.get('quality_metrics', {}),
-            'action_summary': {
-                'total_items': len(report.get('action_items', [])),
-                'high_priority': len([i for i in report.get('action_items', []) if i.get('priority') == 'high']),
-                'medium_priority': len([i for i in report.get('action_items', []) if i.get('priority') == 'medium']),
-                'low_priority': len([i for i in report.get('action_items', []) if i.get('priority') == 'low'])
-            },
-            'recommendations': report.get('recommendations', [])[:10],
-            'next_quarter_goals': [
-                'Maintain quality score above 85',
-                'Reduce high-priority action items to under 5',
-                'Improve API documentation coverage',
-                'Enhance user guide completeness'
-            ]
-        }
-
-        with open('quarterly_summary.json', 'w') as f:
-            json.dump(summary, f, indent=2)
-        "
-
-    - name: Create quarterly review issue
-      uses: actions/github-script@v6
+    - name: Create Maintenance Issue if Needed
+      uses: actions/github-script@v7
       with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const fs = require('fs');
-          const summary = JSON.parse(fs.readFileSync('quarterly_summary.json', 'utf8'));
+          const audit = JSON.parse(fs.readFileSync('maintenance_audit.json', 'utf8'));
+          if (audit.maintenance_info.maintenance_status === 'critical') {
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Critical Documentation Maintenance Required',
+              body: 'The scheduled maintenance audit has identified critical issues. Please review the attached audit artifact.',
+              labels: ['documentation', 'maintenance', 'critical']
+            });
+          }
 
-          const issueBody = `
-          # Quarterly Documentation Review - ${summary.quarter}
-
-          ## Overall Assessment
-          - **Quality Score**: ${summary.overall_assessment.quality_score}/100
-          - **Quality Grade**: ${summary.overall_assessment.quality_grade}
-          - **Status**: ${summary.overall_assessment.maintenance_status}
-
-          ## Key Metrics
-          ${Object.entries(summary.key_metrics).map(([key, value]) => `- **${key}**: ${value}`).join('\n')}
-
-          ## Action Items Summary
-          - **Total**: ${summary.action_summary.total_items}
-          - **High Priority**: ${summary.action_summary.high_priority}
-          - **Medium Priority**: ${summary.action_summary.medium_priority}
-          - **Low Priority**: ${summary.action_summary.low_priority}
-
-          ## Top Recommendations
-          ${summary.recommendations.slice(0, 5).map((rec, i) => `${i + 1}. ${rec}`).join('\n')}
-
-          ## Next Quarter Goals
-          ${summary.next_quarter_goals.map((goal, i) => `${i + 1}. ${goal}`).join('\n')}
-
-          ## Action Required
-          - [ ] Review and prioritize action items
-          - [ ] Assign resources for high-priority items
-          - [ ] Update documentation improvement plan
-          - [ ] Schedule follow-up review in 3 months
-          `;
-
-          github.rest.issues.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: `Quarterly Documentation Review - ${summary.quarter}`,
-            body: issueBody,
-            labels: ['documentation', 'quarterly-review', 'maintenance']
-          });
-
-    - name: Upload quarterly review
-      uses: actions/upload-artifact@v3
+    - name: Upload maintenance artifacts
+      uses: actions/upload-artifact@v4
       with:
-        name: quarterly-review
+        name: maintenance-artifacts
         path: |
-          quarterly_review.json
-          quarterly_summary.json
+          maintenance_audit.json
+        retention-days: 30
