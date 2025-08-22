@@ -15,24 +15,16 @@ Demonstrates the font validation system functionality including:
 
 **Usage:**
 
+To run the font validation demonstration, execute the following command from the project root:
+
 ```bash
 python tests/demos/demo_font_validation.py
 ```
 
 **Output:**
 
-- Console output showing validation process
-- Generated validation reports in `output/tests/font_validation_demo_reports/`
-- JSON and HTML format reports with detailed font analysis
-
-## Running Demonstrations
-
-All demonstration scripts can be run directly from the project root:
-
-```bash
-# Font validation demonstration
-python tests/demos/demo_font_validation.py
-```
+- Console output showing the validation process.
+- Generated validation reports in the `output/tests/font_validation_demo_reports/` directory, including both JSON and HTML formats with detailed font analysis.
 
 ## Adding New Demonstrations
 

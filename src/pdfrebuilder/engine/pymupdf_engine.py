@@ -39,7 +39,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
     def __init__(self):
         """Initialize the PyMuPDF engine."""
         super().__init__()
-        self._current_doc = None
+        self._current_doc: Document | None = None
         self._font_cache = {}
 
     def initialize(self, config: dict[str, Any]) -> None:
@@ -69,7 +69,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
         # Log initialization using the new logging system
         self.log_initialization()
 
-    def create_document(self, metadata: dict[str, Any]) -> Any:
+    def create_document(self, metadata: dict[str, Any]) -> Document:
         """Create a new PyMuPDF document."""
         try:
             doc = Document()
@@ -89,9 +89,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
                         doc_metadata[key] = str(value)
 
                 if doc_metadata:
-                    # pyright is incorrectly reporting that set_metadata does not exist
-                    # due to outdated/incorrect stubs. The method is correct per documentation.
-                    doc.set_metadata(doc_metadata)  # type: ignore[reportAttributeAccessIssue]
+                    doc.set_metadata(doc_metadata)
 
             self._current_doc = doc
             return doc
@@ -101,7 +99,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
 
     def add_page(
         self,
-        document: Any,
+        document: Document,
         size: tuple[float, float],
         background_color: Any | None = None,
     ) -> Any:
@@ -152,7 +150,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
                 "error": str(e),
             }
 
-    def finalize_document(self, document: Any, output_path: str) -> None:
+    def finalize_document(self, document: Document, output_path: str) -> None:
         """Finalize and save the document."""
         try:
             # Apply optimization settings

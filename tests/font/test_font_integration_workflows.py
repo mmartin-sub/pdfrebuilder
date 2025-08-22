@@ -44,11 +44,34 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
         # Create test font files
         self.create_test_font_files()
 
+        # Patch TTFont to avoid parsing dummy files
+        self.patcher = patch("pdfrebuilder.font.utils.TTFont")
+        self.mock_ttfont_class = self.patcher.start()
+        self.mock_ttfont_instance = MagicMock()
+        self.mock_ttfont_class.return_value = self.mock_ttfont_instance
+
+        font_data = {
+            "name": self.create_mock_name_table(),
+            "cmap": self.create_mock_cmap_table(),
+        }
+        self.mock_ttfont_instance.__getitem__.side_effect = font_data.get
+
     def tearDown(self):
         """Clean up test fixtures"""
+        self.patcher.stop()
         cleanup_test_output(self.test_name)
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
+
+    def create_mock_name_table(self):
+        mock_name_table = Mock()
+        mock_name_table.names = [Mock(nameID=1, platformID=3, string=b"Arial")]
+        return mock_name_table
+
+    def create_mock_cmap_table(self):
+        mock_cmap_table = Mock()
+        mock_cmap_table.cmap = {}
+        return mock_cmap_table
 
     def create_controlled_font_environment(self):
         """Create a controlled test environment with specific fonts"""
@@ -409,12 +432,35 @@ class TestFontValidationIntegrationWorkflow(unittest.TestCase):
             ],
         }
 
+        # Patch TTFont to avoid parsing dummy files
+        self.patcher = patch("pdfrebuilder.font.utils.TTFont")
+        self.mock_ttfont_class = self.patcher.start()
+        self.mock_ttfont_instance = MagicMock()
+        self.mock_ttfont_class.return_value = self.mock_ttfont_instance
+
+        font_data = {
+            "name": self.create_mock_name_table(),
+            "cmap": self.create_mock_cmap_table(),
+        }
+        self.mock_ttfont_instance.__getitem__.side_effect = font_data.get
+
     def tearDown(self):
         """Clean up test fixtures"""
+        self.patcher.stop()
         cleanup_test_output(self.test_name)
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
         set_font_validator(None)
+
+    def create_mock_name_table(self):
+        mock_name_table = Mock()
+        mock_name_table.names = [Mock(nameID=1, platformID=3, string=b"Arial")]
+        return mock_name_table
+
+    def create_mock_cmap_table(self):
+        mock_cmap_table = Mock()
+        mock_cmap_table.cmap = {}
+        return mock_cmap_table
 
     def test_document_font_validation_workflow(self):
         """Test complete document font validation workflow"""
@@ -674,12 +720,35 @@ class TestEndToEndFontWorkflow(unittest.TestCase):
             ],
         }
 
+        # Patch TTFont to avoid parsing dummy files
+        self.patcher = patch("pdfrebuilder.font.utils.TTFont")
+        self.mock_ttfont_class = self.patcher.start()
+        self.mock_ttfont_instance = MagicMock()
+        self.mock_ttfont_class.return_value = self.mock_ttfont_instance
+
+        font_data = {
+            "name": self.create_mock_name_table(),
+            "cmap": self.create_mock_cmap_table(),
+        }
+        self.mock_ttfont_instance.__getitem__.side_effect = font_data.get
+
     def tearDown(self):
         """Clean up test fixtures"""
+        self.patcher.stop()
         cleanup_test_output(self.test_name)
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
         set_font_validator(None)
+
+    def create_mock_name_table(self):
+        mock_name_table = Mock()
+        mock_name_table.names = [Mock(nameID=1, platformID=3, string=b"Arial")]
+        return mock_name_table
+
+    def create_mock_cmap_table(self):
+        mock_cmap_table = Mock()
+        mock_cmap_table.cmap = {}
+        return mock_cmap_table
 
     @patch("pdfrebuilder.font.utils.download_google_font")
     @patch("pdfrebuilder.font.utils.TTFont")

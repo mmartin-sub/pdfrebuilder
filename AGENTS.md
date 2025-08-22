@@ -11,25 +11,25 @@ The Multi-Format Document Engine is a Python-based system designed for extractin
 The project is managed using `hatch`. All commands should be run through the `hatch` runner.
 
 - **Install dependencies and create the virtual environment**:
-
   ```bash
   hatch env create
   ```
+  After creating the environment, it is recommended to sync the dependencies using `uv`:
+  ```bash
+  hatch run uv sync --extra all
+  ```
 
 - **Activate the virtual environment**:
-
   ```bash
   hatch shell
   ```
 
 - **Run the test suite**:
-
   ```bash
   hatch run test
   ```
 
 - **Run linters and formatters**:
-
   ```bash
   # Check formatting and linting
   hatch run check
@@ -39,7 +39,6 @@ The project is managed using `hatch`. All commands should be run through the `ha
   ```
 
 - **Build the documentation**:
-
   ```bash
   hatch run docs:build
   ```
@@ -50,6 +49,21 @@ The project is managed using `hatch`. All commands should be run through the `ha
 - The full test suite must pass before submitting work. Run it with `hatch run test`.
 - Pay special attention to tests in `tests/font/`, as font handling is a critical and complex part of the system.
 - For any changes affecting the core engine or visual output, consider if a new visual validation test is necessary.
+
+## Troubleshooting
+
+- **`ModuleNotFoundError: No module named 'pdfrebuilder'` when running tests:**
+  This issue can occur if the `src` directory is not in the `PYTHONPATH`. To fix this, you can:
+  1. Add `pythonpath = "src"` to the `[tool.pytest.ini_options]` section of `pyproject.toml`.
+  2. Add `sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))` to `tests/conftest.py`.
+
+- **Test failures in `tests/wip`:**
+  The tests in the `tests/wip` directory are work-in-progress and may not be stable. You can ignore them by running pytest with the `--ignore` flag:
+  `hatch run pytest --ignore=tests/wip`
+  The default `test` script in `pyproject.toml` has been updated to do this automatically.
+
+- **Dependency resolution errors with `uv sync`:**
+  If you encounter dependency resolution errors, especially regarding `numpy` versions, you may need to adjust the version specifiers in `pyproject.toml`. For example, there was a conflict between `opencv-python` and the `psd` extra. This was resolved by pinning the `numpy` version in the `psd` and `validation` extras to be compatible with `opencv-python`.
 
 ## Agent Directives
 

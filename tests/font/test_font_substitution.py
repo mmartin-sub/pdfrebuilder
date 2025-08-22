@@ -10,7 +10,7 @@ This module tests:
 
 import os
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from pdfrebuilder.font.utils import (
     _FONT_DOWNLOAD_ATTEMPTED,
@@ -299,12 +299,22 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         result = ensure_font_registered(self.mock_page, "Arial", verbose=False, text=None)
         self.assertIsNotNone(result)
 
+    @patch("pdfrebuilder.font.utils.TTFont")
     @patch("pdfrebuilder.font.utils.scan_available_fonts")
     @patch("pdfrebuilder.font.utils.font_covers_text")
-    def test_font_substitution_performance_caching(self, mock_covers, mock_scan):
+    def test_font_substitution_performance_caching(self, mock_covers, mock_scan, mock_ttfont):
         """Test that font substitution results are cached for performance"""
         font_name = "Arial"
         text = "Hello World"
+
+        # Mock TTFont to avoid parsing dummy files
+        mock_font = MagicMock()
+        mock_name_table = Mock()
+        mock_name_table.names = [Mock(nameID=1, platformID=3, string=b"Arial")]
+        mock_cmap_table = Mock()
+        mock_cmap_table.cmap = {}
+        mock_font.__getitem__.side_effect = lambda key: mock_name_table if key == "name" else mock_cmap_table
+        mock_ttfont.return_value = mock_font
 
         # Create a font file to avoid download attempts
         font_path = os.path.join(self.test_fonts_dir, f"{font_name}.ttf")

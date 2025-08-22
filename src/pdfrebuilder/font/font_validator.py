@@ -287,10 +287,13 @@ class FontValidator:
     def _find_missing_characters(self, font_path: str, text: str) -> list[str]:
         """Find characters that are not covered by the font"""
         try:
+            # fontTools is not fully typed, so we have to ignore this import.
+            # fontTools is not fully typed, so we have to ignore this import.
             from fontTools.ttLib import TTFont  # type: ignore[import-untyped]
 
             font = TTFont(font_path)
             cmap = set()
+            # The `tables` attribute of `font["cmap"]` is not recognized by mypy due to incomplete stubs.
             for table in font["cmap"].tables:  # type: ignore[attr-defined]
                 cmap.update(table.cmap.keys())
 

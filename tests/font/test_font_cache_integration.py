@@ -11,7 +11,7 @@ This module tests:
 import os
 import time
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from pdfrebuilder.font.font_validator import FontValidator
 from pdfrebuilder.font.utils import _FONT_DOWNLOAD_ATTEMPTED, _FONT_REGISTRATION_CACHE, ensure_font_registered
@@ -37,11 +37,34 @@ class TestFontRegistrationCache(unittest.TestCase):
         os.makedirs(self.test_fonts_dir, exist_ok=True)
         self.create_test_fonts()
 
+        # Patch TTFont to avoid parsing dummy files
+        self.patcher = patch("pdfrebuilder.font.utils.TTFont")
+        self.mock_ttfont_class = self.patcher.start()
+        self.mock_ttfont_instance = MagicMock()
+        self.mock_ttfont_class.return_value = self.mock_ttfont_instance
+
+        font_data = {
+            "name": self.create_mock_name_table(),
+            "cmap": self.create_mock_cmap_table(),
+        }
+        self.mock_ttfont_instance.__getitem__.side_effect = font_data.get
+
     def tearDown(self):
         """Clean up test fixtures"""
+        self.patcher.stop()
         cleanup_test_output(self.test_name)
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
+
+    def create_mock_name_table(self):
+        mock_name_table = Mock()
+        mock_name_table.names = [Mock(nameID=1, platformID=3, string=b"Arial")]
+        return mock_name_table
+
+    def create_mock_cmap_table(self):
+        mock_cmap_table = Mock()
+        mock_cmap_table.cmap = {}
+        return mock_cmap_table
 
     def create_test_fonts(self):
         """Create test font files"""
@@ -373,9 +396,32 @@ class TestFontValidatorCache(unittest.TestCase):
         os.makedirs(self.test_fonts_dir, exist_ok=True)
         self.create_test_fonts()
 
+        # Patch TTFont to avoid parsing dummy files
+        self.patcher = patch("pdfrebuilder.font.utils.TTFont")
+        self.mock_ttfont_class = self.patcher.start()
+        self.mock_ttfont_instance = MagicMock()
+        self.mock_ttfont_class.return_value = self.mock_ttfont_instance
+
+        font_data = {
+            "name": self.create_mock_name_table(),
+            "cmap": self.create_mock_cmap_table(),
+        }
+        self.mock_ttfont_instance.__getitem__.side_effect = font_data.get
+
     def tearDown(self):
         """Clean up test fixtures"""
+        self.patcher.stop()
         cleanup_test_output(self.test_name)
+
+    def create_mock_name_table(self):
+        mock_name_table = Mock()
+        mock_name_table.names = [Mock(nameID=1, platformID=3, string=b"Arial")]
+        return mock_name_table
+
+    def create_mock_cmap_table(self):
+        mock_cmap_table = Mock()
+        mock_cmap_table.cmap = {}
+        return mock_cmap_table
 
     def create_test_fonts(self):
         """Create test font files"""
@@ -514,11 +560,34 @@ class TestCacheIntegrationPerformance(unittest.TestCase):
         os.makedirs(self.test_fonts_dir, exist_ok=True)
         self.create_many_test_fonts()
 
+        # Patch TTFont to avoid parsing dummy files
+        self.patcher = patch("pdfrebuilder.font.utils.TTFont")
+        self.mock_ttfont_class = self.patcher.start()
+        self.mock_ttfont_instance = MagicMock()
+        self.mock_ttfont_class.return_value = self.mock_ttfont_instance
+
+        font_data = {
+            "name": self.create_mock_name_table(),
+            "cmap": self.create_mock_cmap_table(),
+        }
+        self.mock_ttfont_instance.__getitem__.side_effect = font_data.get
+
     def tearDown(self):
         """Clean up test fixtures"""
+        self.patcher.stop()
         cleanup_test_output(self.test_name)
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
+
+    def create_mock_name_table(self):
+        mock_name_table = Mock()
+        mock_name_table.names = [Mock(nameID=1, platformID=3, string=b"Arial")]
+        return mock_name_table
+
+    def create_mock_cmap_table(self):
+        mock_cmap_table = Mock()
+        mock_cmap_table.cmap = {}
+        return mock_cmap_table
 
     def create_many_test_fonts(self):
         """Create many test font files for performance testing"""
