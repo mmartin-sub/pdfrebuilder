@@ -220,7 +220,3 @@ Create from JSON string
 ### validate_schema_version(data)
 
 Validate that the schema version is supported
-
-### migrate_schema(data, target_version)
-
-Migrate schema to target version (placeholder for future migrations)

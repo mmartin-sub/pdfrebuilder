@@ -9,7 +9,7 @@ to provide consistent output directory management.
 import os
 
 # Import the main settings configuration
-from pdfrebuilder.settings import get_config_value, output_config
+from pdfrebuilder.settings import settings
 
 
 class TestConfig:
@@ -26,7 +26,7 @@ class TestConfig:
         """Get the base output directory for all test outputs"""
         if self._output_dir is None:
             # Use the main settings test output directory or a default
-            self._output_dir = get_config_value("test_output_dir") or "tests/output"
+            self._output_dir = settings.test_framework.test_output_dir or "tests/output"
 
         # The 'or' above ensures _output_dir is a string, but we assert for type checker
         assert self._output_dir is not None
@@ -39,14 +39,14 @@ class TestConfig:
         """Set the base output directory"""
         self._output_dir = value
         # Also update the main settings
-        output_config.test_output_dir = value
+        settings.test_framework.test_output_dir = value
         os.makedirs(self._output_dir, exist_ok=True)
 
     @property
     def temp_dir(self) -> str:
         """Get the temporary directory for test files"""
         if self._temp_dir is None:
-            self._temp_dir = get_config_value("test_temp_dir") or os.path.join(self.output_dir, "temp")
+            self._temp_dir = settings.test_framework.test_temp_dir or os.path.join(self.output_dir, "temp")
         assert self._temp_dir is not None
         os.makedirs(self._temp_dir, exist_ok=True)
         return self._temp_dir
@@ -55,7 +55,7 @@ class TestConfig:
     def fonts_dir(self) -> str:
         """Get the directory for test font files"""
         if self._fonts_dir is None:
-            self._fonts_dir = get_config_value("test_fonts_dir") or os.path.join(self.output_dir, "fonts")
+            self._fonts_dir = settings.test_framework.test_fonts_dir or os.path.join(self.output_dir, "fonts")
         assert self._fonts_dir is not None
         os.makedirs(self._fonts_dir, exist_ok=True)
         return self._fonts_dir
@@ -64,7 +64,7 @@ class TestConfig:
     def reports_dir(self) -> str:
         """Get the directory for test reports and logs"""
         if self._reports_dir is None:
-            self._reports_dir = get_config_value("test_reports_dir") or os.path.join(self.output_dir, "reports")
+            self._reports_dir = settings.test_framework.test_reports_dir or os.path.join(self.output_dir, "reports")
         assert self._reports_dir is not None
         os.makedirs(self._reports_dir, exist_ok=True)
         return self._reports_dir
@@ -272,7 +272,7 @@ def get_debug_output_path(base_name: str, ext: str = ".log") -> str:
         Full path to the debug output file
     """
     # Use the main settings for debug logs directory
-    debug_logs_dir = get_config_value("debug_logs_dir") or os.path.join(test_config.output_dir, "debug_logs")
+    debug_logs_dir = settings.logging.debug_logs_dir or os.path.join(test_config.output_dir, "debug_logs")
     assert debug_logs_dir is not None
     os.makedirs(debug_logs_dir, exist_ok=True)
     return os.path.join(debug_logs_dir, f"{base_name}{ext}")

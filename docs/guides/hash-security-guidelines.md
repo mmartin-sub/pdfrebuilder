@@ -254,7 +254,7 @@ repos:
         files: '\.py$'
 ```
 
-## Migration Guide
+## Update Guide
 
 ### Updating Existing MD5 Usage
 
@@ -265,19 +265,19 @@ repos:
 5. **Test Changes**: Verify functionality remains unchanged
 6. **Update Tests**: Ensure tests cover the security improvements
 
-### Example Migration
+### Example Update
 
 ```python
-# Before migration
+# Before update
 def old_function(data):
     return hashlib.md5(data).hexdigest()
 
-# After migration (non-cryptographic)
+# After update (non-cryptographic)
 def new_function(data):
     # MD5 used for non-cryptographic data identification
     return hashlib.md5(data, usedforsecurity=False).hexdigest()
 
-# After migration (cryptographic)
+# After update (cryptographic)
 def secure_function(data):
     # SHA-256 for cryptographic security
     return hashlib.sha256(data).hexdigest()

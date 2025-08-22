@@ -144,12 +144,9 @@ class TestFontSubstitutionEngine(unittest.TestCase):
 
         mock_covers.side_effect = coverage_side_effect
 
-        with patch(
-            "pdfrebuilder.font.utils.get_config_value",
-            side_effect=lambda key: (
-                self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
-            ),
-        ):
+        with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
             result = ensure_font_registered(self.mock_page, font_name, verbose=True, text=text)
 
         self.assertEqual(result, "NotoSans")
@@ -175,12 +172,9 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         # Mock coverage: no font covers the text
         mock_covers.return_value = False
 
-        with patch(
-            "pdfrebuilder.font.utils.get_config_value",
-            side_effect=lambda key: (
-                self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
-            ),
-        ):
+        with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
             result = ensure_font_registered(self.mock_page, font_name, verbose=False, text=text)
 
         # Should fallback to first available fallback font
@@ -219,12 +213,9 @@ class TestFontSubstitutionEngine(unittest.TestCase):
 
         self.mock_page.insert_font.side_effect = insert_font_side_effect
 
-        with patch(
-            "pdfrebuilder.font.utils.get_config_value",
-            side_effect=lambda key: (
-                self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
-            ),
-        ):
+        with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
             result = ensure_font_registered(self.mock_page, font_name, verbose=False, text=text)
 
         # Should fallback to first available fallback font after registration error
@@ -241,12 +232,9 @@ class TestFontSubstitutionEngine(unittest.TestCase):
 
         # Removed unused variable: font_name = "CustomFont"
 
-        with patch(
-            "pdfrebuilder.font.utils.get_config_value",
-            side_effect=lambda key: (
-                self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
-            ),
-        ):
+        with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
             # Test standard font (highest priority after exact match)
             result = ensure_font_registered(self.mock_page, "helv", verbose=False)
             self.assertEqual(result, "helv")
@@ -321,12 +309,9 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         with open(font_path, "w") as f:
             f.write("dummy font content")
 
-        with patch(
-            "pdfrebuilder.font.utils.get_config_value",
-            side_effect=lambda key: (
-                self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
-            ),
-        ):
+        with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
             # First call
             result1 = ensure_font_registered(self.mock_page, font_name, verbose=False, text=text)
 
@@ -378,12 +363,9 @@ class TestFontFallbackChain(unittest.TestCase):
         mock_covers.return_value = False
 
         # 4. Should fallback to default font
-        with patch(
-            "pdfrebuilder.font.utils.get_config_value",
-            side_effect=lambda key: (
-                self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
-            ),
-        ):
+        with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
             result = ensure_font_registered(self.mock_page, font_name, verbose=False, text=text)
 
         self.assertEqual(result, "Helvetica")
@@ -397,10 +379,8 @@ class TestFontFallbackChain(unittest.TestCase):
         font_name = "NonExistentFont"
 
         # Mock a scenario where default font also fails
-        with patch(
-            "pdfrebuilder.font.utils.get_config_value",
-            side_effect=lambda key: (self.test_fonts_dir if key == "downloaded_fonts_dir" else "also-nonexistent"),
-        ):
+        with patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
+             patch("pdfrebuilder.settings.settings.font_management.default_font", "also-nonexistent"):
             with patch("pdfrebuilder.font.utils.STANDARD_PDF_FONTS", ["helv", "cour", "tiro"]):
                 result = ensure_font_registered(self.mock_page, font_name, verbose=False)
 
@@ -416,12 +396,9 @@ class TestFontFallbackChain(unittest.TestCase):
 
         # Mock scenario where helv is not in standard fonts (edge case)
         with patch("pdfrebuilder.font.utils.STANDARD_PDF_FONTS", ["cour", "tiro"]):
-            with patch(
-                "pdfrebuilder.font.utils.get_config_value",
-                side_effect=lambda key: (
-                    self.test_fonts_dir if key in ["downloaded_fonts_dir", "manual_fonts_dir"] else "helv"
-                ),
-            ):
+            with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir), \
+                 patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
+                 patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
                 with patch("pdfrebuilder.font.utils.os.path.exists", return_value=False):
                     with patch("pdfrebuilder.font.utils.download_google_font", return_value=None):
                         result = ensure_font_registered(self.mock_page, font_name, verbose=False)

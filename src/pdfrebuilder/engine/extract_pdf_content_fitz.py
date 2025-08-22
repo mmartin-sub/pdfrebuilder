@@ -21,7 +21,7 @@ from pdfrebuilder.models.universal_idm import (
     TextElement,
     UniversalDocument,
 )
-from pdfrebuilder.settings import CONFIG
+from pdfrebuilder.settings import settings
 from pdfrebuilder.tools import normalize_text_spacing
 
 logger = logging.getLogger(__name__)
@@ -262,10 +262,8 @@ def extract_pdf_content(pdf_path, extraction_flags=None):
         document_structure=[],
     )
 
-    from pdfrebuilder.settings import get_config_value
-
-    image_dir = get_config_value("image_dir") or "images"
-    space_density_threshold = CONFIG.get("space_density_threshold", 0.3)
+    image_dir = settings.image_dir or "images"
+    space_density_threshold = settings.processing.space_density_threshold
 
     for page_num in range(doc.page_count):
         logger.info(f"Extraction progress: Processing page {page_num + 1}/{doc.page_count}")

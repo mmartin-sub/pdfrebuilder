@@ -352,13 +352,13 @@ def extract_psd_content(psd_path: str, extraction_flags: dict[str, bool] | None 
 
         # Process layers
         for psd_layer in psd:
-            from pdfrebuilder.settings import get_config_value
+            from pdfrebuilder.settings import settings
 
             layer = _process_layer(
                 psd_layer,
                 "canvas",
                 element_counter,
-                get_config_value("image_dir") or "images",
+                settings.image_dir or "images",
             )
             canvas.layers.append(layer)
 

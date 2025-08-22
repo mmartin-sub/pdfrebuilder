@@ -374,7 +374,7 @@ class TestGoogleFontsAPI(unittest.TestCase):
             mock_get.side_effect = [css_response, font_response]
 
             # Mock the default directory
-            with patch("pdfrebuilder.font.googlefonts.get_config_value", return_value="./output/fonts"):
+            with patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", "./output/fonts"):
                 # Call without specifying dest_dir (should use default)
                 result = download_google_font(font_family)
 

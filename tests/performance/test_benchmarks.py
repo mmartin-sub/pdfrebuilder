@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from pdfrebuilder.settings import get_nested_config_value
+from pdfrebuilder.settings import settings
 
 
 @dataclass
@@ -173,17 +173,15 @@ class TestBenchmarks:
 
     def test_configuration_access_benchmark(self):
         """Benchmark configuration access performance"""
-        from pdfrebuilder.settings import get_config_value, get_nested_config_value
-
         config_operations = [
             (
                 "nested_config",
-                lambda: get_nested_config_value("engines.input.wand.density"),
+                lambda: settings.engines.input.wand.density,
             ),
-            ("legacy_config", lambda: get_config_value("default_font")),
+            ("legacy_config", lambda: settings.default_font),
             (
                 "deep_nested",
-                lambda: get_nested_config_value("engines.output.reportlab.compression"),
+                lambda: settings.engines.output.reportlab.compression,
             ),
         ]
 
@@ -321,7 +319,7 @@ class TestBenchmarks:
         print("\n" + report)
 
         # Export results
-        output_dir = get_nested_config_value("test_output_dir", "tests/output")
+        output_dir = "tests/output"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
 

@@ -1,21 +1,35 @@
-# Use an official, lean Python image as a base
-FROM python:3.11-buster
+# Stage 1: Builder
+FROM python:3.12-slim as builder
 
-# Install uv (fast Python package manager)
-RUN pip install --no-cache-dir uv==0.8.4
+# Install uv
+RUN pip install --no-cache-dir uv
 
-# Set the working directory inside the container
+# Set the working directory
 WORKDIR /app
 
-# Copy pyproject.toml and (optionally) pyproject.lock first for Docker layer caching
+# Copy project files
 COPY pyproject.toml ./
-COPY pyproject.lock ./
 
-# Install Python dependencies using uv (from pyproject.toml)
-RUN uv pip install --system --no-cache
+# Install dependencies into a virtual environment
+RUN uv venv /opt/venv
+COPY . .
+RUN /opt/venv/bin/uv pip install --no-cache --system -e .[all]
 
-# Copy all your project files into the container's working directory
+# Stage 2: Final Image
+FROM python:3.12-slim
+
+# Copy the virtual environment from the builder stage
+COPY --from=builder /opt/venv /opt/venv
+
+# Copy the application code
+WORKDIR /app
 COPY . .
 
-# Set the command to run when the container starts, more for debugging
-CMD ["python", "font_test2.py"]
+# Set the PATH to include the virtual environment's bin directory
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set the entrypoint to the pdfrebuilder CLI
+ENTRYPOINT ["pdfrebuilder"]
+
+# Default command to show help
+CMD ["--help"]

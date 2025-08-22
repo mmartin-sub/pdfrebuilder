@@ -1,121 +1,51 @@
 # TODO List
 
-## High Priority
+This file tracks pending tasks and issues to be addressed in the `pdfrebuilder` project.
 
-### Validation Report Improvements
+## Pytest Warnings
 
-- [ ] **Convert HTML report generation to use Jinja2 templates**
-  - Current HTML generation uses string formatting which is error-prone
-  - Jinja2 templates would provide better separation of concerns
-  - Easier to maintain and extend HTML report functionality
-  - Better security through template auto-escaping
-  - More flexible for custom report themes
+- **`PytestCollectionWarning` for `TestFileManager` in `tests/wip/unit/test_utils.py`**:
+  - **Problem**: The test class `TestFileManager` has an `__init__` constructor, which prevents pytest from collecting it as a test class.
+  - **Status**: **Resolved**.
+  - **Analysis**: `TestFileManager` is a helper class for managing test files, not a test class itself. The warning is correct.
+  - **Action Taken**: Renamed the class to `_TestFileManager` to prevent pytest collection.
+  - **Bibliography**: [Pytest good practices - Test discovery](https://docs.pytest.org/en/stable/explanation/goodpractices.html#test-discovery)
 
-### Documentation Enhancements
+## Application Warnings during Tests
 
-- [x] **Create comprehensive Makefile documentation guide** ✅
-  - Added detailed guide at `docs/MAKEFILE_GUIDE.md`
-  - Includes examples, git hooks setup, and CI/CD integration
-  - Covers all documentation targets and best practices
-  - Updated `docs/README.md` to reference the new guide
+- **`Not a TrueType or OpenType font (bad sfntVersion)` warnings**:
+  - **Problem**: Several tests in `tests/font/` are logging warnings about being unable to read mock font files.
+  - **Status**: **Confirmed**.
+  - **Analysis**: The tests in `tests/font/test_font_cache_integration.py` and other font tests are intentionally creating invalid font files with dummy content to test the error handling capabilities of the font management system. The warnings are expected and indicate that the system is correctly identifying invalid font files.
+  - **Action**: To make the tests more explicit and to suppress the warnings from the test output, use `pytest.warns` to assert that these warnings are raised.
+  - **Bibliography**: [pytest.warns documentation](https://docs.pytest.org/en/stable/how-to/capture-warnings.html#asserting-that-a-warning-was-raised)
 
-### File Organization Improvements
+- **`Error: Could not fetch CSS for ...` warnings**:
+  - **Problem**: Several tests related to Google Fonts integration are logging errors about failing to fetch CSS.
+  - **Status**: **Resolved**.
+  - **Analysis**: A test is calling `ensure_font_registered` with the font "Arial". Since "Arial" is not a Google Font, the call to `download_google_font` makes a real network request that fails, triggering the warning. The test is not properly mocking the network call.
+  - **Action Taken**: I have identified several tests in `tests/font/test_font_substitution.py` and `tests/font/test_font_integration_workflows.py` that were missing a patch for `download_google_font`. I have added the `@patch("pdfrebuilder.font.utils.download_google_font")` decorator to these tests to prevent the network requests.
+  - **Bibliography**:
+    - [unittest.mock.patch](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.patch)
 
-- [x] **Move test_file.json to proper location** ✅
-  - Moved `test_file.json` from root to `tests/test_sample_config.json`
-  - Follows project structure conventions for test files
-  - Maintains proper organization of sample/test files
+- **`'cmap'` and `'name'` key errors in font tests**:
+  - **Problem**: Some font tests are logging key errors when trying to access `cmap` or `name` attributes of a font object.
+  - **Status**: **Resolved**.
+  - **Analysis**: Some integration tests were creating dummy font files with invalid content. When `fontTools` tries to parse these files, it creates a `TTFont` object that is missing some tables, like `'cmap'` and `'name'`. When the code under test tries to access these tables, it raises a `KeyError`.
+  - **Action Taken**: I have identified the tests that were causing this issue and patched them to use a mock `TTFont` object that is correctly configured with the necessary attributes. This prevents the `KeyError` and the associated warnings.
+  - **Bibliography**:
+    - [fontTools documentation](https://fonttools.readthedocs.io/en/latest/)
 
-### Security Enhancements
-
-- [ ] **Add Content Security Policy (CSP) headers to HTML reports**
-  - Prevent inline script execution
-  - Restrict resource loading to trusted sources
-  - Add nonce-based script execution if needed
-
-### Performance Optimizations
-
-- [ ] **Implement caching for font downloads**
-  - Cache downloaded Google Fonts to avoid re-downloading
-  - Add cache invalidation strategy
-  - Consider using `functools.lru_cache` for in-memory caching
-
-## Medium Priority
-
-### Code Quality Improvements
-
-- [ ] **Add comprehensive type annotations**
-  - Ensure all functions have proper type hints
-  - Use `typing` module for complex types
-  - Add type checking to CI/CD pipeline
-
-### Testing Enhancements
-
-- [ ] **Increase test coverage to 90%+**
-  - Add unit tests for edge cases
-  - Implement integration tests for complex workflows
-  - Add property-based testing for data validation
-
-### User Experience
-
-- [ ] **Improve error messages and logging**
-  - Add more descriptive error messages
-  - Implement structured logging
-  - Add debug mode with verbose output
-
-## Low Priority
-
-### Documentation Improvements
-
-- [ ] **Add video tutorials for complex workflows**
-  - Screen recordings of common use cases
-  - Step-by-step visual guides
-  - Interactive examples
-
-### Performance Monitoring
-
-- [ ] **Add performance metrics collection**
-  - Monitor memory usage during processing
-  - Track processing time for different document types
-  - Implement performance regression testing
-
-### Integration Features
-
-- [ ] **Add support for more document formats**
-  - Microsoft Word (.docx) support
-  - OpenDocument (.odt) support
-  - Rich Text Format (.rtf) support
-
-## Completed Tasks
-
-### ✅ **Fixed Issues (Previous Session):**
-
-1. **Google Fonts Integration** (`src/font/googlefonts.py`):
-   - ✅ Added missing `get_config_value` import
-   - ✅ Fixed test URL pattern to match expected regex
-   - ✅ All 13 Google Fonts tests now passing
-
-2. **HTML Report XSS Prevention** (`src/engine/validation_report.py`):
-   - ✅ Added `html` module import
-   - ✅ Created `html_escape()` helper function
-   - ✅ Applied HTML escaping to all user content in HTML generation
-   - ✅ All XSS prevention tests now passing
-
-3. **XML Security and Pretty Printing** (`src/engine/validation_report.py`):
-   - ✅ Fixed XML pretty printing to wrap `testsuite` in `testsuites`
-   - ✅ Improved error handling for malformed XML
-   - ✅ Enhanced XML security monitoring
-   - ✅ All XML security tests now passing
-
-4. **Documentation Management**:
-   - ✅ Created comprehensive Makefile guide (`docs/MAKEFILE_GUIDE.md`)
-   - ✅ Added git hooks setup instructions
-   - ✅ Included CI/CD integration examples
-   - ✅ Updated docs README with quick commands
-
-## Notes
-
-- All critical test failures have been resolved
-- Documentation generation workflow is now fully documented
-- Security improvements implemented for HTML reports
-- XML processing is now more robust and secure
+- **`Unsupported element type` warnings in `reportlab_engine`**:
+  - **Problem**: The `reportlab_engine` is logging warnings about unsupported element types (`DrawingElement`).
+  - **Status**: **Analysis Complete**. This is a feature gap.
+  - **Analysis**: The `reportlab_engine`'s `_render_page_canvas` function only handles `TextElement` and `ImageElement` types. It does not have a case for `DrawingElement`, which causes the warning.
+  - **Next Steps**: To resolve this, the following actions are needed:
+        1. **Import `DrawingElement`**: In `src/pdfrebuilder/engine/reportlab_engine.py`, import the `DrawingElement` class from `pdfrebuilder.models.universal_idm`.
+        2. **Implement `_render_drawing_element_canvas`**: Create a new method in the `ReportLabEngine` class to handle the rendering of `DrawingElement` objects. This method should:
+            - Take the `canvas`, `DrawingElement`, `layer`, and `page_size` as arguments.
+            - Set the stroke color, fill color, and line width on the canvas based on the element's properties.
+            - Iterate through the `drawing_commands` of the element and use the appropriate `reportlab.graphics.shapes` to draw the lines, curves, and rectangles.
+        3. **Update `_render_page_canvas`**: Add a new condition to the `for` loop in `_render_page_canvas` to call `_render_drawing_element_canvas` when an element of type `DrawingElement` is encountered.
+  - **Bibliography**:
+    - [ReportLab Graphics Documentation](https://www.reportlab.com/docs/reportlab-userguide.pdf) (Chapter 2: Graphics)

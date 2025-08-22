@@ -132,8 +132,8 @@
     ]
   },
   "api_coverage": {
-    "total_modules": 40,
-    "documented_modules": 40,
+    "total_modules": 39,
+    "documented_modules": 39,
     "coverage_percentage": 100.0,
     "missing_docs": [],
     "documented_modules_list": [
@@ -175,7 +175,6 @@
       "models.schema_validator",
       "models.psd_validator",
       "models.psd_effects",
-      "models.schema_migration",
       "models.universal_idm"
     ]
   },
