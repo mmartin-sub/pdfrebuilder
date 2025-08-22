@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     default_font: str = "Noto Sans"
     visual_diff_threshold: int = 5
 
+
 settings = Settings()
 
 STANDARD_PDF_FONTS = [

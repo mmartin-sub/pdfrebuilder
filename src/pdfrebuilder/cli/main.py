@@ -240,7 +240,9 @@ def full(
 def extract(
     ctx: typer.Context,
     input_file: Annotated[str, typer.Option("--input", help="Input PDF file path.")] = "input/sample.pdf",
-    config_output_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = settings.config_path,
+    config_output_file: Annotated[
+        str, typer.Option("--config", help="Layout config JSON file path.")
+    ] = settings.config_path,
     input_engine: Annotated[str, typer.Option(help="Input processing engine.")] = "auto",
     extract_text: Annotated[bool, typer.Option(help="Include text blocks in extraction.")] = True,
     extract_images: Annotated[bool, typer.Option(help="Include image blocks in extraction.")] = True,
@@ -264,7 +266,9 @@ def extract(
 @app.command()
 def generate(
     ctx: typer.Context,
-    config_input_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = settings.config_path,
+    config_input_file: Annotated[
+        str, typer.Option("--config", help="Layout config JSON file path.")
+    ] = settings.config_path,
     output_file: Annotated[str | None, typer.Option("--output", help="Output PDF file path.")] = None,
     input_file: Annotated[str | None, typer.Option("--input", help="Original input PDF file path (optional).")] = None,
     output_engine: Annotated[str, typer.Option(help="Output rendering engine.")] = "auto",
@@ -283,7 +287,9 @@ def generate(
 @app.command()
 def debug(
     ctx: typer.Context,
-    config_input_file: Annotated[str, typer.Option("--config", help="Layout config JSON file path.")] = settings.config_path,
+    config_input_file: Annotated[
+        str, typer.Option("--config", help="Layout config JSON file path.")
+    ] = settings.config_path,
     debug_output_file: Annotated[str | None, typer.Option("--debugoutput", help="Debug output PDF file path.")] = None,
 ):
     """Generates a debug PDF with drawing layers from a JSON config file."""

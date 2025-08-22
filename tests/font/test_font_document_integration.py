@@ -245,9 +245,11 @@ class TestDocumentFontIntegration(unittest.TestCase):
 
             mock_ttfont.side_effect = create_mock_font
 
-            with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir), \
-                 patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
-                 patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
+            with (
+                patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir),
+                patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),
+                patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"),
+            ):
                 # Process each page in the document
                 for page_idx, doc_unit in enumerate(self.document_config["document_structure"]):
                     if doc_unit["type"] == "page":
@@ -409,9 +411,11 @@ class TestDocumentFontIntegration(unittest.TestCase):
 
             mock_exists.side_effect = exists_side_effect
 
-            with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir), \
-                 patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
-                 patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
+            with (
+                patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir),
+                patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),
+                patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"),
+            ):
                 # Process fonts
                 for doc_unit in google_fonts_config["document_structure"]:
                     for layer in doc_unit["layers"]:
@@ -662,8 +666,10 @@ class TestDocumentFontIntegration(unittest.TestCase):
 
             mock_ttfont.side_effect = create_mock_font
 
-            with patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", "/nonexistent"), \
-                 patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
+            with (
+                patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", "/nonexistent"),
+                patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"),
+            ):
                 with patch("pdfrebuilder.font.utils.download_google_font", return_value=None):
                     with patch("pdfrebuilder.font.utils.os.path.exists", return_value=False):  # No fonts exist
                         # Process all text elements
@@ -829,9 +835,11 @@ class TestDocumentFontIntegration(unittest.TestCase):
         # Test font registration performance
         mock_pages = [Mock() for _ in range(50)]
 
-        with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir), \
-             patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir), \
-             patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
+        with (
+            patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir),
+            patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),
+            patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"),
+        ):
             start_time = time.time()
 
             # Process all pages
