@@ -389,7 +389,7 @@ ignore_decorators = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = "src"
+pythonpath = ["src", "scripts"]
 testpaths = ["tests"]
 addopts = "-ra -q --strict-markers"
 asyncio_mode = "auto"

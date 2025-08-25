@@ -116,7 +116,7 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
         # Mock TTFont for font scanning
         mock_font = MagicMock()
         mock_name_table = Mock()
-        mock_name_table.names = [Mock(nameID=1, platformID=3, string=b"Arial")]
+        mock_name_table.getBestFamilyName.return_value = "Arial"
         mock_font.__getitem__.return_value = mock_name_table
         mock_ttfont.return_value = mock_font
 

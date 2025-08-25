@@ -2599,16 +2599,18 @@ def scan_available_fonts(fonts_dir):
         if not os.path.exists(font_dir):
             continue
 
-        font_files = glob.glob(os.path.join(font_dir, "*.ttf")) + glob.glob(os.path.join(font_dir, "*.otf"))
+        font_files = (
+            glob.glob(os.path.join(font_dir, "*.ttf"))
+            + glob.glob(os.path.join(font_dir, "*.otf"))
+            + glob.glob(os.path.join(font_dir, "*.woff"))
+            + glob.glob(os.path.join(font_dir, "*.woff2"))
+        )
         for font_path in font_files:
             try:
                 font = TTFont(font_path)
                 name_table = font["name"]
                 # Use the 'name' table to get the font's family name
-                name = None
-                for record in getattr(name_table, "names", []):
-                    if getattr(record, "nameID", -1) == 1 and (not name or getattr(record, "platformID", -1) == 3):
-                        name = str(getattr(record, "string", b""), errors="ignore")
+                name = name_table.getBestFamilyName()
                 if name:
                     # Prefer manual fonts over auto-downloaded ones
                     if name not in font_map or "manual" in font_path:

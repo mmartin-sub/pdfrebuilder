@@ -20,7 +20,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pdfrebuilder.font.googlefonts import download_google_font
-from pdfrebuilder.settings import get_config_value
+from pdfrebuilder.settings import settings
 
 # Essential fonts list - prioritized by importance and coverage
 ESSENTIAL_FONTS = [
@@ -249,7 +249,7 @@ def download_essential_fonts(
 
     # Use configured fonts directory if not specified
     if fonts_dir is None:
-        fonts_dir = get_config_value("downloaded_fonts_dir")
+        fonts_dir = settings.font_management.downloaded_fonts_dir
 
     # Ensure fonts directory exists
     os.makedirs(fonts_dir, exist_ok=True)
