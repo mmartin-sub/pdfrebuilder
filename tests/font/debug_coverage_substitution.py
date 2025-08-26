@@ -4,7 +4,8 @@ import unittest
 from unittest.mock import Mock, patch
 
 from pdfrebuilder.font.utils import ensure_font_registered
-from tests.config import get_test_temp_dir, cleanup_test_output, get_test_fonts_dir
+from tests.config import cleanup_test_output, get_test_fonts_dir, get_test_temp_dir
+
 
 class DebugCoverageSubstitution(unittest.TestCase):
     def setUp(self):
@@ -24,7 +25,9 @@ class DebugCoverageSubstitution(unittest.TestCase):
         text = "Hello 世界"
 
         shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", os.path.join(self.test_fonts_dir, "Arial.ttf"))
-        shutil.copy("tests/fixtures/fonts/NotoSansCJKjp-Regular.woff", os.path.join(self.test_fonts_dir, "NotoSans.woff"))
+        shutil.copy(
+            "tests/fixtures/fonts/NotoSansCJKjp-Regular.woff", os.path.join(self.test_fonts_dir, "NotoSans.woff")
+        )
 
         mock_download.return_value = None
 

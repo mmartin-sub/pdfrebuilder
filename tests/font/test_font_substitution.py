@@ -82,7 +82,9 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         #    - Public Sans (as Arial.ttf), which does not cover the text
         #    - Noto Sans CJK (as NotoSans.woff), which does
         shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", os.path.join(self.test_fonts_dir, "Arial.ttf"))
-        shutil.copy("tests/fixtures/fonts/NotoSansCJKjp-Regular.woff", os.path.join(self.test_fonts_dir, "NotoSans.woff"))
+        shutil.copy(
+            "tests/fixtures/fonts/NotoSansCJKjp-Regular.woff", os.path.join(self.test_fonts_dir, "NotoSans.woff")
+        )
 
         # 2. Mock download to prevent network calls
         mock_download.return_value = None
@@ -207,7 +209,9 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         font_name = "Arial"
         text = "Hello World"
 
-        shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", os.path.join(self.test_fonts_dir, f"{font_name}.ttf"))
+        shutil.copy(
+            "tests/fixtures/fonts/PublicSans-Regular.otf", os.path.join(self.test_fonts_dir, f"{font_name}.ttf")
+        )
 
         with (
             patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir),
@@ -297,8 +301,10 @@ class TestFontFallbackChain(unittest.TestCase):
         font_name = "helv"
 
         # Mock scenario where helv is not in standard fonts (edge case)
-        with patch("pdfrebuilder.font.utils.STANDARD_PDF_FONTS", ["cour", "tiro"]), \
-             patch("pdfrebuilder.font.utils.FallbackFontManager.FALLBACK_FONTS", ["cour", "tiro"]):
+        with (
+            patch("pdfrebuilder.font.utils.STANDARD_PDF_FONTS", ["cour", "tiro"]),
+            patch("pdfrebuilder.font.utils.FallbackFontManager.FALLBACK_FONTS", ["cour", "tiro"]),
+        ):
             with (
                 patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir),
                 patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),
