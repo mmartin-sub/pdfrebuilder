@@ -1,4 +1,3 @@
----
 name: Python CI
 
 on:
@@ -8,22 +7,67 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     strategy:
+      # Optional: To make it run faster on GitHub Actions, you can remove max-parallel.
+      # For local `act` testing, keeping it prevents race conditions.
+      max-parallel: 1
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12"] # Note: Python 3.13 may not be fully available/stable on runners yet
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install hatch
-      run: pip install hatch
+    - name: Install uv
+      uses: astral-sh/setup-uv@v1
+      with:
+        version: "latest"
 
-    - name: Run CI script
-      run: ./scripts/ci.sh
+    - name: Cache uv dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.python-version }}-
+
+    - name: Install dependencies
+      run: |
+        # This creates a virtual environment and installs ALL dependencies
+        # defined in pyproject.toml, including ruff, black, mypy, and bandit.
+        uv venv
+        uv sync --dev
+
+    - name: Run linting checks
+      run: |
+        uv run ruff check .
+        uv run black --check --diff .
+
+    - name: Run type checking
+      run: |
+        uv run mypy bookspine/
+
+    - name: Run tests
+      run: |
+        # Assuming you have a pytest or similar test runner configured
+        uv run pytest
+
+    - name: Run security scan (Bandit)
+      run: |
+        # Run bandit; || true ensures the step doesn't fail the build
+        # if vulnerabilities are found, allowing for report generation.
+        uv run bandit -r bookspine/ -o bandit-report.json -f json || true
+
+    - name: Upload security report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-report-${{ matrix.python-version }}
+        path: bandit-report.json
