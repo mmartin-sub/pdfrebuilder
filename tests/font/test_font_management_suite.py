@@ -14,7 +14,7 @@ Test Coverage:
 
 Output Configuration:
 - All test outputs can be configured via TEST_OUTPUT_DIR environment variable
-- Default output directory: tests/output/
+- Default output directory: tests/output/ (configurable)
 - CLI support for specifying custom output directories
 """
 
@@ -171,7 +171,7 @@ Environment Variables:
         "--output-dir",
         "-o",
         type=str,
-        help="Directory for test outputs (default: tests/output/ or TEST_OUTPUT_DIR env var)",
+        help="Directory for test outputs (default: from tests/config.py or TEST_OUTPUT_DIR env var)",
     )
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose test output")

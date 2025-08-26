@@ -23,7 +23,12 @@ from pdfrebuilder.font.utils import (
 )
 
 # Import test configuration
-from tests.config import cleanup_test_output, get_test_fonts_dir, get_test_temp_dir
+from tests.config import (
+    cleanup_test_output,
+    get_fixture_path,
+    get_test_fonts_dir,
+    get_test_temp_dir,
+)
 
 
 class TestFontRegistrationCache(unittest.TestCase):
@@ -53,7 +58,7 @@ class TestFontRegistrationCache(unittest.TestCase):
 
     def create_test_fonts(self):
         """Create test font files"""
-        real_font_path = "tests/fixtures/fonts/PublicSans-Regular.otf"
+        real_font_path = get_fixture_path("fonts/PublicSans-Regular.otf")
         test_fonts = ["Arial.ttf", "Times.ttf", "Roboto.ttf", "OpenSans.ttf"]
         for font_file in test_fonts:
             dest_path = os.path.join(self.test_fonts_dir, font_file)
@@ -526,7 +531,7 @@ class TestCacheIntegrationPerformance(unittest.TestCase):
 
     def create_many_test_fonts(self):
         """Create many test font files for performance testing"""
-        real_font_path = "tests/fixtures/fonts/PublicSans-Regular.otf"
+        real_font_path = get_fixture_path("fonts/PublicSans-Regular.otf")
         for i in range(20):
             dest_path = os.path.join(self.test_fonts_dir, f"TestFont{i}.ttf")
             shutil.copy(real_font_path, dest_path)

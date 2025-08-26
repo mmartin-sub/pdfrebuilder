@@ -214,51 +214,52 @@ class TestDocumentFontIntegration(unittest.TestCase):
         # Mock pages for each page in document
         mock_pages = [Mock() for _ in range(2)]
 
-        with patch("pdfrebuilder.font.utils.TTFont") as mock_ttfont:
+        with self.assertLogs(level='WARNING') as cm:
+            with patch("pdfrebuilder.font.utils.TTFont") as mock_ttfont:
 
-            def create_mock_font(font_path):
-                mock_font = MagicMock()
-                font_name = os.path.basename(font_path).replace(".ttf", "").replace(".otf", "")
+                def create_mock_font(font_path):
+                    mock_font = MagicMock()
+                    font_name = os.path.basename(font_path).replace(".ttf", "").replace(".otf", "")
 
-                mock_name_table = Mock()
-                mock_name_table.names = [Mock(nameID=1, platformID=3, string=font_name.encode())]
+                    mock_name_table = Mock()
+                    mock_name_table.names = [Mock(nameID=1, platformID=3, string=font_name.encode())]
 
-                mock_cmap_table = Mock()
-                char_map = {
-                    ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")
-                }
-                mock_cmap_table.cmap = char_map
+                    mock_cmap_table = Mock()
+                    char_map = {
+                        ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")
+                    }
+                    mock_cmap_table.cmap = char_map
 
-                mock_cmap_subtable = Mock()
-                mock_cmap_subtable.tables = [mock_cmap_table]
+                    mock_cmap_subtable = Mock()
+                    mock_cmap_subtable.tables = [mock_cmap_table]
 
-                def getitem_side_effect(key):
-                    if key == "name":
-                        return mock_name_table
-                    elif key == "cmap":
-                        return mock_cmap_subtable
-                    else:
-                        return Mock()
+                    def getitem_side_effect(key):
+                        if key == "name":
+                            return mock_name_table
+                        elif key == "cmap":
+                            return mock_cmap_subtable
+                        else:
+                            return Mock()
 
-                mock_font.__getitem__.side_effect = getitem_side_effect
-                return mock_font
+                    mock_font.__getitem__.side_effect = getitem_side_effect
+                    return mock_font
 
-            mock_ttfont.side_effect = create_mock_font
+                mock_ttfont.side_effect = create_mock_font
 
-            with (
-                patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir),
-                patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),
-                patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"),
-            ):
-                # Process each page in the document
-                for page_idx, doc_unit in enumerate(self.document_config["document_structure"]):
-                    if doc_unit["type"] == "page":
-                        # Simulate font registration for each text element
-                        for layer in doc_unit["layers"]:
-                            for content in layer["content"]:
-                                if content["type"] == "text":
-                                    font_name = content["font_details"]["name"]
-                                    ensure_font_registered(mock_pages[page_idx], font_name, verbose=False)
+                with (
+                    patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir),
+                    patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),
+                    patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"),
+                ):
+                    # Process each page in the document
+                    for page_idx, doc_unit in enumerate(self.document_config["document_structure"]):
+                        if doc_unit["type"] == "page":
+                            # Simulate font registration for each text element
+                            for layer in doc_unit["layers"]:
+                                for content in layer["content"]:
+                                    if content["type"] == "text":
+                                        font_name = content["font_details"]["name"]
+                                        ensure_font_registered(mock_pages[page_idx], font_name, verbose=False)
 
         # Verify that font validation was performed
         validation_result = self.font_validator.validate_document_fonts(self.document_config)
@@ -289,192 +290,192 @@ class TestDocumentFontIntegration(unittest.TestCase):
     @patch("pdfrebuilder.font.utils.TTFont")
     def test_document_with_google_fonts_integration(self, mock_ttfont, mock_download):
         """Test document processing with Google Fonts integration"""
-
-        # Mock successful download for some fonts
-        def download_side_effect(font_name, dest_dir):
-            if font_name in ["Roboto", "OpenSans"]:
-                downloaded_file = os.path.join(dest_dir, f"{font_name}.ttf")
-                os.makedirs(dest_dir, exist_ok=True)
-                with open(downloaded_file, "wb") as f:
-                    f.write(b"OTTO\x00\x01\x00\x00" + b"\x00" * 100)
-                return [downloaded_file]
-            elif font_name == "UnavailableFont":
-                # Simulate failed download for UnavailableFont
+        with self.assertLogs(level='WARNING') as cm:
+            # Mock successful download for some fonts
+            def download_side_effect(font_name, dest_dir):
+                if font_name in ["Roboto", "OpenSans"]:
+                    downloaded_file = os.path.join(dest_dir, f"{font_name}.ttf")
+                    os.makedirs(dest_dir, exist_ok=True)
+                    with open(downloaded_file, "wb") as f:
+                        f.write(b"OTTO\x00\x01\x00\x00" + b"\x00" * 100)
+                    return [downloaded_file]
+                elif font_name == "UnavailableFont":
+                    # Simulate failed download for UnavailableFont
+                    return None
                 return None
-            return None
 
-        mock_download.side_effect = download_side_effect
+            mock_download.side_effect = download_side_effect
 
-        # Mock TTFont for font file reading - make it dynamic based on font name
-        def create_mock_font(font_path):
-            mock_font = MagicMock()
+            # Mock TTFont for font file reading - make it dynamic based on font name
+            def create_mock_font(font_path):
+                mock_font = MagicMock()
 
-            # Extract font name from path for dynamic behavior
-            font_name = os.path.basename(font_path).replace(".ttf", "").replace(".otf", "")
+                # Extract font name from path for dynamic behavior
+                font_name = os.path.basename(font_path).replace(".ttf", "").replace(".otf", "")
 
-            # Mock name table for font name extraction
-            mock_name_table = Mock()
-            mock_name_table.names = [Mock(nameID=1, platformID=3, string=font_name.encode())]
+                # Mock name table for font name extraction
+                mock_name_table = Mock()
+                mock_name_table.names = [Mock(nameID=1, platformID=3, string=font_name.encode())]
 
-            # Mock cmap table for glyph coverage check - cover all basic characters
-            mock_cmap_table = Mock()
-            # Create a comprehensive character map for common text
-            char_map = {}
-            for i, char in enumerate("Text with Roboto OpenSans"):
-                char_map[ord(char)] = i
-            mock_cmap_table.cmap = char_map
+                # Mock cmap table for glyph coverage check - cover all basic characters
+                mock_cmap_table = Mock()
+                # Create a comprehensive character map for common text
+                char_map = {}
+                for i, char in enumerate("Text with Roboto OpenSans"):
+                    char_map[ord(char)] = i
+                mock_cmap_table.cmap = char_map
 
-            mock_cmap_subtable = Mock()
-            mock_cmap_subtable.tables = [mock_cmap_table]
+                mock_cmap_subtable = Mock()
+                mock_cmap_subtable.tables = [mock_cmap_table]
 
-            # Set up the font mock to return different tables based on key
-            def getitem_side_effect(key):
-                if key == "name":
-                    return mock_name_table
-                elif key == "cmap":
-                    return mock_cmap_subtable
-                else:
-                    return Mock()
-
-            mock_font.__getitem__.side_effect = getitem_side_effect
-            return mock_font
-
-        mock_ttfont.side_effect = create_mock_font
-
-        # Create document with Google Fonts
-        google_fonts_config = {
-            "version": "1.0",
-            "document_structure": [
-                {
-                    "type": "page",
-                    "page_number": 0,
-                    "layers": [
-                        {
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "id": "roboto_text",
-                                    "text": "Text with Roboto",
-                                    "font_details": {"name": "Roboto", "size": 12},
-                                },
-                                {
-                                    "type": "text",
-                                    "id": "opensans_text",
-                                    "text": "Text with Open Sans",
-                                    "font_details": {"name": "OpenSans", "size": 12},
-                                },
-                                {
-                                    "type": "text",
-                                    "id": "unavailable_text",
-                                    "text": "Text with unavailable font",
-                                    "font_details": {
-                                        "name": "UnavailableFont",
-                                        "size": 12,
-                                    },
-                                },
-                            ]
-                        }
-                    ],
-                }
-            ],
-        }
-
-        mock_page = Mock()
-
-        with patch("pdfrebuilder.font.utils.os.path.exists") as mock_exists:
-
-            def exists_side_effect(path):
-                # Return True for font directories but NOT for the specific font files
-                # so that download_google_font gets called
-                result = False
-                if self.test_fonts_dir in path:
-                    # Return True for the directory itself, but False for font files
-                    # Also return False for Roboto and OpenSans to force download
-                    if any(
-                        font in path
-                        for font in [
-                            "Roboto.ttf",
-                            "OpenSans.ttf",
-                            "Roboto.otf",
-                            "OpenSans.otf",
-                            "Roboto",
-                            "OpenSans",
-                        ]
-                    ):
-                        result = False
+                # Set up the font mock to return different tables based on key
+                def getitem_side_effect(key):
+                    if key == "name":
+                        return mock_name_table
+                    elif key == "cmap":
+                        return mock_cmap_subtable
                     else:
-                        result = True
-                else:
+                        return Mock()
+
+                mock_font.__getitem__.side_effect = getitem_side_effect
+                return mock_font
+
+            mock_ttfont.side_effect = create_mock_font
+
+            # Create document with Google Fonts
+            google_fonts_config = {
+                "version": "1.0",
+                "document_structure": [
+                    {
+                        "type": "page",
+                        "page_number": 0,
+                        "layers": [
+                            {
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "id": "roboto_text",
+                                        "text": "Text with Roboto",
+                                        "font_details": {"name": "Roboto", "size": 12},
+                                    },
+                                    {
+                                        "type": "text",
+                                        "id": "opensans_text",
+                                        "text": "Text with Open Sans",
+                                        "font_details": {"name": "OpenSans", "size": 12},
+                                    },
+                                    {
+                                        "type": "text",
+                                        "id": "unavailable_text",
+                                        "text": "Text with unavailable font",
+                                        "font_details": {
+                                            "name": "UnavailableFont",
+                                            "size": 12,
+                                        },
+                                    },
+                                ]
+                            }
+                        ],
+                    }
+                ],
+            }
+
+            mock_page = Mock()
+
+            with patch("pdfrebuilder.font.utils.os.path.exists") as mock_exists:
+
+                def exists_side_effect(path):
+                    # Return True for font directories but NOT for the specific font files
+                    # so that download_google_font gets called
                     result = False
+                    if self.test_fonts_dir in path:
+                        # Return True for the directory itself, but False for font files
+                        # Also return False for Roboto and OpenSans to force download
+                        if any(
+                            font in path
+                            for font in [
+                                "Roboto.ttf",
+                                "OpenSans.ttf",
+                                "Roboto.otf",
+                                "OpenSans.otf",
+                                "Roboto",
+                                "OpenSans",
+                            ]
+                        ):
+                            result = False
+                        else:
+                            result = True
+                    else:
+                        result = False
 
-                return result
+                    return result
 
-            mock_exists.side_effect = exists_side_effect
+                mock_exists.side_effect = exists_side_effect
 
-            with (
-                patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir),
-                patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),
-                patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"),
-            ):
-                # Process fonts
-                for doc_unit in google_fonts_config["document_structure"]:
-                    for layer in doc_unit["layers"]:
-                        for element in layer["content"]:
-                            if element["type"] == "text":
-                                font_name = element["font_details"]["name"]
-                                text_content = element["text"]
+                with (
+                    patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir),
+                    patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),
+                    patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"),
+                ):
+                    # Process fonts
+                    for doc_unit in google_fonts_config["document_structure"]:
+                        for layer in doc_unit["layers"]:
+                            for element in layer["content"]:
+                                if element["type"] == "text":
+                                    font_name = element["font_details"]["name"]
+                                    text_content = element["text"]
 
-                                # Clear download attempted for this font to allow download
-                                if font_name in _FONT_DOWNLOAD_ATTEMPTED:
-                                    _FONT_DOWNLOAD_ATTEMPTED.remove(font_name)
+                                    # Clear download attempted for this font to allow download
+                                    if font_name in _FONT_DOWNLOAD_ATTEMPTED:
+                                        _FONT_DOWNLOAD_ATTEMPTED.remove(font_name)
 
-                                # Clear registration cache to ensure fresh processing
-                                page_id = id(mock_page)
-                                if page_id in _FONT_REGISTRATION_CACHE:
-                                    _FONT_REGISTRATION_CACHE[page_id].clear()
+                                    # Clear registration cache to ensure fresh processing
+                                    page_id = id(mock_page)
+                                    if page_id in _FONT_REGISTRATION_CACHE:
+                                        _FONT_REGISTRATION_CACHE[page_id].clear()
 
-                                result = ensure_font_registered(
-                                    mock_page,
-                                    font_name,
-                                    verbose=False,
-                                    text=text_content,
-                                )
+                                    result = ensure_font_registered(
+                                        mock_page,
+                                        font_name,
+                                        verbose=False,
+                                        text=text_content,
+                                    )
 
-                                if font_name in ["Roboto", "OpenSans"]:
-                                    # The font registration might return the downloaded font name or fallback
-                                    # depending on how the font scanning works
-                                    self.assertIn(
-                                        result,
-                                        [
-                                            font_name,
-                                            "helv",
-                                            "Roboto",
-                                            "OpenSans",
-                                            "Arial",
-                                            "Times",
-                                            "Helvetica",
-                                            "Courier",
-                                            "Symbol",
-                                        ],
-                                    )  # Allow any valid font from our test environment
-                                else:
-                                    # UnavailableFont should fallback, but the system might return
-                                    # the original name if fallback logic isn't triggered properly
-                                    self.assertIn(result, ["helv", "UnavailableFont", "Helvetica"])
+                                    if font_name in ["Roboto", "OpenSans"]:
+                                        # The font registration might return the downloaded font name or fallback
+                                        # depending on how the font scanning works
+                                        self.assertIn(
+                                            result,
+                                            [
+                                                font_name,
+                                                "helv",
+                                                "Roboto",
+                                                "OpenSans",
+                                                "Arial",
+                                                "Times",
+                                                "Helvetica",
+                                                "Courier",
+                                                "Symbol",
+                                            ],
+                                        )  # Allow any valid font from our test environment
+                                    else:
+                                        # UnavailableFont should fallback, but the system might return
+                                        # the original name if fallback logic isn't triggered properly
+                                        self.assertIn(result, ["helv", "UnavailableFont", "Helvetica"])
 
-        # Verify downloads were attempted
-        # Since we're mocking exists to return False for Roboto and OpenSans, they should be downloaded
-        # UnavailableFont might not be downloaded due to download failure handling
-        actual_calls = [call[0][0] for call in mock_download.call_args_list]
-        expected_calls = ["Roboto", "OpenSans"]
-        self.assertEqual(sorted(actual_calls), sorted(expected_calls))
+            # Verify downloads were attempted
+            # Since we're mocking exists to return False for Roboto and OpenSans, they should be downloaded
+            # UnavailableFont might not be downloaded due to download failure handling
+            actual_calls = [call[0][0] for call in mock_download.call_args_list]
+            expected_calls = ["Roboto", "OpenSans"]
+            self.assertEqual(sorted(actual_calls), sorted(expected_calls))
 
-        # Verify substitution tracking (if any occurred)
-        substitutions = self.font_validator.substitution_tracker
-        unavailable_substitutions = [s for s in substitutions if s.original_font == "UnavailableFont"]
-        # Substitution tracking may not occur if the font system doesn't properly
-        # detect the unavailable font as needing substitution
-        self.assertGreaterEqual(len(unavailable_substitutions), 0)
+            # Verify substitution tracking (if any occurred)
+            substitutions = self.font_validator.substitution_tracker
+            unavailable_substitutions = [s for s in substitutions if s.original_font == "UnavailableFont"]
+            # Substitution tracking may not occur if the font system doesn't properly
+            # detect the unavailable font as needing substitution
+            self.assertGreaterEqual(len(unavailable_substitutions), 0)
 
     def test_document_font_coverage_validation(self):
         """Test font coverage validation in document context"""

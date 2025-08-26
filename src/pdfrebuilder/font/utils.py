@@ -1502,7 +1502,8 @@ def _check_font_text_coverage(
 
         # Get available fonts and check their coverage
         manual_fonts_dir = settings.font_management.manual_fonts_dir
-        available_fonts = scan_available_fonts(manual_fonts_dir)
+        auto_fonts_dir = settings.font_management.downloaded_fonts_dir
+        available_fonts = scan_available_fonts([manual_fonts_dir, auto_fonts_dir])
         for available_font_name, available_font_path in available_fonts.items():
             if font_covers_text(available_font_path, text_content):
                 if verbose:
@@ -2576,43 +2577,32 @@ _FONT_COVERAGE_CACHE: dict[str, bool] = {}
 
 
 # TODO: Step 2 - In the future, split text into runs by font for perfect coverage (multi-font rendering).
-def scan_available_fonts(fonts_dir):
+def scan_available_fonts(font_dirs):
     """
-    Scan the fonts_dir for .ttf and .otf files and cache their paths.
-    Also scans manual_fonts_dir if available.
+    Scan the given directories for font files.
     Returns a dict: {font_name: font_path}
     """
     font_map = {}
 
-    # Scan multiple font directories
-    font_dirs = [fonts_dir]
-
-    # Add manual fonts directory if different
-    try:
-        manual_fonts_dir = settings.font_management.manual_fonts_dir
-        if manual_fonts_dir and manual_fonts_dir != fonts_dir:
-            font_dirs.append(manual_fonts_dir)
-    except Exception as e:
-        logger.warning(f"[font_utils] Could not get manual_fonts_dir from config: {e}")
+    if isinstance(font_dirs, str):
+        font_dirs = [font_dirs]
 
     for font_dir in font_dirs:
         if not os.path.exists(font_dir):
             continue
 
         font_files = (
-            glob.glob(os.path.join(font_dir, "*.ttf"))
-            + glob.glob(os.path.join(font_dir, "*.otf"))
-            + glob.glob(os.path.join(font_dir, "*.woff"))
-            + glob.glob(os.path.join(font_dir, "*.woff2"))
+            glob.glob(os.path.join(font_dir, "**", "*.ttf"), recursive=True)
+            + glob.glob(os.path.join(font_dir, "**", "*.otf"), recursive=True)
+            + glob.glob(os.path.join(font_dir, "**", "*.woff"), recursive=True)
+            + glob.glob(os.path.join(font_dir, "**", "*.woff2"), recursive=True)
         )
         for font_path in font_files:
             try:
                 font = TTFont(font_path)
                 name_table = font["name"]
-                # Use the 'name' table to get the font's family name
                 name = name_table.getBestFamilyName()
                 if name:
-                    # Prefer manual fonts over auto-downloaded ones
                     if name not in font_map or "manual" in font_path:
                         font_map[name] = font_path
             except Exception as e:

@@ -23,6 +23,7 @@ def recreate_pdf_from_config(
     engine_name: str | None = None,
     engine_config: dict[str, Any] | None = None,
     original_pdf_for_template: str | None = None,
+    engine: Any = None,
 ) -> None:
     """
     Generate a PDF from a JSON configuration file.
@@ -44,18 +45,18 @@ def recreate_pdf_from_config(
             engine_config = load_engine_config()
 
         # Select and create the PDF engine
-        engine: Any
-        if engine_name:
-            try:
-                engine = get_pdf_engine(engine_name, engine_config)
-                logger.info(f"Using specified engine: {engine_name}")
-            except Exception as e:
-                logger.warning(f"Could not create engine {engine_name}: {e}")
-                logger.info("Falling back to default engine")
+        if engine is None:
+            if engine_name:
+                try:
+                    engine = get_pdf_engine(engine_name, engine_config)
+                    logger.info(f"Using specified engine: {engine_name}")
+                except Exception as e:
+                    logger.warning(f"Could not create engine {engine_name}: {e}")
+                    logger.info("Falling back to default engine")
+                    engine = get_default_pdf_engine(engine_config)
+            else:
                 engine = get_default_pdf_engine(engine_config)
-        else:
-            engine = get_default_pdf_engine(engine_config)
-            logger.info(f"Using default engine: {engine.engine_name}")
+                logger.info(f"Using default engine: {engine.engine_name}")
 
         # Generate the PDF
         engine.generate(config, output_pdf_path, original_pdf_for_template)

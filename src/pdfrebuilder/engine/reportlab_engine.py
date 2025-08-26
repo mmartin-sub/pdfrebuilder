@@ -20,7 +20,14 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from pdfrebuilder.engine.pdf_rendering_engine import PDFRenderingEngine, RenderingError
 from pdfrebuilder.font.font_validator import FontValidator
-from pdfrebuilder.models.universal_idm import Color, Layer, PageUnit, TextElement, UniversalDocument
+from pdfrebuilder.models.universal_idm import (
+    Color,
+    DrawingElement,
+    Layer,
+    PageUnit,
+    TextElement,
+    UniversalDocument,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -408,8 +415,53 @@ class ReportLabEngine(PDFRenderingEngine):
             for element in layer.content:
                 if isinstance(element, TextElement):
                     self._render_text_element_canvas(c, element, layer, page_size)
+                elif isinstance(element, DrawingElement):
+                    self._render_drawing_element_canvas(c, element, layer, page_size)
                 else:
                     logger.warning(f"Unsupported element type: {type(element)}")
+
+    def _render_drawing_element_canvas(
+        self, c: canvas.Canvas, element: DrawingElement, layer: Layer, page_size: tuple
+    ) -> None:
+        """Render a drawing element using ReportLab canvas."""
+        try:
+            # Set drawing properties
+            if element.color:
+                color = self._convert_color(element.color)
+                c.setStrokeColor(color)
+            if element.fill:
+                fill_color = self._convert_color(element.fill)
+                c.setFillColor(fill_color)
+            c.setLineWidth(element.width)
+
+            # Process drawing commands
+            for command in element.drawing_commands:
+                if command.cmd == "rect" and command.bbox:
+                    x, y, x1, y1 = command.bbox.to_list()
+                    # Convert to ReportLab coordinates
+                    y_rl = page_size[1] - y1
+                    y1_rl = page_size[1] - y
+                    c.rect(x, y1_rl, x1 - x, y_rl - y1_rl, fill=1 if element.fill else 0)
+                elif command.cmd == "line":
+                    x1, y1, x2, y2 = command.pts
+                    # Convert to ReportLab coordinates
+                    y1_rl = page_size[1] - y1
+                    y2_rl = page_size[1] - y2
+                    c.line(x1, y1_rl, x2, y2_rl)
+                elif command.cmd == "curve":
+                    x1, y1, x2, y2, x3, y3, x4, y4 = command.pts
+                    # Convert to ReportLab coordinates
+                    y1_rl = page_size[1] - y1
+                    y2_rl = page_size[1] - y2
+                    y3_rl = page_size[1] - y3
+                    y4_rl = page_size[1] - y4
+                    p = c.beginPath()
+                    p.moveTo(x1, y1_rl)
+                    p.curveTo(x2, y2_rl, x3, y3_rl, x4, y4_rl)
+                    c.drawPath(p)
+
+        except Exception as e:
+            logger.error(f"Error rendering drawing element {element.id}: {e}")
 
         # Save the canvas
         c.save()

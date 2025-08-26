@@ -1,6 +1,18 @@
 # Multi-Format Document Engine
 
+[![PyPI version](https://badge.fury.io/py/pdfrebuilder.svg)](https://badge.fury.io/py/pdfrebuilder)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/release/python-3100/)
+
 A Python tool for deconstructing document layouts into human-readable JSON format and rebuilding visually similar documents from that data. The primary purpose is to enable programmatic modification of document content while preserving original layout and visual fidelity.
+
+## Test Results
+
+All tests are currently passing. For the latest test results, please see the [GitHub Actions page](https://github.com/mmartin-sub/pdfrebuilder/actions).
+
+## Dependencies
+
+For a complete list of dependencies, please see the `pyproject.toml` file.
 
 ## Table of Contents
 

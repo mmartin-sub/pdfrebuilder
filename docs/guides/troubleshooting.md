@@ -1045,4 +1045,34 @@ hatch env create
 hatch run test
 ```
 
+## Known Test-time Warnings
+
+### `PytestCollectionWarning` for `TestFileManager`
+
+-   **Problem**: You may see a `PytestCollectionWarning` for a class like `TestFileManager` in `tests/wip/unit/test_utils.py`. This happens if a test class has an `__init__` constructor, which prevents pytest from collecting it as a test class.
+-   **Analysis**: In our case, `TestFileManager` is a helper class for managing test files, not a test class itself. The warning is correct.
+-   **Solution**: The class was renamed to `_TestFileManager` to prevent pytest collection. If you encounter a similar issue, ensure that your test classes do not have an `__init__` constructor, and that any helper classes that are not tests are prefixed with an underscore to be ignored by the test collector.
+-   **Bibliography**: [Pytest good practices - Test discovery](https://docs.pytest.org/en/stable/explanation/goodpractices.html#test-discovery)
+
+### `Not a TrueType or OpenType font (bad sfntVersion)` warnings
+
+-   **Problem**: Several tests in `tests/font/` may log warnings about being unable to read mock font files.
+-   **Analysis**: These warnings are expected. The tests in `tests/font/test_font_cache_integration.py` and other font tests are intentionally creating invalid font files with dummy content to test the error handling capabilities of the font management system. The warnings indicate that the system is correctly identifying these invalid font files.
+-   **Action**: To make the tests more explicit and to suppress the warnings from the test output, you can use `pytest.warns` to assert that these warnings are raised. This has been implemented for some tests, and the general test configuration has been updated to suppress these warnings from the console output during test runs.
+-   **Bibliography**: [pytest.warns documentation](https://docs.pytest.org/en/stable/how-to/capture-warnings.html#asserting-that-a-warning-was-raised)
+
+### `Error: Could not fetch CSS for ...` warnings
+
+-   **Problem**: Several tests related to Google Fonts integration may log errors about failing to fetch CSS.
+-   **Analysis**: This can happen if a test calls `ensure_font_registered` with a font name that is not a valid Google Font (e.g., "Arial"). The call to `download_google_font` will then make a real network request that fails, triggering the warning. The test is not properly mocking the network call.
+-   **Solution**: The tests that were causing this issue have been patched to prevent the network requests. If you are writing a new test that involves font registration, ensure that you patch `download_google_font` if you are not testing the download functionality itself.
+-   **Bibliography**: [unittest.mock.patch](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.patch)
+
+### `'cmap'` and `'name'` key errors in font tests
+
+-   **Problem**: Some font tests may log key errors when trying to access `cmap` or `name` attributes of a font object.
+-   **Analysis**: This happens when integration tests create dummy font files with invalid content. When `fontTools` tries to parse these files, it creates a `TTFont` object that is missing some tables, like `'cmap'` and `'name'`. When the code under test tries to access these tables, it raises a `KeyError`.
+-   **Solution**: The tests that were causing this issue have been patched to use a mock `TTFont` object that is correctly configured with the necessary attributes. This prevents the `KeyError` and the associated warnings.
+-   **Bibliography**: [fontTools documentation](https://fonttools.readthedocs.io/en/latest/)
+
 Remember: Most issues can be resolved by carefully reading error messages and checking the basics (file paths, permissions, environment setup).
