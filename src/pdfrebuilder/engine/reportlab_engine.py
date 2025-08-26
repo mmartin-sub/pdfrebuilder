@@ -10,6 +10,7 @@ import os
 import sys
 from typing import Any, ClassVar, cast
 
+from reportlab.lib import colors
 from reportlab.lib.colors import Color as RLColor
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle
@@ -20,7 +21,14 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from pdfrebuilder.engine.pdf_rendering_engine import PDFRenderingEngine, RenderingError
 from pdfrebuilder.font.font_validator import FontValidator
-from pdfrebuilder.models.universal_idm import Color, Layer, PageUnit, TextElement, UniversalDocument
+from pdfrebuilder.models.universal_idm import (
+    Color,
+    DrawingElement,
+    Layer,
+    PageUnit,
+    TextElement,
+    UniversalDocument,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -408,6 +416,8 @@ class ReportLabEngine(PDFRenderingEngine):
             for element in layer.content:
                 if isinstance(element, TextElement):
                     self._render_text_element_canvas(c, element, layer, page_size)
+                elif isinstance(element, DrawingElement):
+                    self._render_drawing_element_canvas(c, element, layer, page_size)
                 else:
                     logger.warning(f"Unsupported element type: {type(element)}")
 
@@ -456,6 +466,53 @@ class ReportLabEngine(PDFRenderingEngine):
 
         except Exception as e:
             logger.error(f"Error rendering text element {element.id}: {e}")
+
+    def _render_drawing_element_canvas(
+        self, c: canvas.Canvas, element: DrawingElement, layer: Layer, page_size: tuple
+    ) -> None:
+        """Render a drawing element using ReportLab canvas."""
+        try:
+            # Set drawing properties
+            if element.color:
+                stroke_color = self._convert_color(element.color)
+                c.setStrokeColor(stroke_color)
+            else:
+                c.setStrokeColor(colors.transparent)
+
+            if element.fill:
+                fill_color = self._convert_color(element.fill)
+                c.setFillColor(fill_color)
+            else:
+                c.setFillColor(colors.transparent)
+
+            c.setLineWidth(element.width)
+
+            # Process drawing commands
+            for cmd in element.drawing_commands:
+                # Convert y-coordinates
+                pts = [p if i % 2 == 0 else page_size[1] - p for i, p in enumerate(cmd.pts)]
+
+                if cmd.cmd == "l":  # Line
+                    c.line(pts[0], pts[1], pts[2], pts[3])
+                elif cmd.cmd == "rect":  # Rectangle
+                    if cmd.bbox:
+                        x = cmd.bbox.x1
+                        y = cmd.bbox.y1
+                        w = cmd.bbox.width
+                        h = cmd.bbox.height
+
+                        y_rl = page_size[1] - y - h
+                        c.rect(x, y_rl, w, h, fill=1)
+                    else:
+                        logger.warning("Unsupported rect command without bbox")
+                elif cmd.cmd == "c":  # Bezier curve
+                    x1, y1, x2, y2, x3, y3, x4, y4 = pts
+                    c.bezier(x1, y1, x2, y2, x3, y3, x4, y4)
+                else:
+                    logger.warning(f"Unsupported drawing command: {cmd.cmd}")
+
+        except Exception as e:
+            logger.error(f"Error rendering drawing element {element.id}: {e}")
 
     def _render_page(self, doc: SimpleDocTemplate, page_unit: PageUnit, document: UniversalDocument) -> None:
         """Render a single page using ReportLab."""
