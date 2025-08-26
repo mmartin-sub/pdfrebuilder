@@ -19,8 +19,10 @@ class Settings(BaseSettings):
         env_file=".env",
         env_nested_delimiter="__",
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
+    env_id: str = "Dev"
     engines: EnginesConfig = Field(default_factory=EnginesConfig)
     font_management: FontManagementConfig = Field(default_factory=FontManagementConfig)
     validation: ValidationConfig = Field(default_factory=ValidationConfig)
