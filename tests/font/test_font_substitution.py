@@ -22,7 +22,12 @@ from pdfrebuilder.font.utils import (
 )
 
 # Import test configuration
-from tests.config import cleanup_test_output, get_test_fonts_dir, get_test_temp_dir
+from tests.config import (
+    cleanup_test_output,
+    get_fixture_path,
+    get_test_fonts_dir,
+    get_test_temp_dir,
+)
 
 
 class TestFontSubstitutionEngine(unittest.TestCase):
@@ -35,7 +40,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         self.test_fonts_dir = get_test_fonts_dir(self.test_name)
         os.makedirs(self.test_fonts_dir, exist_ok=True)
         self.font_path = os.path.join(self.test_fonts_dir, "test_font.otf")
-        shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", self.font_path)
+        shutil.copy(get_fixture_path("fonts/PublicSans-Regular.otf"), self.font_path)
 
         # Clear caches
         _FONT_REGISTRATION_CACHE.clear()
@@ -81,9 +86,9 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         # 1. Create a directory with two fonts:
         #    - Public Sans (as Arial.ttf), which does not cover the text
         #    - Noto Sans CJK (as NotoSans.woff), which does
-        shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", os.path.join(self.test_fonts_dir, "Arial.ttf"))
+        shutil.copy(get_fixture_path("fonts/PublicSans-Regular.otf"), os.path.join(self.test_fonts_dir, "Arial.ttf"))
         shutil.copy(
-            "tests/fixtures/fonts/NotoSansCJKjp-Regular.woff", os.path.join(self.test_fonts_dir, "NotoSans.woff")
+            get_fixture_path("fonts/NotoSansCJKjp-Regular.woff"), os.path.join(self.test_fonts_dir, "NotoSans.woff")
         )
 
         # 2. Mock download to prevent network calls
@@ -113,7 +118,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         mock_download.return_value = None  # Download fails
 
         # Create some fonts that don't cover the text
-        shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", os.path.join(self.test_fonts_dir, "Arial.ttf"))
+        shutil.copy(get_fixture_path("fonts/PublicSans-Regular.otf"), os.path.join(self.test_fonts_dir, "Arial.ttf"))
 
         with (
             patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir),
@@ -135,7 +140,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         mock_download.return_value = None  # Download fails
 
         # Create a font that will be found but will fail to register
-        shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", os.path.join(self.test_fonts_dir, "Arial.ttf"))
+        shutil.copy(get_fixture_path("fonts/PublicSans-Regular.otf"), os.path.join(self.test_fonts_dir, "Arial.ttf"))
 
         # Mock insert_font to raise exception for the substituted font
         def insert_font_side_effect(fontfile=None, fontname=None):
@@ -189,7 +194,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
     def test_font_substitution_edge_cases(self):
         """Test edge cases in font substitution"""
         # Create a real font file to avoid unnecessary fallbacks
-        shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", os.path.join(self.test_fonts_dir, "Arial.ttf"))
+        shutil.copy(get_fixture_path("fonts/PublicSans-Regular.otf"), os.path.join(self.test_fonts_dir, "Arial.ttf"))
 
         with patch("pdfrebuilder.settings.settings.font_management.manual_fonts_dir", self.test_fonts_dir):
             # Test with empty text
@@ -210,7 +215,7 @@ class TestFontSubstitutionEngine(unittest.TestCase):
         text = "Hello World"
 
         shutil.copy(
-            "tests/fixtures/fonts/PublicSans-Regular.otf", os.path.join(self.test_fonts_dir, f"{font_name}.ttf")
+            get_fixture_path("fonts/PublicSans-Regular.otf"), os.path.join(self.test_fonts_dir, f"{font_name}.ttf")
         )
 
         with (
@@ -261,7 +266,7 @@ class TestFontFallbackChain(unittest.TestCase):
         mock_download.return_value = None
 
         # 3. Create a local font that does cover the text
-        shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", os.path.join(self.test_fonts_dir, "PublicSans.ttf"))
+        shutil.copy(get_fixture_path("fonts/PublicSans-Regular.otf"), os.path.join(self.test_fonts_dir, "PublicSans.ttf"))
 
         # 4. Should fallback to the local font
         with (

@@ -246,6 +246,20 @@ def get_unique_id() -> str:
     return f"{timestamp}_{random_suffix}"
 
 
+def get_fixture_path(filename: str) -> str:
+    """
+    Get path to a test fixture file.
+
+    Args:
+        filename: Name of the fixture file
+
+    Returns:
+        Full path to the test fixture file
+    """
+    # Look for fixture files in the tests/fixtures directory
+    return os.path.join("tests", "fixtures", filename)
+
+
 def get_sample_input_path(filename: str) -> str:
     """
     Get path to a sample input file.

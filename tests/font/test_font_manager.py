@@ -25,7 +25,12 @@ from pdfrebuilder.font.utils import (
 from pdfrebuilder.settings import settings
 
 # Import test configuration
-from tests.config import cleanup_test_output, get_test_fonts_dir, get_test_temp_dir
+from tests.config import (
+    cleanup_test_output,
+    get_fixture_path,
+    get_test_fonts_dir,
+    get_test_temp_dir,
+)
 
 
 class TestFontDiscovery(unittest.TestCase):
@@ -44,22 +49,22 @@ class TestFontDiscovery(unittest.TestCase):
 
     def test_scan_available_fonts_empty_directory(self):
         """Test scanning an empty fonts directory"""
-        result = scan_available_fonts(self.test_fonts_dir)
+        result = scan_available_fonts([self.test_fonts_dir])
         self.assertEqual(result, {})
 
     def test_scan_available_fonts_nonexistent_directory(self):
         """Test scanning a non-existent directory"""
         nonexistent_dir = os.path.join(self.temp_dir, "nonexistent")
-        result = scan_available_fonts(nonexistent_dir)
+        result = scan_available_fonts([nonexistent_dir])
         self.assertEqual(result, {})
 
     def test_scan_available_fonts_with_valid_fonts(self):
         """Test scanning directory with valid font files"""
-        real_font_path = "tests/fixtures/fonts/PublicSans-Regular.otf"
+        real_font_path = get_fixture_path("fonts/PublicSans-Regular.otf")
         shutil.copy(real_font_path, os.path.join(self.test_fonts_dir, "Arial.ttf"))
         shutil.copy(real_font_path, os.path.join(self.test_fonts_dir, "Times.otf"))
 
-        result = scan_available_fonts(self.test_fonts_dir)
+        result = scan_available_fonts([self.test_fonts_dir])
 
         # The font name for PublicSans-Regular.otf is "Public Sans"
         self.assertIn("Public Sans", result)
@@ -72,7 +77,7 @@ class TestFontDiscovery(unittest.TestCase):
             f.write("this is not a font")
 
         with patch("pdfrebuilder.font.utils.logger") as mock_logger:
-            result = scan_available_fonts(self.test_fonts_dir)
+            result = scan_available_fonts([self.test_fonts_dir])
 
             self.assertEqual(result, {})
             mock_logger.warning.assert_called()
@@ -87,7 +92,7 @@ class TestFontCoverage(unittest.TestCase):
         self.temp_dir = get_test_temp_dir(self.test_name)
         os.makedirs(self.temp_dir, exist_ok=True)
         self.font_path = os.path.join(self.temp_dir, "test_font.otf")
-        shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", self.font_path)
+        shutil.copy(get_fixture_path("fonts/PublicSans-Regular.otf"), self.font_path)
 
     def tearDown(self):
         """Clean up test fixtures"""
@@ -153,10 +158,11 @@ class TestFontRegistration(unittest.TestCase):
         """Test handling of Unnamed-T3 font with fallback"""
         font_name = "Unnamed-T3"
 
-        result = ensure_font_registered(self.mock_page, font_name, verbose=False)
+        with patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"):
+            result = ensure_font_registered(self.mock_page, font_name, verbose=False)
 
-        # Should fallback to default font from the mock config
-        self.assertEqual(result, "helv")
+            # Should fallback to default font from the mock config
+            self.assertEqual(result, "helv")
 
     def test_ensure_font_registered_cached_font(self):
         """Test that cached fonts are not re-registered"""
@@ -172,7 +178,7 @@ class TestFontRegistration(unittest.TestCase):
         """Test registering a local TTF font file"""
         font_name = "CustomFont"
         font_path = os.path.join(self.test_fonts_dir, f"{font_name}.ttf")
-        shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", font_path)
+        shutil.copy(get_fixture_path("fonts/PublicSans-Regular.otf"), font_path)
 
         with (
             patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),
@@ -188,7 +194,7 @@ class TestFontRegistration(unittest.TestCase):
         """Test registering a local OTF font file"""
         font_name = "CustomFont"
         font_path = os.path.join(self.test_fonts_dir, f"{font_name}.otf")
-        shutil.copy("tests/fixtures/fonts/PublicSans-Regular.otf", font_path)
+        shutil.copy(get_fixture_path("fonts/PublicSans-Regular.otf"), font_path)
 
         with (
             patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),

@@ -206,7 +206,8 @@ class TestEngineBenchmarks:
 
             try:
                 start_time = time.time()
-                recreate_pdf_from_config(config_file, output_file, engine_name)
+                engine = get_engine_selector().get_engine(engine_name)
+                engine.generate(document, output_file)
                 end_time = time.time()
 
                 duration = end_time - start_time

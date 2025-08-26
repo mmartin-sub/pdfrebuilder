@@ -388,14 +388,13 @@ class TestEnhancedFontRegistration:
     def test_register_font_with_validation_fallback(self, mock_page):
         """Test registration with fallback font usage"""
         # Mock font file not found, but fallback succeeds
-        with (
-            patch("pdfrebuilder.font.utils._find_font_file_for_name", return_value=None),
-            patch("pdfrebuilder.font.utils.STANDARD_PDF_FONTS", ["Helvetica"]),
-        ):
-            result = register_font_with_validation(page=mock_page, font_name="NonexistentFont", verbose=False)
+        with patch("pdfrebuilder.font.utils._find_font_file_for_name", return_value=None):
+            with patch("pdfrebuilder.font.utils.STANDARD_PDF_FONTS", ["Helvetica"]):
+                with patch("pdfrebuilder.font.utils.logger") as mock_logger:
+                    result = register_font_with_validation(page=mock_page, font_name="NonexistentFont", verbose=True)
 
         # Should succeed with fallback
-        assert result.success is True
+        assert result.success is True, f"Expected success, but got {result.error_message}"
         assert result.fallback_used is True
 
     @patch("pdfrebuilder.font.utils.register_font_with_validation")
