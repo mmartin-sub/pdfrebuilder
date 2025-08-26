@@ -4,6 +4,3 @@
 # Set container resource limits
 --container-options --memory=1g
 --container-options --cpus=0.2
-
-# Explicitly set the repository to fix API calls
--e GITHUB_REPOSITORY=mmartin-sub/pdfrebuilder
