@@ -1,5 +1,9 @@
+# Limit concurrent jobs to avoid race conditions
 --concurrent-jobs=1
+
+# Set container resource limits
 --container-options --memory=1g
 --container-options --cpus=0.2
-# CORRECTED: Explicitly set the repository to fix API calls
+
+# Explicitly set the repository to fix API calls
 -e GITHUB_REPOSITORY=mmartin-sub/pdfrebuilder
