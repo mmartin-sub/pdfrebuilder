@@ -77,7 +77,7 @@
 - [x] 4.2 Fix unused arguments in tests/conftest.py pytest hooks
   - Fix pytest_runtest_setup item argument (rename to _item)
   - Fix pytest_assertrepr_compare config argument (rename to _config)
-  - Fix pytest_exception_interact node and report arguments (rename to _node, _report)
+  - Fix pytest_exception_interact node and report arguments (rename to _node,_report)
   - Run pre-commit and pytest to validate fixes
   - _Requirements: 4.1, 4.2, 4.4, 5.1, 5.2, 5.3_
 

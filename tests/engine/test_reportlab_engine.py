@@ -1,15 +1,17 @@
 import os
 import unittest
+
 from pdfrebuilder.engine.reportlab_engine import ReportLabEngine
 from pdfrebuilder.models.universal_idm import (
     BoundingBox,
-    UniversalDocument,
-    PageUnit,
-    Layer,
-    DrawingElement,
     DrawingCommand,
+    DrawingElement,
+    Layer,
+    PageUnit,
+    UniversalDocument,
 )
-from tests.config import get_test_temp_dir, cleanup_test_output
+from tests.config import cleanup_test_output, get_test_temp_dir
+
 
 class TestReportLabEngine(unittest.TestCase):
     def setUp(self):
@@ -59,6 +61,7 @@ class TestReportLabEngine(unittest.TestCase):
             self.assertTrue(os.path.exists(self.output_pdf_path))
         except Exception as e:
             self.fail(f"Rendering failed with exception: {e}")
+
 
 if __name__ == "__main__":
     unittest.main()

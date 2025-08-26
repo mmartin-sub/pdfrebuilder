@@ -195,16 +195,19 @@ Unused Function Arguments (ARG001)
 ### ARG001 Violation Handling Strategy
 
 #### Pytest Hook Functions
+
 - **Pattern**: Functions like `pytest_runtest_setup`, `pytest_assertrepr_compare`, `pytest_exception_interact`
 - **Strategy**: Rename unused arguments with underscore prefix (e.g., `item` → `_item`)
 - **Rationale**: These functions must maintain specific signatures required by pytest interface
 
 #### Mock Functions in Tests
+
 - **Pattern**: Nested mock functions that need to accept arbitrary arguments
 - **Strategy**: Rename to indicate intentional non-use (`*args` → `*_args`, `**kwargs` → `**_kwargs`)
 - **Rationale**: Mock functions often need to match signatures but don't use all arguments
 
 #### Utility Functions
+
 - **Pattern**: Functions with arguments that may be used in future or for interface compliance
 - **Strategy**: Analyze usage context - rename with underscore if keeping for interface, remove if truly unused
 - **Rationale**: Maintain clean interfaces while indicating intentional design decisions

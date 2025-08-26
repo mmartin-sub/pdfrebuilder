@@ -214,7 +214,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
         # Mock pages for each page in document
         mock_pages = [Mock() for _ in range(2)]
 
-        with self.assertLogs(level='WARNING') as cm:
+        with self.assertLogs(level="WARNING") as cm:
             with patch("pdfrebuilder.font.utils.TTFont") as mock_ttfont:
 
                 def create_mock_font(font_path):
@@ -226,7 +226,8 @@ class TestDocumentFontIntegration(unittest.TestCase):
 
                     mock_cmap_table = Mock()
                     char_map = {
-                        ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")
+                        ord(c): i
+                        for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")
                     }
                     mock_cmap_table.cmap = char_map
 
@@ -290,7 +291,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
     @patch("pdfrebuilder.font.utils.TTFont")
     def test_document_with_google_fonts_integration(self, mock_ttfont, mock_download):
         """Test document processing with Google Fonts integration"""
-        with self.assertLogs(level='WARNING') as cm:
+        with self.assertLogs(level="WARNING") as cm:
             # Mock successful download for some fonts
             def download_side_effect(font_name, dest_dir):
                 if font_name in ["Roboto", "OpenSans"]:

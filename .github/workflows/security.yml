@@ -40,19 +40,22 @@ jobs:
 
       - name: Install project dependencies
         run: |
-          # Create a virtual environment and install all dev dependencies
-          # This ensures bandit, safety, etc. are correctly installed.
+          # Create a virtual environment
           uv venv
-          uv sync --dev
+          # Install all dependencies including the "dev" extras
+          uv sync --all-extras
 
       - name: Run security checks with bandit and safety
         run: |
+          # Activate the virtual environment for the following commands
+          source .venv/bin/activate
+
           # Run bandit and tell it to continue even if vulnerabilities are found
           # We will just upload the report
-          uv run bandit -r bookspine/ -f json -o bandit-report.json || true
+          bandit -r bookspine/ -f json -o bandit-report.json || true
 
           # Run safety check
-          uv run safety check || true
+          safety check || true
 
       - name: Upload security report
         uses: actions/upload-artifact@v4

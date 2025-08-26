@@ -39,6 +39,7 @@ This implementation plan transforms the current PDF Layout Extractor into `pdfre
   - Add configuration for temporary directories, output paths, engine settings
   - Document precedence: CLI args > config file > environment variables > defaults
   - Example structure:
+
     ```toml
     [paths]
     temp_dir = "/tmp/pdfrebuilder"
@@ -63,6 +64,7 @@ This implementation plan transforms the current PDF Layout Extractor into `pdfre
     validate_paths = true
     secure_temp_files = true
     ```
+
   - _Requirements: 7.1, 7.2, 13.4_
 
 - [ ] 1.5 Implement environment-aware configuration defaults
@@ -443,18 +445,21 @@ This implementation plan transforms the current PDF Layout Extractor into `pdfre
 ## Implementation Notes
 
 ### Migration Strategy
+
 - Implement new components alongside existing code initially
 - Use feature flags to gradually switch to new implementations
 - Maintain backward compatibility throughout the process
 - Provide clear migration path for existing users
 
 ### Testing Strategy
+
 - Test each component in isolation before integration
 - Use temporary directories and mock objects for unit tests
 - Test with real PDF files for integration tests
 - Validate on multiple platforms and Python versions
 
 ### Rollout Plan
+
 1. Core infrastructure (config, logging, resources)
 2. Library API implementation
 3. CLI interface modernization

@@ -266,7 +266,9 @@ class TestFontFallbackChain(unittest.TestCase):
         mock_download.return_value = None
 
         # 3. Create a local font that does cover the text
-        shutil.copy(get_fixture_path("fonts/PublicSans-Regular.otf"), os.path.join(self.test_fonts_dir, "PublicSans.ttf"))
+        shutil.copy(
+            get_fixture_path("fonts/PublicSans-Regular.otf"), os.path.join(self.test_fonts_dir, "PublicSans.ttf")
+        )
 
         # 4. Should fallback to the local font
         with (

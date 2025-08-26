@@ -83,6 +83,7 @@ dev = [
     # Core dev tools (same style as project 1)
     "ruff>=0.12.9",
     "bandit",
+    "safety",
     "detect-secrets",
     "pre-commit>=3.0.0",
 
