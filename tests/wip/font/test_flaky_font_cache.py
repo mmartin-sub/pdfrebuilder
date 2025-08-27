@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 import pytest
+
 from pdfrebuilder.font.utils import (
     _FONT_DOWNLOAD_ATTEMPTED,
     _FONT_REGISTRATION_CACHE,

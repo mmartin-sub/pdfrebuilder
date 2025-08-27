@@ -48,7 +48,6 @@ class TestConfigurationSystem:
         # Reset to original value
         set_nested_config_value("engines.input.wand.density", 300)
 
-
     def test_engine_defaults(self):
         """Test that engine defaults are properly configured"""
         # Input engine default

@@ -12,8 +12,6 @@ from typing import Any
 from pdfrebuilder.engine.config_loader import load_engine_config
 from pdfrebuilder.engine.pdf_engine_selector import get_default_pdf_engine, get_pdf_engine
 
-from .pdf_engine import FitzPDFEngine
-
 logger = logging.getLogger(__name__)
 
 

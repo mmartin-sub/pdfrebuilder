@@ -15,6 +15,7 @@ import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+
 from pdfrebuilder.font.font_validator import FontValidator
 from pdfrebuilder.font.utils import (
     _FONT_DOWNLOAD_ATTEMPTED,

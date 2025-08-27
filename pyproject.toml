@@ -9,7 +9,7 @@ name = "pdfrebuilder"
 dynamic = ["version"] # use VCS for version like project 1
 description = "Extract and rebuild PDF layouts with high fidelity"
 readme = "README.md"
-requires-python = ">=3.10" # align with project 1; bump if you need 3.11
+requires-python = ">=3.10"
 authors = [
     { name = "Michel Martin", email = "172776424+mmartin-sub@users.noreply.github.com" },
 ]

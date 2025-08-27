@@ -8,12 +8,12 @@ The `wand` engine is designed to handle a wide variety of image formats, with a 
 
 ### Key Capabilities
 
-*   **Broad Format Support:** Process a wide range of image formats, including PSD, PSB, TIFF, PNG, JPEG, GIF, and BMP.
-*   **Layer Extraction:** Extract individual layers from PSD files, preserving their hierarchy, blend modes, and opacity.
-*   **Metadata Extraction:** Extract rich metadata from images, including EXIF and Photoshop-specific information.
-*   **Optional OCR:** Use Tesseract OCR to extract text from rasterized text layers.
-*   **Image Enhancement:** Apply various image enhancements, such as auto-level, auto-gamma, sharpening, and noise reduction.
-*   **Color Management:** Ensure consistent color reproduction with color profile management.
+* **Broad Format Support:** Process a wide range of image formats, including PSD, PSB, TIFF, PNG, JPEG, GIF, and BMP.
+* **Layer Extraction:** Extract individual layers from PSD files, preserving their hierarchy, blend modes, and opacity.
+* **Metadata Extraction:** Extract rich metadata from images, including EXIF and Photoshop-specific information.
+* **Optional OCR:** Use Tesseract OCR to extract text from rasterized text layers.
+* **Image Enhancement:** Apply various image enhancements, such as auto-level, auto-gamma, sharpening, and noise reduction.
+* **Color Management:** Ensure consistent color reproduction with color profile management.
 
 ## Installation
 
@@ -24,17 +24,20 @@ The `wand` engine is an optional dependency. To use it, you need to install the 
 ImageMagick is a system-level dependency. You need to install it on your operating system before installing the `wand` Python library.
 
 **On macOS (using Homebrew):**
+
 ```bash
 brew install imagemagick
 ```
 
 **On Debian/Ubuntu:**
+
 ```bash
 sudo apt-get update
 sudo apt-get install libmagickwand-dev
 ```
 
 **On CentOS/RHEL:**
+
 ```bash
 sudo yum install ImageMagick-devel
 ```
@@ -97,6 +100,7 @@ To use this feature, you need to install `pytesseract` and the Tesseract OCR eng
 Follow the installation instructions for your operating system on the [Tesseract OCR website](https://github.com/tesseract-ocr/tesseract).
 
 **2. Install the `pytesseract` library:**
+
 ```bash
 pip install pytesseract
 ```

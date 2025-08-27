@@ -215,4 +215,3 @@ class TestSettings:
         # Verify it was reset
         reset_value = get_nested_config_value("validation.ssim_threshold")
         assert reset_value == original_value
-
