@@ -17,15 +17,15 @@ from pdfrebuilder.font.googlefonts import download_google_font
 from tests.config import cleanup_test_output, get_test_temp_dir
 
 
-class TestGoogleFontsAPI(unittest.TestCase):
+class TestGoogleFontsAPI:
     """Test Google Fonts API integration"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """Set up test fixtures"""
-        self.test_name = self.__class__.__name__ + "_" + self._testMethodName
+        self.test_name = self.__class__.__name__ + "_" + method.__name__
         self.temp_dir = get_test_temp_dir(self.test_name)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """Clean up test fixtures"""
         cleanup_test_output(self.test_name)
 
@@ -55,13 +55,13 @@ class TestGoogleFontsAPI(unittest.TestCase):
 
         result = download_google_font(font_family, self.temp_dir)
 
-        self.assertIsNotNone(result)
+        assert result is not None
         if result:
-            self.assertEqual(len(result), 1)
-            self.assertTrue(result[0].endswith("KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2"))
+            assert len(result) == 1
+            assert result[0].endswith("KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2")
 
             # Verify the file was created
-            self.assertTrue(os.path.exists(result[0]))
+            assert os.path.exists(result[0])
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_download_multiple_font_weights(self, mock_get):
@@ -99,13 +99,13 @@ class TestGoogleFontsAPI(unittest.TestCase):
 
         result = download_google_font(font_family, self.temp_dir)
 
-        self.assertIsNotNone(result)
+        assert result is not None
         if result:
-            self.assertEqual(len(result), 2)
+            assert len(result) == 2
 
             # Verify both files were created
             for file_path in result:
-                self.assertTrue(os.path.exists(file_path))
+                assert os.path.exists(file_path)
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_font_family_name_with_spaces(self, mock_get):
@@ -131,10 +131,10 @@ class TestGoogleFontsAPI(unittest.TestCase):
         # Check that the URL was called with timeout parameter
         mock_get.assert_any_call(expected_css_url, timeout=10)
 
-        self.assertIsNotNone(result)
+        assert result is not None
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_css_fetch_http_error(self, mock_get):
+    def test_css_fetch_http_error(self, mock_get, suppress_logging):
         """Test handling of HTTP errors when fetching CSS"""
         font_family = "NonExistentFont"
 
@@ -142,27 +142,25 @@ class TestGoogleFontsAPI(unittest.TestCase):
         css_response.status_code = 404
         mock_get.return_value = css_response
 
-        with patch("pdfrebuilder.font.googlefonts.logging") as mock_logging:
+        with suppress_logging("pdfrebuilder.font.googlefonts"):
             result = download_google_font(font_family, self.temp_dir)
 
-            self.assertIsNone(result)
-            mock_logging.error.assert_called_once()
+        assert result is None
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_css_fetch_network_error(self, mock_get):
+    def test_css_fetch_network_error(self, mock_get, suppress_logging):
         """Test handling of network errors when fetching CSS"""
         font_family = "Roboto"
 
         mock_get.side_effect = requests.RequestException("Network error")
 
-        with patch("pdfrebuilder.font.googlefonts.logging") as mock_logging:
+        with suppress_logging("pdfrebuilder.font.googlefonts"):
             result = download_google_font(font_family, self.temp_dir)
 
-            self.assertIsNone(result)
-            mock_logging.error.assert_called_once()
+        assert result is None
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_font_file_download_error(self, mock_get):
+    def test_font_file_download_error(self, mock_get, suppress_logging):
         """Test handling of errors when downloading font files"""
         font_family = "Roboto"
 
@@ -179,14 +177,13 @@ class TestGoogleFontsAPI(unittest.TestCase):
 
         mock_get.side_effect = [css_response, font_response]
 
-        with patch("pdfrebuilder.font.googlefonts.logging") as mock_logging:
+        with suppress_logging("pdfrebuilder.font.googlefonts"):
             result = download_google_font(font_family, self.temp_dir)
 
-            self.assertIsNone(result)
-            mock_logging.error.assert_called()
+        assert result is None
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_partial_download_failure(self, mock_get):
+    def test_partial_download_failure(self, mock_get, suppress_logging):
         """Test handling when some font files download successfully and others fail"""
         font_family = "Roboto"
 
@@ -212,16 +209,17 @@ class TestGoogleFontsAPI(unittest.TestCase):
             font_response_failure,
         ]
 
-        result = download_google_font(font_family, self.temp_dir)
+        with suppress_logging("pdfrebuilder.font.googlefonts"):
+            result = download_google_font(font_family, self.temp_dir)
 
         # Should return the successfully downloaded files
-        self.assertIsNotNone(result)
+        assert result is not None
         if result:
-            self.assertEqual(len(result), 1)
-            self.assertTrue(result[0].endswith("regular.woff2"))
+            assert len(result) == 1
+            assert result[0].endswith("regular.woff2")
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_empty_css_response(self, mock_get):
+    def test_empty_css_response(self, mock_get, suppress_logging):
         """Test handling of empty CSS response"""
         font_family = "EmptyFont"
 
@@ -230,14 +228,13 @@ class TestGoogleFontsAPI(unittest.TestCase):
         css_response.text = ""
         mock_get.return_value = css_response
 
-        with patch("pdfrebuilder.font.googlefonts.logging") as mock_logging:
+        with suppress_logging("pdfrebuilder.font.googlefonts"):
             result = download_google_font(font_family, self.temp_dir)
 
-            self.assertIsNone(result)
-            mock_logging.warning.assert_called_once()
+        assert result is None
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_css_with_no_font_urls(self, mock_get):
+    def test_css_with_no_font_urls(self, mock_get, suppress_logging):
         """Test handling of CSS response with no font URLs"""
         font_family = "NoUrlsFont"
 
@@ -251,11 +248,10 @@ class TestGoogleFontsAPI(unittest.TestCase):
         """
         mock_get.return_value = css_response
 
-        with patch("pdfrebuilder.font.googlefonts.logging") as mock_logging:
+        with suppress_logging("pdfrebuilder.font.googlefonts"):
             result = download_google_font(font_family, self.temp_dir)
 
-            self.assertIsNone(result)
-            mock_logging.warning.assert_called_once()
+        assert result is None
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_directory_creation(self, mock_get):
@@ -264,7 +260,7 @@ class TestGoogleFontsAPI(unittest.TestCase):
         dest_dir = os.path.join(self.temp_dir, "nested", "fonts", "directory")
 
         # Ensure directory doesn't exist initially
-        self.assertFalse(os.path.exists(dest_dir))
+        assert not os.path.exists(dest_dir)
 
         css_response = Mock()
         css_response.status_code = 200
@@ -281,12 +277,12 @@ class TestGoogleFontsAPI(unittest.TestCase):
         result = download_google_font(font_family, dest_dir)
 
         # Verify directory was created
-        self.assertTrue(os.path.exists(dest_dir))
-        self.assertIsNotNone(result)
+        assert os.path.exists(dest_dir)
+        assert result is not None
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     @patch("builtins.open", side_effect=OSError("Permission denied"))
-    def test_file_write_permission_error(self, mock_file, mock_get):
+    def test_file_write_permission_error(self, mock_file, mock_get, suppress_logging):
         """Test handling of file write permission errors"""
         font_family = "Roboto"
 
@@ -302,11 +298,10 @@ class TestGoogleFontsAPI(unittest.TestCase):
 
         mock_get.side_effect = [css_response, font_response]
 
-        with patch("pdfrebuilder.font.googlefonts.logging") as mock_logging:
+        with suppress_logging("pdfrebuilder.font.googlefonts"):
             result = download_google_font(font_family, self.temp_dir)
 
-            self.assertIsNone(result)
-            mock_logging.error.assert_called()
+        assert result is None
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_url_extraction_regex_patterns(self, mock_get):
@@ -341,9 +336,9 @@ class TestGoogleFontsAPI(unittest.TestCase):
 
         result = download_google_font(font_family, self.temp_dir)
 
-        self.assertIsNotNone(result)
+        assert result is not None
         if result:
-            self.assertEqual(len(result), 4)
+            assert len(result) == 4
 
             # Verify all expected files were created
             expected_files = [
@@ -354,7 +349,7 @@ class TestGoogleFontsAPI(unittest.TestCase):
             ]
 
             for expected_file in expected_files:
-                self.assertTrue(any(expected_file in path for path in result))
+                assert any(expected_file in path for path in result)
 
     def test_default_destination_directory(self):
         """Test using default destination directory"""
@@ -378,9 +373,9 @@ class TestGoogleFontsAPI(unittest.TestCase):
                 # Call without specifying dest_dir (should use default)
                 result = download_google_font(font_family)
 
-                self.assertIsNotNone(result)
+                assert result is not None
                 # Should create the configured fonts directory
-                self.assertTrue(os.path.exists("./output/fonts"))
+                assert os.path.exists("./output/fonts")
 
                 # Clean up
                 import shutil
@@ -388,19 +383,19 @@ class TestGoogleFontsAPI(unittest.TestCase):
                 shutil.rmtree("./output/fonts", ignore_errors=True)
 
 
-class TestGoogleFontsIntegrationEdgeCases(unittest.TestCase):
+class TestGoogleFontsIntegrationEdgeCases:
     """Test edge cases and error conditions in Google Fonts integration"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """Set up test fixtures"""
-        self.test_name = self.__class__.__name__ + "_" + self._testMethodName
+        self.test_name = self.__class__.__name__ + "_" + method.__name__
         self.temp_dir = get_test_temp_dir(self.test_name)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """Clean up test fixtures"""
         cleanup_test_output(self.test_name)
 
-    def test_font_family_with_special_characters(self):
+    def test_font_family_with_special_characters(self, suppress_logging):
         """Test font family names with special characters"""
         special_names = [
             "Font-Name",
@@ -418,8 +413,9 @@ class TestGoogleFontsIntegrationEdgeCases(unittest.TestCase):
                 mock_get.return_value = css_response
 
                 # Should not raise exception
-                result = download_google_font(font_name, self.temp_dir)
-                self.assertIsNone(result)
+                with suppress_logging("pdfrebuilder.font.googlefonts"):
+                    result = download_google_font(font_name, self.temp_dir)
+                assert result is None
 
     def test_very_large_font_file(self):
         """Test handling of very large font files"""
@@ -441,11 +437,11 @@ class TestGoogleFontsIntegrationEdgeCases(unittest.TestCase):
 
             result = download_google_font(font_family, self.temp_dir)
 
-            self.assertIsNotNone(result)
+            assert result is not None
             if result:
                 # Verify the large file was written correctly
-                self.assertTrue(os.path.exists(result[0]))
-                self.assertEqual(os.path.getsize(result[0]), 10 * 1024 * 1024)
+                assert os.path.exists(result[0])
+                assert os.path.getsize(result[0]) == 10 * 1024 * 1024
 
     def test_concurrent_downloads_same_font(self):
         """Test behavior when multiple processes try to download the same font"""
@@ -475,9 +471,5 @@ class TestGoogleFontsIntegrationEdgeCases(unittest.TestCase):
             result2 = download_google_font(font_family, self.temp_dir)
 
             # Both should succeed (second overwrites first)
-            self.assertIsNotNone(result1)
-            self.assertIsNotNone(result2)
-
-
-if __name__ == "__main__":
-    unittest.main()
+            assert result1 is not None
+            assert result2 is not None

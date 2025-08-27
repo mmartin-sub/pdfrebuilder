@@ -28,6 +28,7 @@ from pdfrebuilder.font.utils import (
     get_font_registration_tracker,
     initialize_font_fallback_system,
 )
+from tests.fixtures.logging import suppress_logging
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from config import cleanup_test_output, get_test_fonts_dir, get_test_reports_dir, get_test_temp_dir, test_config

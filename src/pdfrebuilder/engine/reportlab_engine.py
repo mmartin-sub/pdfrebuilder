@@ -344,20 +344,33 @@ class ReportLabEngine(PDFRenderingEngine):
                 else:
                     raise ValueError("Config must be a dict or UniversalDocument")
 
+                # Get page size from the first page or use default
+                page_size = letter  # Default
+                if document.document_structure and isinstance(document.document_structure[0], PageUnit):
+                    page_size = document.document_structure[0].size
+
+                # Create canvas
+                c = canvas.Canvas(output_pdf_path, pagesize=page_size)
+
                 # Count pages and elements for metrics
                 page_count = 0
                 element_count = 0
 
                 # Process each page
-                for page_unit in document.document_structure:
+                for i, page_unit in enumerate(document.document_structure):
                     if isinstance(page_unit, PageUnit):
                         page_count += 1
                         for layer in page_unit.layers:
                             element_count += len(layer.content)
-                        self._render_page_canvas(output_pdf_path, page_unit, document)
+                        self._render_page_on_canvas(c, page_unit, document)
+                        if i < len(document.document_structure) - 1:
+                            c.showPage()
                     else:
                         logger.warning(f"Skipping non-page unit: {type(page_unit)}")
                         metrics["warnings"].append(f"Skipped non-page unit: {type(page_unit)}")
+
+                # Save the canvas
+                c.save()
 
                 # Update metrics
                 metrics["page_count"] = page_count
@@ -391,15 +404,12 @@ class ReportLabEngine(PDFRenderingEngine):
 
         return doc
 
-    def _render_page_canvas(self, output_path: str, page_unit: PageUnit, document: UniversalDocument) -> None:
-        """Render a single page using ReportLab canvas."""
+    def _render_page_on_canvas(self, c: canvas.Canvas, page_unit: PageUnit, document: UniversalDocument) -> None:
+        """Render a single page on a ReportLab canvas."""
         # Get page size
         page_size: tuple[float, float] = (600.0, 400.0)  # Default
         if page_unit.size:
             page_size = page_unit.size
-
-        # Create canvas
-        c = canvas.Canvas(output_path, pagesize=page_size)
 
         # Process layers in z-order (bottom to top)
         layers = sorted(
@@ -462,9 +472,6 @@ class ReportLabEngine(PDFRenderingEngine):
 
         except Exception as e:
             logger.error(f"Error rendering drawing element {element.id}: {e}")
-
-        # Save the canvas
-        c.save()
 
     def _render_text_element_canvas(
         self, c: canvas.Canvas, element: TextElement, layer: Layer, page_size: tuple
