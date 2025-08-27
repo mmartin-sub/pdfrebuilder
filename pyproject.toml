@@ -159,9 +159,11 @@ dependencies = [
     "sphinx-autobuild>=2021.3.14",
     "sphinx-autodoc-typehints",
     "myst-parser",
+    "linkify-it-py",
     "sphinx-copybutton",
     "sphinxcontrib-mermaid",
     "sphinx-design",
+    "pdfrebuilder[all]",
 ]
 
 [tool.hatch.envs.docs.scripts]
@@ -175,6 +177,7 @@ workflow = ["docs:validate", "docs:test", "docs:build"]
 
 [tool.hatch.envs.default.scripts]
 check = ["lint-check", "format-check", "types-pyright", "security"]
+post-install = "dotenvx-postinstall"
 test = "pytest {args:--ignore=tests/wip tests/}"
 test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src {args:--ignore=tests/wip tests/}"
 

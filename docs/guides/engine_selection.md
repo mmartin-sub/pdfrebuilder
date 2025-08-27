@@ -19,22 +19,23 @@ For PDF documents, you have one primary option:
 - **Use when**: Processing any PDF document
 
 ```python
-# Configuration
-"engines": {
-    "input": {
-        "fitz": {
-            "extract_text": True,
-            "extract_images": True,
-            "extract_drawings": True,
-            "extract_raw_backgrounds": False
-        }
-    }
-}
+# Example configuration for the fitz engine in your pdfrebuilder.toml
+[engines.input.fitz]
+extract_text = true
+extract_images = true
+extract_drawings = true
+extract_raw_backgrounds = false
 ```
 
 ### PSD Documents
 
-For PSD documents, you have two options:
+For PSD documents, there are two available input engines: `psd-tools` and `wand`. While both can process PSD files, the **`wand` engine is the recommended and more modern option**, offering broader format support and more advanced features.
+
+#### psd-tools Engine (Legacy)
+
+- **Best for**: Basic PSD processing when you cannot install system dependencies for `wand`.
+- **Strengths**: Pure Python, no external dependencies.
+- **Use when**: You need a simple, self-contained solution for PSD files and cannot install ImageMagick.
 
 #### psd-tools Engine
 
@@ -43,17 +44,12 @@ For PSD documents, you have two options:
 - **Use when**: You need reliable PSD processing without external dependencies
 
 ```python
-# Configuration
-"engines": {
-    "input": {
-        "psd_tools": {
-            "extract_text_layers": True,
-            "extract_image_layers": True,
-            "extract_shape_layers": True,
-            "preserve_layer_effects": True
-        }
-    }
-}
+# Example configuration for the psd-tools engine in your pdfrebuilder.toml
+[engines.input.psd_tools]
+extract_text_layers = true
+extract_image_layers = true
+extract_shape_layers = true
+preserve_layer_effects = true
 ```
 
 #### Wand Engine (ImageMagick)
@@ -63,20 +59,17 @@ For PSD documents, you have two options:
 - **Use when**: You need advanced image processing or support for multiple formats
 - **Requirements**: ImageMagick system installation
 
+For more detailed information on the `wand` engine, see the [Image Processing with Wand](./image-processing-wand.md) guide.
+
 ```python
-# Configuration
-"engines": {
-    "input": {
-        "wand": {
-            "density": 300,
-            "use_ocr": False,
-            "tesseract_lang": "eng",
-            "image_format": "png",
-            "color_management": True,
-            "memory_limit_mb": 1024
-        }
-    }
-}
+# Example configuration for the wand engine in your pdfrebuilder.toml
+[engines.input.wand]
+density = 300
+use_ocr = false
+tesseract_lang = "eng"
+image_format = "png"
+color_management = true
+memory_limit_mb = 1024
 ```
 
 ### Decision Matrix: PSD Engines
@@ -102,18 +95,13 @@ For PDF output, you have two main options:
 - **Use when**: Text-heavy documents, precise layout requirements, file size matters
 
 ```python
-# Configuration
-"engines": {
-    "output": {
-        "reportlab": {
-            "compression": 1,
-            "page_mode": "portrait",
-            "embed_fonts": True,
-            "color_space": "RGB",
-            "output_dpi": 300
-        }
-    }
-}
+# Example configuration for the reportlab engine in your pdfrebuilder.toml
+[engines.output.reportlab]
+compression = 1
+page_mode = "portrait"
+embed_fonts = true
+color_space = "RGB"
+output_dpi = 300
 ```
 
 ### PyMuPDF Engine
@@ -123,17 +111,12 @@ For PDF output, you have two main options:
 - **Use when**: Graphics-heavy documents, performance is critical, using templates
 
 ```python
-# Configuration
-"engines": {
-    "output": {
-        "pymupdf": {
-            "overlay_mode": False,
-            "annotation_mode": "ignore",
-            "compression": "flate",
-            "embed_fonts": True
-        }
-    }
-}
+# Example configuration for the pymupdf engine in your pdfrebuilder.toml
+[engines.output.pymupdf]
+overlay_mode = false
+annotation_mode = "ignore"
+compression = "flate"
+embed_fonts = true
 ```
 
 ### Decision Matrix: Output Engines

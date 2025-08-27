@@ -65,18 +65,7 @@ def recreate_pdf_from_config(
 
     except Exception as e:
         logger.error(f"Failed to generate PDF from config {config_path}: {e}")
-        # Try fallback to legacy engine
-        try:
-            logger.info("Attempting fallback to legacy engine...")
-            with open(config_path) as f:
-                config = json.load(f)
-
-            engine = FitzPDFEngine()
-            engine.generate(config, output_pdf_path, original_pdf_for_template)
-            logger.info(f"Successfully generated PDF using fallback engine: {output_pdf_path}")
-        except Exception as fallback_error:
-            logger.error(f"Fallback engine also failed: {fallback_error}")
-            raise e  # Raise the original error
+        raise e
 
 
 def recreate_pdf_with_engine(

@@ -9,6 +9,7 @@ This section contains comprehensive guides for using the Multi-Format Document E
    installation
    install-dev
    getting-started
+   image-processing-wand
    advanced-usage
    batch-processing
    visual-validation

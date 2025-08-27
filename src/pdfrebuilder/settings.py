@@ -51,6 +51,8 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+# The 14 standard PDF fonts are guaranteed to be available with any PDF viewer/engine.
+# They do not need to be embedded in the PDF file.
 STANDARD_PDF_FONTS = [
     "helv",
     "Helvetica",

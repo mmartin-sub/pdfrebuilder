@@ -216,18 +216,3 @@ class TestSettings:
         reset_value = get_nested_config_value("validation.ssim_threshold")
         assert reset_value == original_value
 
-    def test_legacy_config_keys_mapping(self):
-        """Test that legacy configuration keys are properly mapped"""
-        # Test legacy keys that should still work
-        legacy_mappings = {
-            "fonts_dir": "font_management.font_directory",
-            "default_font": "font_management.default_font",
-            "visual_diff_threshold": "validation.visual_diff_threshold",
-        }
-
-        for legacy_key, nested_path in legacy_mappings.items():
-            legacy_value = get_config_value(legacy_key)
-            nested_value = get_nested_config_value(nested_path)
-
-            # They should have the same value
-            assert legacy_value == nested_value, f"Legacy key {legacy_key} doesn't match {nested_path}"

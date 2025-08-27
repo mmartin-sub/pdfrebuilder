@@ -1,5 +1,7 @@
 # generate_debug_pdf_layers
 
+**Engine Dependency:** The debug PDF generation functionality is currently dependent on the **PyMuPDF (`fitz`)** engine. It uses `fitz` to create the debug PDF, draw shapes, and render text.
+
 ## Functions
 
 ### _create_summarized_json(data_dict)

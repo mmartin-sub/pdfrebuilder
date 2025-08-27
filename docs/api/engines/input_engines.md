@@ -61,22 +61,30 @@ class DocumentParser(ABC):
 #### Usage Example
 
 ```python
-from src.engine.document_parser import PDFParser
+from pdfrebuilder.engine.document_parser import PDFParser
 
+# Initialize the parser
 parser = PDFParser()
+
+# Check if the parser can handle the file
 if parser.can_parse("document.pdf"):
-    document = parser.parse("document.pdf", {
+    # Define extraction flags
+    flags = {
         "extract_text": True,
         "extract_images": True,
         "extract_drawings": True
-    })
+    }
+    # Parse the document
+    document = parser.parse("document.pdf", extraction_flags=flags)
 ```
 
-### PSD Engine (psd-tools)
+### PSD Engine (psd-tools) (Legacy)
 
 **Engine Name**: `psd-tools`
 **Supported Formats**: PSD, PSB
 **Implementation**: `PSDParser`
+
+**Note:** While `psd-tools` is available for processing PSD files, the **`wand` engine is the recommended and more modern option**. It offers broader format support and more advanced features.
 
 #### Configuration
 
@@ -105,22 +113,28 @@ if parser.can_parse("document.pdf"):
 #### Usage Example
 
 ```python
-from src.engine.document_parser import PSDParser
+from pdfrebuilder.engine.document_parser import PSDParser
 
+# Initialize the parser
 parser = PSDParser()
+
+# Check if the parser can handle the file
 if parser.can_parse("design.psd"):
-    document = parser.parse("design.psd", {
+    # Define extraction flags
+    flags = {
         "extract_text_layers": True,
         "extract_image_layers": True,
         "extract_shape_layers": True
-    })
+    }
+    # Parse the document
+    document = parser.parse("design.psd", extraction_flags=flags)
 ```
 
 ### Wand Engine (Python-Wand/ImageMagick)
 
 **Engine Name**: `wand`
-**Supported Formats**: PSD, PSB, TIFF, AI, XCF, SVG
-**Implementation**: `WandParser` (planned)
+**Supported Formats**: PSD, PSB, TIFF, AI, XCF, SVG, and other formats supported by ImageMagick.
+**Implementation**: `WandParser`
 
 #### Configuration
 
@@ -150,14 +164,20 @@ if parser.can_parse("design.psd"):
 #### Usage Example
 
 ```python
-from src.engine.document_parser import WandParser
+from pdfrebuilder.engine.document_parser import WandParser
 
+# Initialize the parser
 parser = WandParser()
+
+# Check if the parser can handle the file
 if parser.can_parse("design.psd"):
-    document = parser.parse("design.psd", {
+    # Define extraction flags
+    flags = {
         "use_ocr": True,
         "tesseract_lang": "eng"
-    })
+    }
+    # Parse the document
+    document = parser.parse("design.psd", extraction_flags=flags)
 ```
 
 ## Engine Selection

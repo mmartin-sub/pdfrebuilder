@@ -280,7 +280,7 @@ The `manual_overrides.json5` file allows manual corrections and customizations:
 
   // Global settings
   "global_settings": {
-    "default_font": "Arial",
+    "default_font": "Noto Sans",
     "default_font_size": 12,
     "preserve_original_colors": true
   }
@@ -327,7 +327,7 @@ Map problematic or missing fonts to available alternatives:
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `default_font` | string | Default font for missing fonts |
+| `default_font` | string | Default font for missing fonts. "Noto Sans" is a good choice. |
 | `default_font_size` | number | Default font size |
 | `preserve_original_colors` | boolean | Whether to preserve original colors |
 | `normalize_text_spacing` | boolean | Global text spacing normalization |
@@ -353,11 +353,11 @@ fonts/
 
 ### Font Resolution Priority
 
-1. **Standard PDF Fonts**: Built-in fonts (helv, cour, tiro, etc.)
-2. **Manual Fonts**: Fonts in `fonts/manual/` directory
-3. **Auto Fonts**: Fonts in `fonts/auto/` directory
-4. **Google Fonts**: Automatic download to `auto/` directory
-5. **Fallback**: Default font from configuration
+1. Standard PDF Fonts: Built-in fonts (helv, cour, tiro, etc.)
+2. Manual Fonts: Fonts in `fonts/manual/` directory
+3. Auto Fonts: Fonts in `fonts/auto/` directory
+4. Google Fonts: Automatic download to `auto/` directory
+5. Fallback: Default font from configuration
 
 ### Font Configuration in Manual Overrides
 
@@ -487,7 +487,7 @@ CONFIG = {
     "debug_pdf": lambda: output_config.get_output_path("debug_layers.pdf"),
 
     # Font settings
-    "default_font": "helv",
+    "default_font": "Noto Sans",
     "fonts_dir": "fonts",
     "downloaded_fonts_dir": "fonts/auto",
     "manual_fonts_dir": "fonts/manual",
@@ -590,7 +590,7 @@ debug_pdf_path = get_config_value('debug_pdf')
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `default_font` | string | `"helv"` | Default fallback font |
+| `default_font` | string | `"Noto Sans"` | Default fallback font |
 | `fonts_dir` | string | `"fonts"` | Base fonts directory |
 | `downloaded_fonts_dir` | string | `"fonts/auto"` | Auto-downloaded fonts directory |
 | `manual_fonts_dir` | string | `"fonts/manual"` | Manually added fonts directory |
@@ -707,7 +707,7 @@ configure_logging(
 
 ## Environment Variables
 
-The system recognizes these environment variables:
+The system recognizes these environment variables. For more information on how to manage environment variables and secrets, see the [Secrets Management](../guides/secrets-management.md) guide.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -851,7 +851,7 @@ migrate_config("old_config.json", "new_config.json")
   // Basic configuration for simple PDF processing
   "use_original_as_template": false,
   "global_settings": {
-    "default_font": "Arial",
+    "default_font": "Noto Sans",
     "default_font_size": 12,
     "preserve_original_colors": true,
     "normalize_text_spacing": true
@@ -885,7 +885,7 @@ migrate_config("old_config.json", "new_config.json")
   // Configuration optimized for batch processing
   "use_original_as_template": false,
   "global_settings": {
-    "default_font": "Arial",
+    "default_font": "Noto Sans",
     "normalize_text_spacing": true,
     "optimize_for_speed": true,
     "cache_fonts": true

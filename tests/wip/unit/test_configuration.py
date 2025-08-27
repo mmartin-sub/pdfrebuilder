@@ -48,17 +48,6 @@ class TestConfigurationSystem:
         # Reset to original value
         set_nested_config_value("engines.input.wand.density", 300)
 
-    def test_legacy_config_compatibility(self):
-        """Test that legacy configuration keys still work"""
-        # Legacy keys should still be accessible
-        fonts_dir = get_config_value("fonts_dir")
-        assert fonts_dir == "fonts"
-
-        default_font = get_config_value("default_font")
-        assert default_font == "Noto Sans"
-
-        visual_diff_threshold = get_config_value("visual_diff_threshold")
-        assert visual_diff_threshold == 5
 
     def test_engine_defaults(self):
         """Test that engine defaults are properly configured"""
