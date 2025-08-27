@@ -438,7 +438,7 @@ class TestDocumentFontIntegration(unittest.TestCase):
                                     result = ensure_font_registered(
                                         mock_page,
                                         font_name,
-                                        verbose=False,
+                                        verbose=True,  # Enable logging for this test
                                         text=text_content,
                                     )
 

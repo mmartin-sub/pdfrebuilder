@@ -138,14 +138,13 @@ class TestGoogleFontsAPI:
         """Test handling of HTTP errors when fetching CSS"""
         font_family = "NonExistentFont"
 
-        css_response = Mock()
-        css_response.status_code = 404
-        mock_get.return_value = css_response
+        mock_get.side_effect = requests.exceptions.RequestException("HTTP error")
 
         with suppress_logging("pdfrebuilder.font.googlefonts"):
             result = download_google_font(font_family, self.temp_dir)
 
         assert result is None
+        assert mock_get.call_count == 3
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_css_fetch_network_error(self, mock_get, suppress_logging):
@@ -158,65 +157,53 @@ class TestGoogleFontsAPI:
             result = download_google_font(font_family, self.temp_dir)
 
         assert result is None
+        assert mock_get.call_count == 3
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_font_file_download_error(self, mock_get, suppress_logging):
         """Test handling of errors when downloading font files"""
         font_family = "Roboto"
 
-        # Mock successful CSS response
         css_response = Mock()
         css_response.status_code = 200
-        css_response.text = """
-        src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2);
-        """
+        css_response.text = "src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2);"
+        css_response.raise_for_status = Mock()
 
-        # Mock failed font file response
-        font_response = Mock()
-        font_response.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
-
-        mock_get.side_effect = [css_response, font_response]
+        mock_get.side_effect = [css_response] + [requests.exceptions.RequestException("Download failed")] * 3
 
         with suppress_logging("pdfrebuilder.font.googlefonts"):
             result = download_google_font(font_family, self.temp_dir)
 
-        assert result is None
+        assert result == []
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_partial_download_failure(self, mock_get, suppress_logging):
         """Test handling when some font files download successfully and others fail"""
         font_family = "Roboto"
 
-        # Mock CSS response with multiple font URLs
         css_response = Mock()
         css_response.status_code = 200
         css_response.text = """
         src: url(https://fonts.gstatic.com/s/roboto/v30/regular.woff2);
         src: url(https://fonts.gstatic.com/s/roboto/v30/bold.woff2);
         """
+        css_response.raise_for_status = Mock()
 
-        # Mock responses: first succeeds, second fails
         font_response_success = Mock()
         font_response_success.content = b"fake font data"
         font_response_success.raise_for_status = Mock()
 
-        font_response_failure = Mock()
-        font_response_failure.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
-
         mock_get.side_effect = [
             css_response,
             font_response_success,
-            font_response_failure,
-        ]
+        ] + [requests.exceptions.RequestException("Download failed")] * 3
 
         with suppress_logging("pdfrebuilder.font.googlefonts"):
             result = download_google_font(font_family, self.temp_dir)
 
-        # Should return the successfully downloaded files
         assert result is not None
-        if result:
-            assert len(result) == 1
-            assert result[0].endswith("regular.woff2")
+        assert len(result) == 1
+        assert result[0].endswith("regular.woff2")
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_empty_css_response(self, mock_get, suppress_logging):
@@ -264,9 +251,8 @@ class TestGoogleFontsAPI:
 
         css_response = Mock()
         css_response.status_code = 200
-        css_response.text = """
-        src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2);
-        """
+        css_response.text = "src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2);"
+        css_response.raise_for_status = Mock()
 
         font_response = Mock()
         font_response.content = b"fake font data"
@@ -288,20 +274,19 @@ class TestGoogleFontsAPI:
 
         css_response = Mock()
         css_response.status_code = 200
-        css_response.text = """
-        src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2);
-        """
+        css_response.text = "src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2);"
+        css_response.raise_for_status = Mock()
 
         font_response = Mock()
         font_response.content = b"fake font data"
         font_response.raise_for_status = Mock()
 
-        mock_get.side_effect = [css_response, font_response]
+        mock_get.side_effect = [css_response, font_response, font_response, font_response]
 
         with suppress_logging("pdfrebuilder.font.googlefonts"):
             result = download_google_font(font_family, self.temp_dir)
 
-        assert result is None
+        assert result == []
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_url_extraction_regex_patterns(self, mock_get):
@@ -408,14 +393,12 @@ class TestGoogleFontsIntegrationEdgeCases:
 
         for font_name in special_names:
             with patch("pdfrebuilder.font.googlefonts.requests.get") as mock_get:
-                css_response = Mock()
-                css_response.status_code = 404  # Simulate not found
-                mock_get.return_value = css_response
+                mock_get.side_effect = requests.exceptions.RequestException("HTTP error")
 
-                # Should not raise exception
                 with suppress_logging("pdfrebuilder.font.googlefonts"):
                     result = download_google_font(font_name, self.temp_dir)
                 assert result is None
+                assert mock_get.call_count == 3
 
     def test_very_large_font_file(self):
         """Test handling of very large font files"""

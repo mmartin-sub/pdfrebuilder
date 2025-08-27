@@ -12,6 +12,8 @@ import shutil
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
+import requests
+
 from pdfrebuilder.font.googlefonts import download_google_font
 
 # Import the modules we're testing
@@ -341,13 +343,12 @@ class TestGoogleFontsIntegration(unittest.TestCase):
         """Test Google Font download with CSS fetch error"""
         font_family = "NonExistentFont"
 
-        css_response = Mock()
-        css_response.status_code = 404
-        mock_get.return_value = css_response
+        mock_get.side_effect = requests.exceptions.RequestException("HTTP error")
 
         result = download_google_font(font_family, self.temp_dir)
 
         self.assertIsNone(result)
+        self.assertEqual(mock_get.call_count, 3)
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_download_google_font_no_urls_found(self, mock_get):
@@ -357,6 +358,7 @@ class TestGoogleFontsIntegration(unittest.TestCase):
         css_response = Mock()
         css_response.status_code = 200
         css_response.text = "/* No font URLs here */"
+        css_response.raise_for_status = Mock()
         mock_get.return_value = css_response
 
         result = download_google_font(font_family, self.temp_dir)
@@ -368,22 +370,16 @@ class TestGoogleFontsIntegration(unittest.TestCase):
         """Test Google Font download with file download error"""
         font_family = "Roboto"
 
-        # Mock CSS response
         css_response = Mock()
         css_response.status_code = 200
-        css_response.text = """
-        src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2);
-        """
+        css_response.text = "src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2);"
+        css_response.raise_for_status = Mock()
 
-        # Mock font file response with error
-        font_response = Mock()
-        font_response.raise_for_status.side_effect = Exception("Download failed")
-
-        mock_get.side_effect = [css_response, font_response]
+        mock_get.side_effect = [css_response] + [requests.exceptions.RequestException("Download failed")] * 3
 
         result = download_google_font(font_family, self.temp_dir)
 
-        self.assertIsNone(result)
+        self.assertEqual(result, [])
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_download_google_font_creates_directory(self, mock_get):
@@ -417,11 +413,12 @@ class TestGoogleFontsIntegration(unittest.TestCase):
         """Test Google Font download with network error"""
         font_family = "Roboto"
 
-        mock_get.side_effect = Exception("Network error")
+        mock_get.side_effect = requests.exceptions.RequestException("Network error")
 
         result = download_google_font(font_family, self.temp_dir)
 
         self.assertIsNone(result)
+        self.assertEqual(mock_get.call_count, 3)
 
 
 class TestFontManagerIntegration(unittest.TestCase):

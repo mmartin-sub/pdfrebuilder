@@ -213,7 +213,9 @@ class FontErrorReporter:
         self._discovery_errors: list[dict[str, Any]] = []
         self._error_counts: dict[str, int] = {}
 
-    def report_registration_error(self, font_name: str, error: Exception, context: dict[str, Any]) -> None:
+    def report_registration_error(
+        self, font_name: str, error: Exception, context: dict[str, Any], verbose: bool = True
+    ) -> None:
         """
         Report font registration error with full context
 
@@ -221,6 +223,7 @@ class FontErrorReporter:
             font_name: Name of the font that failed to register
             error: The exception that occurred during registration
             context: Additional context (font_path, element_id, page_number, etc.)
+            verbose: Whether to log the error to the console
         """
         error_record = {
             "timestamp": datetime.now(),
@@ -234,19 +237,22 @@ class FontErrorReporter:
         self._registration_errors.append(error_record)
         self._increment_error_count("registration")
 
-        # Log with appropriate level based on error type
-        if error_record["is_need_font_file_error"]:
-            self.logger.error(
-                f"Font registration failed with 'need font file or buffer' error: "
-                f"font='{font_name}', context={context}, error={error}"
-            )
-        else:
-            self.logger.error(
-                f"Font registration failed: font='{font_name}', "
-                f"error_type={type(error).__name__}, context={context}, error={error}"
-            )
+        if verbose:
+            # Log with appropriate level based on error type
+            if error_record["is_need_font_file_error"]:
+                self.logger.error(
+                    f"Font registration failed with 'need font file or buffer' error: "
+                    f"font='{font_name}', context={context}, error={error}"
+                )
+            else:
+                self.logger.error(
+                    f"Font registration failed: font='{font_name}', "
+                    f"error_type={type(error).__name__}, context={context}, error={error}"
+                )
 
-    def report_validation_error(self, font_path: str, validation_errors: list[str], context: dict[str, Any]) -> None:
+    def report_validation_error(
+        self, font_path: str, validation_errors: list[str], context: dict[str, Any], verbose: bool = True
+    ) -> None:
         """
         Report font validation errors
 
@@ -254,6 +260,7 @@ class FontErrorReporter:
             font_path: Path to the font file that failed validation
             validation_errors: List of specific validation errors
             context: Additional context information
+            verbose: Whether to log the error to the console
         """
         error_record = {
             "timestamp": datetime.now(),
@@ -266,9 +273,10 @@ class FontErrorReporter:
         self._validation_errors.append(error_record)
         self._increment_error_count("validation")
 
-        self.logger.warning(
-            f"Font validation failed: path='{font_path}', errors={validation_errors}, context={context}"
-        )
+        if verbose:
+            self.logger.warning(
+                f"Font validation failed: path='{font_path}', errors={validation_errors}, context={context}"
+            )
 
     def report_fallback_error(
         self,
@@ -276,6 +284,7 @@ class FontErrorReporter:
         attempted_fallbacks: list[str],
         final_error: Exception | None,
         context: dict[str, Any],
+        verbose: bool = True,
     ) -> None:
         """
         Report font fallback system failure
@@ -285,6 +294,7 @@ class FontErrorReporter:
             attempted_fallbacks: List of fallback fonts that were attempted
             final_error: The final error that occurred after all fallbacks failed
             context: Additional context information
+            verbose: Whether to log the error to the console
         """
         error_record = {
             "timestamp": datetime.now(),
@@ -298,13 +308,16 @@ class FontErrorReporter:
         self._fallback_errors.append(error_record)
         self._increment_error_count("fallback")
 
-        self.logger.critical(
-            f"Font fallback system failed: original_font='{original_font}', "
-            f"attempted_fallbacks={attempted_fallbacks}, final_error={final_error}, "
-            f"context={context}"
-        )
+        if verbose:
+            self.logger.critical(
+                f"Font fallback system failed: original_font='{original_font}', "
+                f"attempted_fallbacks={attempted_fallbacks}, final_error={final_error}, "
+                f"context={context}"
+            )
 
-    def report_discovery_error(self, font_name: str, search_paths: list[str], context: dict[str, Any]) -> None:
+    def report_discovery_error(
+        self, font_name: str, search_paths: list[str], context: dict[str, Any], verbose: bool = True
+    ) -> None:
         """
         Report font discovery failure
 
@@ -312,6 +325,7 @@ class FontErrorReporter:
             font_name: Name of the font that couldn't be found
             search_paths: List of paths that were searched
             context: Additional context information
+            verbose: Whether to log the error to the console
         """
         error_record = {
             "timestamp": datetime.now(),
@@ -324,9 +338,10 @@ class FontErrorReporter:
         self._discovery_errors.append(error_record)
         self._increment_error_count("discovery")
 
-        self.logger.warning(
-            f"Font discovery failed: font='{font_name}', search_paths={search_paths}, context={context}"
-        )
+        if verbose:
+            self.logger.warning(
+                f"Font discovery failed: font='{font_name}', search_paths={search_paths}, context={context}"
+            )
 
     def _increment_error_count(self, error_type: str) -> None:
         """Increment error count for the given type"""
@@ -526,7 +541,12 @@ class FallbackFontManager:
             self.logger.warning(f"Could not ensure fallback consistency: {e}")
 
     def select_fallback_font(
-        self, original_font: str, text_content: str, page, element_id: str | None = None
+        self,
+        original_font: str,
+        text_content: str,
+        page,
+        element_id: str | None = None,
+        verbose: bool = True,
     ) -> str | None:
         """
         Select and validate appropriate fallback font with glyph coverage checking
@@ -536,16 +556,18 @@ class FallbackFontManager:
             text_content: The text content that needs to be rendered
             page: PyMuPDF page object for font registration testing
             element_id: Optional element ID for tracking
+            verbose: Whether to log detailed information
 
         Returns:
             Name of working fallback font or None if all fallbacks fail
         """
         page_id = id(page)
 
-        self.logger.info(
-            f"Selecting fallback font for '{original_font}' on page {page_id}, "
-            f"text_length={len(text_content) if text_content else 0}"
-        )
+        if verbose:
+            self.logger.info(
+                f"Selecting fallback font for '{original_font}' on page {page_id}, "
+                f"text_length={len(text_content) if text_content else 0}"
+            )
 
         # First, try intelligent fallback selection with glyph coverage
         if text_content:
@@ -554,7 +576,7 @@ class FallbackFontManager:
                 return coverage_fallback
 
         # If glyph coverage selection fails, fall back to standard prioritized list
-        return self._select_fallback_from_priority_list(original_font, text_content, page, element_id)
+        return self._select_fallback_from_priority_list(original_font, text_content, page, element_id, verbose)
 
     def _select_fallback_with_glyph_coverage(
         self, original_font: str, text_content: str, page, element_id: str | None = None
@@ -785,7 +807,12 @@ class FallbackFontManager:
         return None
 
     def _select_fallback_from_priority_list(
-        self, original_font: str, text_content: str, page, element_id: str | None = None
+        self,
+        original_font: str,
+        text_content: str,
+        page,
+        element_id: str | None = None,
+        verbose: bool = True,
     ) -> str | None:
         """
         Select fallback font from prioritized list (fallback method)
@@ -795,6 +822,7 @@ class FallbackFontManager:
             text_content: The text content that needs to be rendered
             page: PyMuPDF page object for font registration testing
             element_id: Optional element ID for tracking
+            verbose: Whether to log detailed information
 
         Returns:
             Name of working fallback font or None if all fallbacks fail
@@ -820,15 +848,18 @@ class FallbackFontManager:
                         reason="Priority list fallback",
                         text_content=text_content,
                     )
-
-                    self.logger.info(
-                        f"Selected priority fallback '{fallback_font}' for '{original_font}' on page {page_id}"
-                    )
+                    if verbose:
+                        self.logger.info(
+                            f"Selected priority fallback '{fallback_font}' for '{original_font}' on page {page_id}"
+                        )
 
                     return fallback_font
 
             except Exception as e:
-                self.logger.warning(f"Priority fallback '{fallback_font}' validation failed for '{original_font}': {e}")
+                if verbose:
+                    self.logger.warning(
+                        f"Priority fallback '{fallback_font}' validation failed for '{original_font}': {e}"
+                    )
                 continue
 
         # If we get here, all fallbacks failed
@@ -841,11 +872,13 @@ class FallbackFontManager:
                 "element_id": element_id,
                 "text_content": text_content[:100] if text_content else None,
             },
+            verbose=verbose,
         )
 
-        self.logger.critical(
-            f"All fallback fonts failed for '{original_font}' on page {page_id}. Attempted: {attempted_fallbacks}"
-        )
+        if verbose:
+            self.logger.critical(
+                f"All fallback fonts failed for '{original_font}' on page {page_id}. Attempted: {attempted_fallbacks}"
+            )
 
         return None
 
@@ -1390,6 +1423,7 @@ def register_font_with_validation(
                 "page_number": page_id,
                 "text_content": text_content[:100] if text_content else None,
             },
+            verbose=verbose,
         )
 
         # Continue with fallback process despite validation errors
@@ -1671,7 +1705,7 @@ def _attempt_direct_font_registration(
             "registration_method": "direct",
         }
 
-        error_reporter.report_registration_error(font_name, e, error_context)
+        error_reporter.report_registration_error(font_name, e, error_context, verbose=verbose)
 
         return FontRegistrationResult(
             success=False,
@@ -1712,6 +1746,7 @@ def _attempt_fallback_font_registration(
         text_content=text_content or "",
         page=page,
         element_id=element_id,
+        verbose=verbose,
     )
 
     if fallback_font:
