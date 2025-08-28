@@ -54,7 +54,7 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
-def configure_logging(log_file=None, log_level=logging.INFO, log_format='%(asctime)s - %(levelname)s - %(message)s'):
+def configure_logging(log_file=None, log_level=logging.INFO, log_format="%(asctime)s - %(levelname)s - %(message)s"):
     """Configures logging for the application."""
     handlers = [logging.StreamHandler()]
     if log_file:
@@ -64,7 +64,7 @@ def configure_logging(log_file=None, log_level=logging.INFO, log_format='%(ascti
         level=log_level,
         format=log_format,
         handlers=handlers,
-        force=True  # Force re-configuration
+        force=True,  # Force re-configuration
     )
 
 

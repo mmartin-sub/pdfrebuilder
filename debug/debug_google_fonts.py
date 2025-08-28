@@ -1,5 +1,6 @@
 import requests
 
+
 def check_font_url(font_name):
     """Checks if a font is available on Google Fonts."""
     url = f"https://fonts.googleapis.com/css?family={font_name}"

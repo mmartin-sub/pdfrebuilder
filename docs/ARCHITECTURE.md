@@ -19,7 +19,7 @@ The architecture is composed of several key components:
 
 The typical data flow is as follows:
 
-1.  An input file is passed to the appropriate engine.
-2.  The engine parses the file and converts its content into the UIDM.
-3.  The UIDM can be manipulated or modified as needed.
-4.  A rendering engine takes the UIDM and generates an output file, typically a PDF.
+1. An input file is passed to the appropriate engine.
+2. The engine parses the file and converts its content into the UIDM.
+3. The UIDM can be manipulated or modified as needed.
+4. A rendering engine takes the UIDM and generates an output file, typically a PDF.
