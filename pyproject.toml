@@ -392,6 +392,13 @@ ignore_decorators = [
     "@contextmanager",
 ]
 
+[[tool.hatch.envs.test.matrix]]
+python = ["3.10", "3.11", "3.12"]
+
+# Configure hatch to use uv
+[tool.hatch.env.test]
+installer = "uv"
+
 [tool.pytest.ini_options]
 pythonpath = ["src", "scripts"]
 testpaths = ["tests"]
