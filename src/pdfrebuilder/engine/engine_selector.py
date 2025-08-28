@@ -124,7 +124,7 @@ class PDFEngineSelector:
 
         try:
             return self.get_engine(default_engine, config)
-        except Exception as e:
+        except Exception:
             fallback_engines = ["reportlab", "pymupdf", "fitz"]
             for fallback in fallback_engines:
                 if fallback != default_engine and fallback in self.engines:
@@ -189,13 +189,13 @@ def get_output_engine_selector():
     return _output_engine_selector
 
 
-def get_input_engine(engine_name: str, config: dict = None) -> DocumentParser:
+def get_input_engine(engine_name: str, config: dict | None = None) -> DocumentParser:
     """Get an input engine instance."""
     selector = get_input_engine_selector()
     return selector.get_engine(engine_name, config)
 
 
-def get_output_engine(engine_name: str, config: dict = None) -> DocumentRenderer:
+def get_output_engine(engine_name: str, config: dict | None = None) -> DocumentRenderer:
     """Get an output engine instance."""
     selector = get_output_engine_selector()
     return selector.get_engine(engine_name, config)

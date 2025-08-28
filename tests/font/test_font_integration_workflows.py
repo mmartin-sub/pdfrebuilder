@@ -47,7 +47,6 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
 
-
     def create_controlled_font_environment(self):
         """Create a controlled test environment with a real font."""
         os.makedirs(self.test_fonts_dir, exist_ok=True)
