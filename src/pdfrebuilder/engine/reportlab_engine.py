@@ -23,6 +23,7 @@ from pdfrebuilder.font.font_validator import FontValidator
 from pdfrebuilder.models.universal_idm import (
     Color,
     DrawingElement,
+    ImageElement,
     Layer,
     PageUnit,
     TextElement,
@@ -427,8 +428,39 @@ class ReportLabEngine(PDFRenderingEngine):
                     self._render_text_element_canvas(c, element, layer, page_size)
                 elif isinstance(element, DrawingElement):
                     self._render_drawing_element_canvas(c, element, layer, page_size)
+                elif isinstance(element, ImageElement):
+                    self._render_image_element_canvas(c, element, layer, page_size)
                 else:
                     logger.warning(f"Unsupported element type: {type(element)}")
+
+    def _render_image_element_canvas(
+        self, c: canvas.Canvas, element: ImageElement, layer: Layer, page_size: tuple
+    ) -> None:
+        """Render an image element placeholder using ReportLab canvas."""
+        try:
+            # Get bounding box
+            bbox = element.bbox
+            x1, y1, x2, y2 = bbox.x1, bbox.y1, bbox.x2, bbox.y2
+
+            # Convert to ReportLab coordinates
+            y1_rl = page_size[1] - y2
+            y2_rl = page_size[1] - y1
+
+            # Draw a placeholder rectangle
+            c.setStrokeColorRGB(0.5, 0.5, 0.5)  # Gray color
+            c.rect(x1, y1_rl, x2 - x1, y2 - y1, fill=0)
+
+            # Draw a cross inside the rectangle
+            c.line(x1, y1_rl, x2, y2_rl)
+            c.line(x1, y2_rl, x2, y1_rl)
+
+            # Draw the image path
+            c.setFillColorRGB(0.5, 0.5, 0.5)
+            c.setFont("Helvetica", 8)
+            c.drawCentredString(x1 + (x2 - x1) / 2, y1_rl + (y2_rl - y1_rl) / 2, element.image_file)
+
+        except Exception as e:
+            logger.error(f"Error rendering image element {element.id}: {e}")
 
     def _render_drawing_element_canvas(
         self, c: canvas.Canvas, element: DrawingElement, layer: Layer, page_size: tuple
@@ -632,7 +664,7 @@ class ReportLabEngine(PDFRenderingEngine):
                 except Exception as e:
                     logger.warning(f"Could not register font {font_name}: {e}")
             else:
-                logger.warning(f"Font file not found for: {font_name}")
+                logger.info(f"Font file not found for: {font_name}")
 
         except Exception as e:
             logger.error(f"Error registering font {font_name}: {e}")

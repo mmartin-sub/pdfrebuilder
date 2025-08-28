@@ -32,6 +32,7 @@ def download_google_font(
     css_url = f"https://fonts.googleapis.com/css?family={font_family.replace(' ', '+')}:400,700"
     css_content = None
 
+    last_exception = None
     for attempt in range(retries):
         try:
             response = requests.get(css_url, timeout=10)
@@ -39,11 +40,15 @@ def download_google_font(
             css_content = response.text
             break  # Success
         except requests.exceptions.RequestException as e:
-            logging.warning(f"Attempt {attempt + 1}/{retries} failed to fetch CSS for {font_family}: {e}")
+            last_exception = e
+            logging.debug(f"Attempt {attempt + 1}/{retries} failed to fetch CSS for {font_family}: {e}")
             if attempt < retries - 1:
                 time.sleep(delay)
             else:
-                logging.error(f"Could not fetch CSS for {font_family} after {retries} attempts.")
+                logging.error(
+                    f"Could not fetch CSS for {font_family} after {retries} attempts.",
+                    exc_info=last_exception,
+                )
                 return None
 
     if not css_content:
@@ -57,6 +62,7 @@ def download_google_font(
     downloaded_files: list[str] = []
     for url in font_urls:
         filename = os.path.join(dest_dir, url.split("/")[-1])
+        last_exception = None
         for attempt in range(retries):
             try:
                 r = requests.get(url, timeout=10)
@@ -67,10 +73,14 @@ def download_google_font(
                 downloaded_files.append(filename)
                 break  # Success
             except (requests.exceptions.RequestException, OSError) as e:
-                logging.warning(f"Attempt {attempt + 1}/{retries} failed to download {url}: {e}")
+                last_exception = e
+                logging.debug(f"Attempt {attempt + 1}/{retries} failed to download {url}: {e}")
                 if attempt < retries - 1:
                     time.sleep(delay)
                 else:
-                    logging.error(f"Failed to download {url} after {retries} attempts.")
+                    logging.error(
+                        f"Failed to download {url} after {retries} attempts.",
+                        exc_info=last_exception,
+                    )
 
     return downloaded_files

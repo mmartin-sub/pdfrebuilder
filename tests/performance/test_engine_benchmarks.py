@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 
 from pdfrebuilder.core.recreate_pdf_from_config import recreate_pdf_from_config
-from pdfrebuilder.engine.pdf_engine_selector import get_engine_selector
+from pdfrebuilder.engine.engine_selector import get_pdf_engine_selector
 from pdfrebuilder.engine.performance_metrics import generate_performance_report, get_performance_collector
 
 
@@ -206,7 +206,7 @@ class TestEngineBenchmarks:
 
             try:
                 start_time = time.time()
-                engine = get_engine_selector().get_engine(engine_name)
+                engine = get_pdf_engine_selector().get_engine(engine_name)
                 engine.generate(document, output_file)
                 end_time = time.time()
 
@@ -225,7 +225,7 @@ class TestEngineBenchmarks:
     @pytest.mark.performance
     def test_simple_document_benchmark(self):
         """Benchmark engines with a simple document."""
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
         available_engines = selector.list_available_engines()
 
         results = {}
@@ -264,7 +264,7 @@ class TestEngineBenchmarks:
     @pytest.mark.performance
     def test_complex_document_benchmark(self):
         """Benchmark engines with a complex document."""
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
         available_engines = selector.list_available_engines()
 
         results = {}
@@ -298,7 +298,7 @@ class TestEngineBenchmarks:
     @pytest.mark.slow
     def test_large_document_benchmark(self):
         """Benchmark engines with a large document."""
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
         available_engines = selector.list_available_engines()
 
         results = {}
@@ -337,7 +337,7 @@ class TestEngineBenchmarks:
     @pytest.mark.performance
     def test_memory_usage_comparison(self):
         """Compare memory usage between engines."""
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
         available_engines = selector.list_available_engines()
 
         # Clear metrics history
@@ -369,7 +369,7 @@ class TestEngineBenchmarks:
     @pytest.mark.performance
     def test_engine_feature_performance_correlation(self):
         """Test correlation between engine features and performance."""
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
         available_engines = selector.list_available_engines()
 
         performance_data = {}
@@ -405,7 +405,7 @@ class TestEngineBenchmarks:
     def test_performance_report_generation(self):
         """Test performance report generation."""
         # Run some benchmarks to generate data
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
         available_engines = list(selector.list_available_engines().keys())
 
         if not available_engines:
@@ -443,7 +443,7 @@ class TestEngineBenchmarks:
         import queue
         import threading
 
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
         available_engines = list(selector.list_available_engines().keys())
 
         if len(available_engines) < 2:
