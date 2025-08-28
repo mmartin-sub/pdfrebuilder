@@ -15,8 +15,8 @@ import pytest
 
 # Add docs/tools to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "docs" / "tools"))
-from coverage_reporter import DocumentationCoverageReporter  # type: ignore[import]
-from validation import DocumentationValidator, ValidationStatus  # type: ignore[import]
+from coverage_reporter import DocumentationCoverageReporter
+from validation import DocumentationValidator, ValidationStatus
 
 
 class TestComprehensiveDocumentation(unittest.TestCase):

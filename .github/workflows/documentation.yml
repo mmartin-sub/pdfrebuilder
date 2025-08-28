@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v4
@@ -59,7 +59,7 @@ jobs:
       run: uv sync --extra all
 
     - name: Run comprehensive documentation tests
-      run: uv run pytest tests/test_comprehensive_documentation.py -v --tb=short
+      run: uv run pytest tests/wip/documentation/test_comprehensive_documentation.py -v --tb=short
 
     - name: Validate code examples, API references, and configs
       run: uv run python scripts/validate_docs.py --all --verbose
