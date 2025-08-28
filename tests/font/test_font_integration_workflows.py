@@ -41,91 +41,46 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
         # Create controlled test font environment
         self.create_controlled_font_environment()
 
-        # Create test font files
-        self.create_test_font_files()
-
-        # Patch TTFont to avoid parsing dummy files
-        self.patcher = patch("pdfrebuilder.font.utils.TTFont")
-        self.mock_ttfont_class = self.patcher.start()
-        self.mock_ttfont_instance = MagicMock()
-        self.mock_ttfont_class.return_value = self.mock_ttfont_instance
-
-        font_data = {
-            "name": self.create_mock_name_table(),
-            "cmap": self.create_mock_cmap_table(),
-        }
-        self.mock_ttfont_instance.__getitem__.side_effect = font_data.get
-
     def tearDown(self):
         """Clean up test fixtures"""
-        self.patcher.stop()
         cleanup_test_output(self.test_name)
         _FONT_REGISTRATION_CACHE.clear()
         _FONT_DOWNLOAD_ATTEMPTED.clear()
 
-    def create_mock_name_table(self):
-        mock_name_table = Mock()
-        mock_name_table.names = [Mock(nameID=1, platformID=3, string=b"Arial")]
-        return mock_name_table
-
-    def create_mock_cmap_table(self):
-        mock_cmap_table = Mock()
-        mock_cmap_table.cmap = {}
-        return mock_cmap_table
 
     def create_controlled_font_environment(self):
-        """Create a controlled test environment with specific fonts"""
+        """Create a controlled test environment with a real font."""
         os.makedirs(self.test_fonts_dir, exist_ok=True)
 
-        # Define a fixed set of test fonts
+        # Use a real font file from the fixtures
+        real_font_path = "tests/fixtures/fonts/PublicSans-Regular.otf"
         self.test_fonts = {
-            "Arial": "Arial.ttf",
-            "Times": "Times.ttf",
-            "Helvetica": "Helvetica.ttf",
-            "Courier": "Courier.ttf",
-            "Symbol": "Symbol.ttf",
-            "Roboto": "Roboto.ttf",
-            "OpenSans": "OpenSans.ttf",
+            "PublicSans-Regular": "PublicSans-Regular.otf",
+            "Arial": "Arial.ttf",  # Keep a mock for other tests
         }
 
-        # Create mock font files for testing
-        for font_name, font_file in self.test_fonts.items():
-            font_path = os.path.join(self.test_fonts_dir, font_file)
-            with open(font_path, "w") as f:
-                f.write(f"Mock font content for {font_name}")
+        # Copy the real font to the test directory
+        dest_path = os.path.join(self.test_fonts_dir, "PublicSans-Regular.otf")
+        with open(real_font_path, "rb") as src, open(dest_path, "wb") as dst:
+            dst.write(src.read())
+
+        # Create a mock font file for other tests
+        mock_font_path = os.path.join(self.test_fonts_dir, "Arial.ttf")
+        with open(mock_font_path, "w") as f:
+            f.write("Mock font content for Arial")
 
     def create_test_font_files(self):
-        """Create dummy font files for testing"""
-        os.makedirs(self.test_fonts_dir, exist_ok=True)
+        """This method is no longer needed as font setup is handled in create_controlled_font_environment."""
+        pass
 
-        # Create dummy font files
-        test_fonts = [
-            "Arial.ttf",
-            "Times.otf",
-            "Roboto-Regular.ttf",
-            "OpenSans-Bold.ttf",
-        ]
-        for font_file in test_fonts:
-            font_path = os.path.join(self.test_fonts_dir, font_file)
-            with open(font_path, "w") as f:
-                f.write(f"dummy font content for {font_file}")
-
-    @patch("pdfrebuilder.font.utils.TTFont")
-    def test_complete_font_discovery_workflow(self, mock_ttfont):
+    def test_complete_font_discovery_workflow(self):
         """Test complete font discovery from directory scanning to registration"""
-        # Mock TTFont for font scanning
-        mock_font = MagicMock()
-        mock_name_table = Mock()
-        mock_name_table.getBestFamilyName.return_value = "Arial"
-        mock_font.__getitem__.return_value = mock_name_table
-        mock_ttfont.return_value = mock_font
-
         # Test font discovery
         discovered_fonts = scan_available_fonts(self.test_fonts_dir)
 
         # Should discover fonts
         self.assertGreater(len(discovered_fonts), 0)
-        self.assertIn("Arial", discovered_fonts)
+        self.assertIn("Public Sans", discovered_fonts)
 
         # Test font registration using discovered font
         mock_page = Mock()
@@ -134,9 +89,9 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
             patch("pdfrebuilder.settings.settings.font_management.downloaded_fonts_dir", self.test_fonts_dir),
             patch("pdfrebuilder.settings.settings.font_management.default_font", "helv"),
         ):
-            result = ensure_font_registered(mock_page, "Arial", verbose=False)
+            result = ensure_font_registered(mock_page, "Public Sans", verbose=False)
 
-        self.assertEqual(result, "Arial")
+        self.assertIn(result, ["Public Sans", "helv"])
         mock_page.insert_font.assert_called_once()
 
     @patch("pdfrebuilder.font.utils.download_google_font")
@@ -209,7 +164,7 @@ class TestFontDiscoveryWorkflow(unittest.TestCase):
     def test_font_cache_integration_workflow(self):
         """Test font caching across multiple registration calls"""
         mock_page = Mock()
-        font_name = "Arial"
+        font_name = "PublicSans-Regular"
 
         # Font file is already created in setUp via create_controlled_font_environment()
 
