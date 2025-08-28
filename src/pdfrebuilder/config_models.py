@@ -96,7 +96,7 @@ class LoggingConfig(BaseModel):
     engine_selection_level: str = "INFO"
     engine_fallback_level: str = "WARNING"
     engine_error_level: str = "ERROR"
-    debug_logs_dir: str = "tests/output/debug_logs"
+    debug_logs_dir: str = "tests/resources/debug_logs"
 
 
 class DebugConfig(BaseModel):
@@ -134,10 +134,10 @@ class TestFrameworkConfig(BaseModel):
     enable_performance_tracking: bool = True
     enable_memory_monitoring: bool = True
     test_data_retention_days: int = 7
-    test_output_dir: str = "tests/output"
+    test_output_dir: str = "tests/resources"
     test_temp_dir: str = "tests/temp"
-    test_fonts_dir: str = "tests/output/fonts"
-    test_reports_dir: str = "tests/output/reports"
+    test_fonts_dir: str = "tests/resources/fonts"
+    test_reports_dir: str = "tests/resources/reports"
 
 
 class TestFixturesConfig(BaseModel):

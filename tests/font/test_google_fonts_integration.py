@@ -7,6 +7,7 @@ including API interaction, error handling, and file management.
 
 import os
 import unittest
+import logging
 from unittest.mock import Mock, patch
 
 import requests
@@ -134,33 +135,35 @@ class TestGoogleFontsAPI:
         assert result is not None
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_css_fetch_http_error(self, mock_get, suppress_logging):
+    def test_css_fetch_http_error(self, mock_get, caplog):
         """Test handling of HTTP errors when fetching CSS"""
         font_family = "NonExistentFont"
 
         mock_get.side_effect = requests.exceptions.RequestException("HTTP error")
 
-        with suppress_logging("pdfrebuilder.font.googlefonts"):
+        with caplog.at_level(logging.ERROR):
             result = download_google_font(font_family, self.temp_dir)
 
         assert result is None
         assert mock_get.call_count == 3
+        assert "Could not fetch CSS for NonExistentFont" in caplog.text
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_css_fetch_network_error(self, mock_get, suppress_logging):
+    def test_css_fetch_network_error(self, mock_get, caplog):
         """Test handling of network errors when fetching CSS"""
         font_family = "Roboto"
 
         mock_get.side_effect = requests.RequestException("Network error")
 
-        with suppress_logging("pdfrebuilder.font.googlefonts"):
+        with caplog.at_level(logging.ERROR):
             result = download_google_font(font_family, self.temp_dir)
 
         assert result is None
         assert mock_get.call_count == 3
+        assert "Could not fetch CSS for Roboto" in caplog.text
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_font_file_download_error(self, mock_get, suppress_logging):
+    def test_font_file_download_error(self, mock_get, caplog):
         """Test handling of errors when downloading font files"""
         font_family = "Roboto"
 
@@ -171,13 +174,14 @@ class TestGoogleFontsAPI:
 
         mock_get.side_effect = [css_response] + [requests.exceptions.RequestException("Download failed")] * 3
 
-        with suppress_logging("pdfrebuilder.font.googlefonts"):
+        with caplog.at_level(logging.ERROR):
             result = download_google_font(font_family, self.temp_dir)
 
         assert result == []
+        assert "Failed to download https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2" in caplog.text
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_partial_download_failure(self, mock_get, suppress_logging):
+    def test_partial_download_failure(self, mock_get, caplog):
         """Test handling when some font files download successfully and others fail"""
         font_family = "Roboto"
 
@@ -198,15 +202,16 @@ class TestGoogleFontsAPI:
             font_response_success,
         ] + [requests.exceptions.RequestException("Download failed")] * 3
 
-        with suppress_logging("pdfrebuilder.font.googlefonts"):
+        with caplog.at_level(logging.ERROR):
             result = download_google_font(font_family, self.temp_dir)
 
         assert result is not None
         assert len(result) == 1
         assert result[0].endswith("regular.woff2")
+        assert "Failed to download https://fonts.gstatic.com/s/roboto/v30/bold.woff2" in caplog.text
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_empty_css_response(self, mock_get, suppress_logging):
+    def test_empty_css_response(self, mock_get, caplog):
         """Test handling of empty CSS response"""
         font_family = "EmptyFont"
 
@@ -215,13 +220,13 @@ class TestGoogleFontsAPI:
         css_response.text = ""
         mock_get.return_value = css_response
 
-        with suppress_logging("pdfrebuilder.font.googlefonts"):
+        with caplog.at_level(logging.WARNING):
             result = download_google_font(font_family, self.temp_dir)
 
         assert result is None
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
-    def test_css_with_no_font_urls(self, mock_get, suppress_logging):
+    def test_css_with_no_font_urls(self, mock_get, caplog):
         """Test handling of CSS response with no font URLs"""
         font_family = "NoUrlsFont"
 
@@ -235,10 +240,11 @@ class TestGoogleFontsAPI:
         """
         mock_get.return_value = css_response
 
-        with suppress_logging("pdfrebuilder.font.googlefonts"):
+        with caplog.at_level(logging.WARNING):
             result = download_google_font(font_family, self.temp_dir)
 
         assert result is None
+        assert "No font files found for 'NoUrlsFont'" in caplog.text
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_directory_creation(self, mock_get):
@@ -268,7 +274,7 @@ class TestGoogleFontsAPI:
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     @patch("builtins.open", side_effect=OSError("Permission denied"))
-    def test_file_write_permission_error(self, mock_file, mock_get, suppress_logging):
+    def test_file_write_permission_error(self, mock_file, mock_get, caplog):
         """Test handling of file write permission errors"""
         font_family = "Roboto"
 
@@ -283,10 +289,11 @@ class TestGoogleFontsAPI:
 
         mock_get.side_effect = [css_response, font_response, font_response, font_response]
 
-        with suppress_logging("pdfrebuilder.font.googlefonts"):
+        with caplog.at_level(logging.ERROR):
             result = download_google_font(font_family, self.temp_dir)
 
         assert result == []
+        assert "Failed to download" in caplog.text
 
     @patch("pdfrebuilder.font.googlefonts.requests.get")
     def test_url_extraction_regex_patterns(self, mock_get):
@@ -380,7 +387,7 @@ class TestGoogleFontsIntegrationEdgeCases:
         """Clean up test fixtures"""
         cleanup_test_output(self.test_name)
 
-    def test_font_family_with_special_characters(self, suppress_logging):
+    def test_font_family_with_special_characters(self, caplog):
         """Test font family names with special characters"""
         special_names = [
             "Font-Name",
@@ -395,10 +402,12 @@ class TestGoogleFontsIntegrationEdgeCases:
             with patch("pdfrebuilder.font.googlefonts.requests.get") as mock_get:
                 mock_get.side_effect = requests.exceptions.RequestException("HTTP error")
 
-                with suppress_logging("pdfrebuilder.font.googlefonts"):
+                with caplog.at_level(logging.ERROR):
                     result = download_google_font(font_name, self.temp_dir)
                 assert result is None
                 assert mock_get.call_count == 3
+                assert f"Could not fetch CSS for {font_name}" in caplog.text
+                caplog.clear()
 
     def test_very_large_font_file(self):
         """Test handling of very large font files"""

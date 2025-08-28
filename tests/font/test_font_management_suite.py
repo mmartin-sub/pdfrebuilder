@@ -14,7 +14,7 @@ Test Coverage:
 
 Output Configuration:
 - All test outputs can be configured via TEST_OUTPUT_DIR environment variable
-- Default output directory: tests/output/ (configurable)
+- Default output directory: tests/resources/ (configurable)
 - CLI support for specifying custom output directories
 """
 

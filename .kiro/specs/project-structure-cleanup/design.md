@@ -11,7 +11,7 @@ This design outlines the reorganization of the project structure to move misplac
 The main directory currently contains:
 - **Demo files**: Previously contained `demo_font_validation.py` (now moved to `tests/demos/`)
 - **Log files**: `e2e_debug.log`, `e2e_full.log` - test execution logs
-- **Debug artifacts**: `debug_layers.pdf`, `test_text_render.pdf` - generated debug files (now moved to `tests/output/`)
+- **Debug artifacts**: `debug_layers.pdf`, `test_text_render.pdf` - generated debug files (now moved to `tests/resources/`)
 - **Utility scripts**: `extract_sample.py` - sample extraction utility
 - **Test configurations**: `manual_overrides.json.test` - test configuration file (now moved to `tests/fixtures/`)
 
@@ -31,7 +31,7 @@ project_root/
 │   │   └── e2e_full.log      # Moved from root
 │   └── debug/                 # NEW: Debug artifacts
 │       ├── debug_layers.pdf   # Moved from root
-│       └── test_text_render.pdf # Already moved to tests/output/
+│       └── test_text_render.pdf # Already moved to tests/resources/
 ├── tests/
 │   └── fixtures/              # NEW: Test configuration files
 │       └── manual_overrides.json.test # Already moved to tests/fixtures/
@@ -127,7 +127,7 @@ MIGRATION_PLAN = [
         needs_import_update=False,
         description="Debug visualization of PDF layers"
     ),
-    # FileMigration for test_text_render.pdf already completed - moved to tests/output/
+    # FileMigration for test_text_render.pdf already completed - moved to tests/resources/
     # FileMigration for manual_overrides.json.test already completed - moved to tests/fixtures/
 ]
 ```

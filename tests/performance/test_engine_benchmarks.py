@@ -16,6 +16,7 @@ import pytest
 
 from pdfrebuilder.core.recreate_pdf_from_config import recreate_pdf_from_config
 from pdfrebuilder.engine.engine_selector import get_pdf_engine_selector
+from pdfrebuilder.models.universal_idm import UniversalDocument
 from pdfrebuilder.engine.performance_metrics import generate_performance_report, get_performance_collector
 
 
@@ -207,7 +208,8 @@ class TestEngineBenchmarks:
             try:
                 start_time = time.time()
                 engine = get_pdf_engine_selector().get_engine(engine_name)
-                engine.generate(document, output_file)
+                doc_obj = UniversalDocument.from_dict(document)
+                engine.render(doc_obj, output_file)
                 end_time = time.time()
 
                 duration = end_time - start_time

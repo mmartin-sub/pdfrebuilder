@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Document Validation: demo1" tests="1" failures="1" errors="0" time="0">
+  <testsuite name="demo1" tests="1" failures="1" errors="0" timestamp="2025-08-28T16:05:58.290417">
+    <properties>
+      <property name="original_path" value="tests/sample/demo1.pdf"/>
+      <property name="generated_path" value="tests/resources/matrix_demo1.pdf_reportlab.pdf"/>
+      <property name="timestamp" value="2025-08-28T16:05:58.290136"/>
+      <property name="report_id" value="report_20250828160558"/>
+      <property name="overall_passed" value="False"/>
+      <property name="result_count" value="1"/>
+      <property name="pass_count" value="0"/>
+      <property name="fail_count" value="1"/>
+      <property name="average_ssim" value="0.7962900665621839"/>
+      <property name="min_ssim" value="0.7962900665621839"/>
+      <property name="max_ssim" value="0.7962900665621839"/>
+    </properties>
+    <testcase name="Validation 1" classname="document.validation.demo1">
+      <failure type="moderate_visual_difference" message="SSIM score 0.7963 below threshold 0.9500 (moderate_visual_difference)">SSIM Score: 0.7963
+Threshold: 0.9500
+Original: tests/sample/demo1.pdf
+Generated: tests/resources/matrix_demo1.pdf_reportlab.pdf
+Failure Reason: moderate_visual_difference
+Severity: high
+Recommendations:
+- Check for element positioning discrepancies
+- Verify text content and formatting
+- Check image quality and resolution
+Details:
+- rendering_dpi: 300
+- comparison_engine: opencv
+</failure>
+      <system-out>SSIM Score: 0.7963
+Original: tests/sample/demo1.pdf
+Generated: tests/resources/matrix_demo1.pdf_reportlab.pdf
+</system-out>
+    </testcase>
+  </testsuite>
+</testsuites>
