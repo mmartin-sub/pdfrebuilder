@@ -31,8 +31,6 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@v1
-      with:
-        version: "latest"
 
     - name: Cache uv dependencies
       uses: actions/cache@v4
@@ -45,32 +43,29 @@ jobs:
     - name: Install dependencies
       run: |
         uv venv
-        source .venv/bin/activate
+        echo "VIRTUAL_ENV=.venv" >> $GITHUB_ENV
         uv sync --dev
 
-    - name: Run linting checks
-      # This fixes the "ruff: command not found" error
+    - name: Add venv to path
       run: |
-        source .venv/bin/activate
+        echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+
+    - name: Run linting checks
+      run: |
         ruff check .
         black --check --diff .
 
     - name: Run type checking
-      # This fixes the "mypy: command not found" error
       run: |
-        source .venv/bin/activate
         mypy bookspine/
 
     - name: Run tests
-      # This fixes the "pytest: command not found" error
       run: |
-        source .venv/bin/activate
         pytest
 
     - name: Run security scan (Bandit)
-      # This fixes the "bandit: command not found" error
       run: |
-        source .venv/bin/activate
+        # Continue even if bandit finds issues, to ensure report is always generated
         bandit -r bookspine/ -o bandit-report.json -f json || true
 
     - name: Upload security report

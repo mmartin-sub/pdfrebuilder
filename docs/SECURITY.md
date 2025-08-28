@@ -6,11 +6,11 @@ This document outlines the security considerations for the `pdfrebuilder` projec
 
 The `pdfrebuilder` project follows secure coding practices to prevent common vulnerabilities. This includes:
 
--   **Input Validation**: All input is validated to prevent injection attacks.
--   **Dependency Management**: Dependencies are regularly scanned for vulnerabilities.
--   **Secure XML Parsing**: The `defusedxml` library is used to prevent XML-related attacks.
--   **Path Traversal**: The `is_safe_path` utility is used to prevent path traversal attacks.
--   **Subprocess Execution**: The `SecureExecutor` class is used to safely execute external commands.
+- **Input Validation**: All input is validated to prevent injection attacks.
+- **Dependency Management**: Dependencies are regularly scanned for vulnerabilities.
+- **Secure XML Parsing**: The `defusedxml` library is used to prevent XML-related attacks.
+- **Path Traversal**: The `is_safe_path` utility is used to prevent path traversal attacks.
+- **Subprocess Execution**: The `SecureExecutor` class is used to safely execute external commands.
 
 ## Vulnerability Reporting
 

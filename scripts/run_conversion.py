@@ -1,5 +1,6 @@
 import os
 import sys
+
 import click
 
 # Add the project root to the Python path to allow importing from pdfrebuilder
@@ -9,6 +10,7 @@ sys.path.insert(0, project_root)
 from pdfrebuilder.engine.document_parser import parse_document
 from pdfrebuilder.engine.engine_selector import get_output_engine
 from pdfrebuilder.settings import configure_logging
+
 
 @click.command(help="A generic script to convert a document from one format to another using the pdfrebuilder engines.")
 @click.option('--input-file', required=True, type=click.Path(exists=True, dir_okay=False), help="Path to the input document.")

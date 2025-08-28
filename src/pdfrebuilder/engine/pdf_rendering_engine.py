@@ -9,6 +9,8 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
+from pdfrebuilder.models.universal_idm import UniversalDocument
+
 logger = logging.getLogger(__name__)
 
 

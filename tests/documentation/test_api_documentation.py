@@ -8,8 +8,6 @@ code examples execute correctly.
 import ast
 import importlib
 import inspect
-import importlib
-import inspect
 import unittest
 from pathlib import Path
 

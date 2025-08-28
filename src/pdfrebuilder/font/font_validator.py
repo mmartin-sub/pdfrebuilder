@@ -75,6 +75,7 @@ class FontValidationResult:
 
 class FontValidator:
     """Font validation system for document processing"""
+
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -88,7 +89,7 @@ class FontValidator:
         Args:
             fonts_dir: Directory containing font files. If None, uses settings.
         """
-        if hasattr(self, '_initialized') and self._initialized and not fonts_dir:
+        if hasattr(self, "_initialized") and self._initialized and not fonts_dir:
             return
 
         from pdfrebuilder.settings import settings

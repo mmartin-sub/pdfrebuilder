@@ -140,7 +140,7 @@ class TestComparePDFsVisual(unittest.TestCase):
         call_args = mock_validate.call_args
         config = call_args[1]["config"]  # keyword argument
         expected_ssim_threshold = 1.0 - (10 / 100.0)  # 0.9
-        self.assertAlmostEqual(config['ssim_threshold'], expected_ssim_threshold, places=2)
+        self.assertAlmostEqual(config["ssim_threshold"], expected_ssim_threshold, places=2)
 
     @patch("pdfrebuilder.core.compare_pdfs_visual.validate_documents")
     @patch("pdfrebuilder.core.compare_pdfs_visual.generate_validation_report")
@@ -236,7 +236,7 @@ class TestComparePDFsVisual(unittest.TestCase):
                     # Check that ValidationConfig was created with correct SSIM threshold
                     call_args = mock_validate.call_args
                     config = call_args[1]["config"]
-                    self.assertAlmostEqual(config['ssim_threshold'], expected_ssim, places=2)
+                    self.assertAlmostEqual(config["ssim_threshold"], expected_ssim, places=2)
 
 
 if __name__ == "__main__":

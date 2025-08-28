@@ -58,8 +58,9 @@ jobs:
     - name: Install dependencies
       run: uv sync --extra all
 
-    - name: Run comprehensive documentation tests
-      run: uv run pytest tests/wip/documentation/test_comprehensive_documentation.py -v --tb=short
+# not needed, above all we are moving this test script
+#    - name: Run comprehensive documentation tests
+#      run: uv run pytest tests/wip/documentation/test_comprehensive_documentation.py -v --tb=short
 
     - name: Validate code examples, API references, and configs
       run: uv run python scripts/validate_docs.py --all --verbose

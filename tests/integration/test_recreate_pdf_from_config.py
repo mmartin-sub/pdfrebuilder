@@ -48,11 +48,7 @@ class TestRecreatePDFFromConfig(unittest.TestCase):
                                     "type": "text",
                                     "text": "Hello World",
                                     "bbox": [100, 100, 200, 120],
-                                    "font_details": {
-                                        "name": "Helvetica",
-                                        "size": 12,
-                                        "color": 0
-                                    }
+                                    "font_details": {"name": "Helvetica", "size": 12, "color": 0},
                                 }
                             ],
                         }
@@ -74,7 +70,7 @@ class TestRecreatePDFFromConfig(unittest.TestCase):
             json.dump(self.sample_config, f)
 
         mock_engine = Mock()
-        mock_engine.engine_name = 'fitz'
+        mock_engine.engine_name = "fitz"
         mock_get_engine.return_value = mock_engine
 
         recreate_pdf_from_config(self.config_path, self.output_path)
@@ -164,7 +160,7 @@ class TestRecreatePDFFromConfig(unittest.TestCase):
             json.dump(self.sample_config, f)
 
         mock_engine = Mock()
-        mock_engine.engine_name = 'fitz'
+        mock_engine.engine_name = "fitz"
         mock_get_engine.return_value = mock_engine
 
         recreate_pdf_from_config(self.config_path, self.output_path)

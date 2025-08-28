@@ -5,7 +5,7 @@ Tests for settings and configuration management.
 import logging
 from unittest.mock import patch
 
-from pdfrebuilder.settings import settings, STANDARD_PDF_FONTS, configure_logging
+from pdfrebuilder.settings import STANDARD_PDF_FONTS, configure_logging, settings
 
 
 class TestSettings:
