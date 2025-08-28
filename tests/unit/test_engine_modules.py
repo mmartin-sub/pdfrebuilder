@@ -32,7 +32,7 @@ class TestDocumentParser:
         with open(self.sample_pdf, "wb") as f:
             f.write(b"%PDF-1.4\n%dummy content\n%%EOF")
 
-    @patch("src.engine.document_parser.extract_pdf_content")
+    @patch("pdfrebuilder.engine.document_parser.extract_pdf_content")
     def test_parse_document_pdf_success(self, mock_extract_pdf):
         """Test successful PDF document parsing"""
         # Mock the extract_pdf_content function
@@ -67,7 +67,7 @@ class TestDocumentParser:
         with pytest.raises(DocumentParsingError, match="Unsupported file format"):
             parse_document(unsupported_file, {})
 
-    @patch("src.engine.document_parser.extract_pdf_content")
+    @patch("pdfrebuilder.engine.document_parser.extract_pdf_content")
     def test_parse_document_extraction_error(self, mock_extract_pdf):
         """Test handling of extraction errors"""
         # Mock extract_pdf_content to raise exception
@@ -76,16 +76,16 @@ class TestDocumentParser:
         with pytest.raises(DocumentParsingError, match="Failed to parse document"):
             parse_document(self.sample_pdf, {}, engine="fitz")
 
-    @patch("src.engine.document_parser.detect_file_format")
-    @patch("src.engine.document_parser.WandParser.parse")
-    def test_parse_document_wand_engine(self, mock_wand_parse, mock_detect_format):
+    @patch("pdfrebuilder.engine.document_parser.detect_file_format")
+    @patch("pdfrebuilder.engine.extract_wand_content.extract_wand_content")
+    def test_parse_document_wand_engine(self, mock_extract_wand, mock_detect_format):
         """Test parsing with Wand engine"""
         # Mock file format detection to return a supported format
         mock_detect_format.return_value = "png"
 
         # Mock Wand parser
         mock_document = Mock()
-        mock_wand_parse.return_value = mock_document
+        mock_extract_wand.return_value = mock_document
 
         # Create a test image file that Wand can handle
         test_image = os.path.join(self.temp_dir, "test.png")
@@ -95,7 +95,7 @@ class TestDocumentParser:
         result = parse_document(test_image, {}, engine="wand")
 
         assert result == mock_document
-        mock_wand_parse.assert_called_once()
+        mock_extract_wand.assert_called_once()
 
     def teardown_method(self):
         """Clean up test fixtures"""
@@ -207,7 +207,7 @@ class TestValidationReport:
         assert len(report.difference_details) == 2
         assert report.difference_details[0]["type"] == "color_mismatch"
 
-    @patch("src.engine.validation_report.validate_documents")
+    @patch("pdfrebuilder.engine.validation_report.validate_documents")
     def test_generate_validation_report_success(self, mock_validate):
         """Test successful validation report generation"""
         # Mock validation results
@@ -233,7 +233,7 @@ class TestValidationReport:
         assert report.differences_found is False
         mock_validate.assert_called_once()
 
-    @patch("src.engine.validation_report.validate_documents")
+    @patch("pdfrebuilder.engine.validation_report.validate_documents")
     def test_generate_validation_report_with_differences(self, mock_validate):
         """Test validation report generation with differences"""
         # Mock validation results with differences
@@ -276,7 +276,7 @@ class TestValidationReport:
         with pytest.raises(FileNotFoundError):
             generate_validation_report(non_existent_original, non_existent_generated, self.report_path)
 
-    @patch("src.engine.validation_report.validate_documents")
+    @patch("pdfrebuilder.engine.validation_report.validate_documents")
     def test_generate_validation_report_validation_error(self, mock_validate):
         """Test handling of validation errors"""
         # Mock validation to raise exception

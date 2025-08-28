@@ -8,13 +8,12 @@ code examples execute correctly.
 import ast
 import importlib
 import inspect
-import sys
+import importlib
+import inspect
 import unittest
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root = Path(__file__).parent.parent.parent
 
 
 class TestAPIDocumentation(unittest.TestCase):
@@ -91,10 +90,10 @@ class TestAPIDocumentation(unittest.TestCase):
     def test_settings_imports(self):
         """Test that settings module can be imported"""
         try:
-            from pdfrebuilder.settings import get_config_value
+            from pdfrebuilder.settings import settings
 
             # Test configuration access
-            image_dir = get_config_value("image_dir")
+            image_dir = settings.image_dir
             self.assertIsNotNone(image_dir)
 
         except ImportError as e:
@@ -216,7 +215,6 @@ class TestAPIExamples(unittest.TestCase):
     def setUp(self):
         """Set up test environment"""
         self.project_root = Path(__file__).parent.parent
-        sys.path.insert(0, str(self.project_root))
 
     def test_universal_idm_creation(self):
         """Test Universal IDM document creation example"""

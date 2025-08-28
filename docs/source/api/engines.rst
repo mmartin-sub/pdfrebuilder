@@ -15,6 +15,76 @@ Document Parser
    :show-inheritance:
    :ignore-module-all:
 
+.. automodule:: pdfrebuilder.engine.config_loader
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.engine_config_schema
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.engine_logger
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.engine_selector
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.extract_pdf_content_fitz
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.extract_psd_content
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.extract_wand_content
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.generic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.performance_metrics
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.psd_text_processor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.scikit_image_validator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.tool_fritz
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.validation_manager
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pdfrebuilder.engine.validation_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Document Renderer
 -----------------
 

@@ -56,8 +56,8 @@ def recreate_pdf_from_config(
                 engine = get_default_pdf_engine(engine_config)
                 logger.info(f"Using default engine: {engine.engine_name}")
 
-        # Generate the PDF
-        engine.generate(config, output_pdf_path, original_pdf_for_template)
+        # Render the PDF
+        engine.render(config, output_pdf_path, original_pdf_for_template)
 
         logger.info(f"Successfully generated PDF: {output_pdf_path}")
 

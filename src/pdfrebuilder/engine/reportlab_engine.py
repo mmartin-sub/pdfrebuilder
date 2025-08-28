@@ -326,32 +326,19 @@ class ReportLabEngine(PDFRenderingEngine):
             "ReportLab engine does not support PDF extraction. Use PyMuPDF engine for extraction."
         )
 
-    def generate(
-        self,
-        config: dict[str, Any],
-        output_pdf_path: str,
-        original_pdf_for_template: str | None = None,
-    ) -> None:
-        """Generate PDF from universal JSON config using ReportLab."""
+    def render(self, document: UniversalDocument, output_path: str) -> None:
+        """Render a UniversalDocument to a PDF file using ReportLab."""
         from pdfrebuilder.engine.performance_metrics import measure_engine_performance
 
         with measure_engine_performance(self.engine_name, self.engine_version) as metrics:
             try:
-                # Parse the universal document
-                if isinstance(config, dict):
-                    document = UniversalDocument.from_dict(config)
-                elif isinstance(config, UniversalDocument):
-                    document = config
-                else:
-                    raise ValueError("Config must be a dict or UniversalDocument")
-
                 # Get page size from the first page or use default
                 page_size = letter  # Default
                 if document.document_structure and isinstance(document.document_structure[0], PageUnit):
                     page_size = document.document_structure[0].size
 
                 # Create canvas
-                c = canvas.Canvas(output_pdf_path, pagesize=page_size)
+                c = canvas.Canvas(output_path, pagesize=page_size)
 
                 # Count pages and elements for metrics
                 page_count = 0
@@ -377,7 +364,7 @@ class ReportLabEngine(PDFRenderingEngine):
                 metrics["page_count"] = page_count
                 metrics["element_count"] = element_count
 
-                logger.info(f"PDF generated successfully: {output_pdf_path}")
+                logger.info(f"PDF generated successfully: {output_path}")
 
             except Exception as e:
                 logger.error(f"Error generating PDF with ReportLab: {e}")

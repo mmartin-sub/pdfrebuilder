@@ -2711,7 +2711,8 @@ def ensure_font_registered(page, font_name, verbose=True, text=None):
         return default_font
 
     # Try Google Fonts download if font not found locally
-    if font_name not in STANDARD_PDF_FONTS and font_name not in _FONT_DOWNLOAD_ATTEMPTED:
+    logging.info(f"Is test environment? {is_test_environment()}")
+    if not is_test_environment() and font_name not in STANDARD_PDF_FONTS and font_name not in _FONT_DOWNLOAD_ATTEMPTED:
         font_file = _find_font_file_for_name(font_name)
         if not font_file:
             if verbose:

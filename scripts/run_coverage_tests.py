@@ -14,14 +14,14 @@ def run_coverage_tests():
 
     # List of new test files created for coverage improvement
     new_test_files = [
-        "tests/test_compare_pdfs_visual.py",
-        "tests/test_recreate_pdf_from_config.py",
-        "tests/test_generate_debug_pdf_layers.py",
-        "tests/test_settings.py",
-        "tests/test_tools_init.py",
-        "tests/test_models_universal_idm.py",
-        "tests/test_security_modules.py",
-        "tests/test_engine_modules.py",
+        "tests/integration/test_compare_pdfs_visual.py",
+        "tests/integration/test_recreate_pdf_from_config.py",
+        "tests/integration/test_generate_debug_pdf_layers.py",
+        "tests/unit/test_settings.py",
+        "tests/unit/test_tools_init.py",
+        "tests/unit/test_models_universal_idm.py",
+        "tests/security/test_security_modules.py",
+        "tests/unit/test_engine_modules.py",
     ]
 
     # Run tests for each new test file

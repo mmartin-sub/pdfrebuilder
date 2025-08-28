@@ -2,16 +2,13 @@
 Tests for API reference validation system.
 """
 
-import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 
-# Add docs/tools to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "docs" / "tools"))
-from api_validator import APIReference, APIReferenceValidator
-from validation import ValidationStatus
+from docs.tools.api_validator import APIReference, APIReferenceValidator
+from docs.tools.validation import ValidationStatus
 
 
 class TestAPIReferenceValidator:

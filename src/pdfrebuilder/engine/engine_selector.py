@@ -157,8 +157,10 @@ class OutputEngineSelector(EngineSelector):
     def register_default_engines(self):
         try:
             from pdfrebuilder.engine.krita_engine import KritaOutputEngine
+            from pdfrebuilder.engine.wand_image_engine import WandImageOutputEngine
 
             self.register_engine("krita", KritaOutputEngine)
+            self.register_engine("wand_image", WandImageOutputEngine)
         except ImportError as e:
             logger.warning(f"Could not register some default output engines: {e}")
 

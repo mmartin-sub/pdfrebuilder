@@ -144,7 +144,7 @@ class TestSecureExecution:
         assert result.success is True
         assert result.return_code == 0
 
-    @patch("src.security.secure_execution.local")
+    @patch("pdfrebuilder.security.secure_execution.local")
     def test_secure_executor_failure(self, mock_local):
         """Test failed secure execution"""
         from plumbum import ProcessExecutionError
@@ -202,7 +202,7 @@ class TestSecureExecution:
         assert validate_command_safety([]) is False
         assert validate_command_safety(None) is False  # type: ignore[arg-type]
 
-    @patch("src.security.secure_execution.local")
+    @patch("pdfrebuilder.security.secure_execution.local")
     def test_secure_executor_working_directory(self, mock_local):
         """Test secure executor with working directory"""
         # Mock plumbum local
@@ -224,7 +224,7 @@ class TestSecureExecution:
 
         assert result.success is True
 
-    @patch("src.security.secure_execution.local")
+    @patch("pdfrebuilder.security.secure_execution.local")
     def test_secure_executor_environment_variables(self, mock_local):
         """Test secure executor with environment variables"""
         # Mock plumbum local

@@ -10,6 +10,8 @@ This section contains the complete API documentation for the Multi-Format Docume
    engines
    models
    tools
+   security
+   utils
 
 Core Modules
 ------------

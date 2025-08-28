@@ -296,7 +296,7 @@ class TestCanvas:
 
         assert isinstance(result, dict)
         assert result["type"] == "canvas"
-        assert result["canvas_size"] == [1920, 1080]
+        assert result["size"] == [1920, 1080]
         assert len(result["layers"]) == 1
 
 
