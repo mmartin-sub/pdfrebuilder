@@ -57,8 +57,8 @@ class TestComparePDFsVisual(unittest.TestCase):
 
         self.assertEqual(result, ERROR_CODES["REBUILT_PDF_NOT_FOUND"])
 
-    @patch("src.compare_pdfs_visual.validate_documents")
-    @patch("src.compare_pdfs_visual.generate_validation_report")
+    @patch("pdfrebuilder.core.compare_pdfs_visual.validate_documents")
+    @patch("pdfrebuilder.core.compare_pdfs_visual.generate_validation_report")
     def test_successful_comparison(self, mock_generate_report, mock_validate):
         """Test successful visual comparison"""
         # Mock validation result with high SSIM score (passing)
@@ -81,8 +81,8 @@ class TestComparePDFsVisual(unittest.TestCase):
         mock_validate.assert_called_once()
         mock_generate_report.assert_called_once()
 
-    @patch("src.compare_pdfs_visual.validate_documents")
-    @patch("src.compare_pdfs_visual.generate_validation_report")
+    @patch("pdfrebuilder.core.compare_pdfs_visual.validate_documents")
+    @patch("pdfrebuilder.core.compare_pdfs_visual.generate_validation_report")
     def test_visual_difference_found(self, mock_generate_report, mock_validate):
         """Test handling when visual differences are found"""
         # Mock validation result with low SSIM score (failing)
@@ -103,7 +103,7 @@ class TestComparePDFsVisual(unittest.TestCase):
 
         self.assertEqual(result, ERROR_CODES["VISUAL_DIFFERENCE_FOUND"])
 
-    @patch("src.compare_pdfs_visual.validate_documents")
+    @patch("pdfrebuilder.core.compare_pdfs_visual.validate_documents")
     def test_exception_handling(self, mock_validate):
         """Test exception handling during comparison"""
         # Mock validation to raise an exception
@@ -113,11 +113,12 @@ class TestComparePDFsVisual(unittest.TestCase):
 
         self.assertEqual(result, ERROR_CODES["EXCEPTION_OCCURRED"])
 
-    @patch("src.compare_pdfs_visual.CONFIG", {"visual_diff_threshold": 10})
-    @patch("src.compare_pdfs_visual.validate_documents")
-    @patch("src.compare_pdfs_visual.generate_validation_report")
-    def test_default_threshold_from_config(self, mock_generate_report, mock_validate):
-        """Test using default threshold from CONFIG when not specified"""
+    @patch("pdfrebuilder.core.compare_pdfs_visual.settings")
+    @patch("pdfrebuilder.core.compare_pdfs_visual.validate_documents")
+    @patch("pdfrebuilder.core.compare_pdfs_visual.generate_validation_report")
+    def test_default_threshold_from_config(self, mock_generate_report, mock_validate, mock_settings):
+        """Test using default threshold from settings when not specified"""
+        mock_settings.validation.visual_diff_threshold = 10
         mock_result = Mock()
         mock_result.ssim_score = 0.99
         mock_result.diff_image_path = None
@@ -129,21 +130,21 @@ class TestComparePDFsVisual(unittest.TestCase):
             self.original_pdf,
             self.generated_pdf,
             self.diff_image_base,
-            # No visual_diff_threshold specified - should use CONFIG value
+            # No visual_diff_threshold specified - should use settings value
         )
 
         self.assertEqual(result, ERROR_CODES["SUCCESS"])
 
-        # Verify ValidationConfig was created with correct threshold
-        # (CONFIG value of 10 should convert to SSIM threshold of 0.9)
+        # Verify config dict was created with correct threshold
+        # (settings value of 10 should convert to SSIM threshold of 0.9)
         call_args = mock_validate.call_args
         config = call_args[1]["config"]  # keyword argument
         expected_ssim_threshold = 1.0 - (10 / 100.0)  # 0.9
-        self.assertAlmostEqual(config.ssim_threshold, expected_ssim_threshold, places=2)
+        self.assertAlmostEqual(config['ssim_threshold'], expected_ssim_threshold, places=2)
 
-    @patch("src.compare_pdfs_visual.validate_documents")
-    @patch("src.compare_pdfs_visual.generate_validation_report")
-    @patch("src.compare_pdfs_visual.FontValidator")
+    @patch("pdfrebuilder.core.compare_pdfs_visual.validate_documents")
+    @patch("pdfrebuilder.core.compare_pdfs_visual.generate_validation_report")
+    @patch("pdfrebuilder.core.compare_pdfs_visual.FontValidator")
     @patch("os.path.exists")
     def test_font_validation_integration(
         self,
@@ -218,8 +219,8 @@ class TestComparePDFsVisual(unittest.TestCase):
         ]
 
         for pixel_threshold, expected_ssim in test_cases:
-            with patch("src.compare_pdfs_visual.validate_documents") as mock_validate:
-                with patch("src.compare_pdfs_visual.generate_validation_report"):
+            with patch("pdfrebuilder.core.compare_pdfs_visual.validate_documents") as mock_validate:
+                with patch("pdfrebuilder.core.compare_pdfs_visual.generate_validation_report"):
                     mock_result = Mock()
                     mock_result.ssim_score = 0.99
                     mock_result.diff_image_path = None
@@ -235,7 +236,7 @@ class TestComparePDFsVisual(unittest.TestCase):
                     # Check that ValidationConfig was created with correct SSIM threshold
                     call_args = mock_validate.call_args
                     config = call_args[1]["config"]
-                    self.assertAlmostEqual(config.ssim_threshold, expected_ssim, places=2)
+                    self.assertAlmostEqual(config['ssim_threshold'], expected_ssim, places=2)
 
 
 if __name__ == "__main__":

@@ -127,22 +127,16 @@ class PDFRenderingEngine(ABC):
         """
 
     @abstractmethod
-    def generate(
-        self,
-        config: dict[str, Any],
-        output_pdf_path: str,
-        original_pdf_for_template: str | None = None,
-    ) -> None:
+    def render(self, document: "UniversalDocument", output_path: str) -> None:
         """
-        Generate a PDF from a universal document configuration.
+        Render a UniversalDocument to a file.
 
         Args:
-            config: Document configuration dictionary
-            output_pdf_path: Output PDF file path
-            original_pdf_for_template: Optional path to an original PDF for overlay/template
+            document: The UniversalDocument to render.
+            output_path: The path to save the output file.
 
         Raises:
-            RenderingError: If PDF generation fails
+            RenderingError: If rendering fails.
         """
 
     @abstractmethod

@@ -42,7 +42,7 @@ class TestGenerateDebugPdfLayers:
                                     "text": "Test text",
                                     "bbox": [100, 100, 200, 120],
                                     "font_details": {
-                                        "name": "Arial",
+                                        "name": "Tangerine",
                                         "size": 12,
                                         "color": 0,
                                     },
@@ -69,13 +69,13 @@ class TestGenerateDebugPdfLayers:
     @patch("pdfrebuilder.core.generate_debug_pdf_layers.fitz.open")
     def test_generate_debug_pdf_layers_success(self, mock_fitz_open):
         """Test successful debug PDF generation"""
-        # Mock PyMuPDF document
+        # Mock PyMuPDF document and context manager
         mock_doc = Mock()
         mock_page = Mock()
         mock_page.rect.width = 612
         mock_page.rect.height = 792
         mock_doc.new_page.return_value = mock_page
-        mock_fitz_open.return_value = mock_doc
+        mock_fitz_open.return_value.__enter__.return_value = mock_doc
 
         # Write config to file
         import json
@@ -89,7 +89,6 @@ class TestGenerateDebugPdfLayers:
         mock_fitz_open.assert_called_once()
         mock_doc.new_page.assert_called()
         mock_doc.save.assert_called_once_with(self.output_path, garbage=4, deflate=True)
-        mock_doc.close.assert_called_once()
 
     def test_generate_debug_pdf_layers_file_not_found(self):
         """Test error when config file doesn't exist"""
@@ -109,7 +108,7 @@ class TestGenerateDebugPdfLayers:
         mock_page.rect.height = 792
         mock_doc.new_page.return_value = mock_page
         mock_doc.save.side_effect = Exception("Save failed")
-        mock_fitz_open.return_value = mock_doc
+        mock_fitz_open.return_value.__enter__.return_value = mock_doc
 
         # Write config to file
         import json
@@ -130,7 +129,7 @@ class TestGenerateDebugPdfLayers:
             "id": "text_1",
             "text": "Test text",
             "bbox": [100, 100, 200, 120],
-            "font_details": {"name": "Arial", "size": 12, "color": 0},
+            "font_details": {"name": "Tangerine", "size": 12, "color": 0},
         }
 
         _render_debug_element(mock_page, text_element, "layer_1", 0)
@@ -185,14 +184,14 @@ class TestGenerateDebugPdfLayers:
             "type": "text",
             "id": "text_1",
             "text": "Test text",
-            "font_details": {"name": "Arial", "size": 12},
+            "font_details": {"name": "Tangerine", "size": 12},
         }
 
         info_text = _get_element_info_text(text_element, "layer_1", 0)
 
         assert "text_1" in info_text
         assert "Test text" in info_text
-        assert "Arial" in info_text
+        assert "Tangerine" in info_text
         assert "12" in info_text
 
     def test_get_element_info_text_drawing_element(self):

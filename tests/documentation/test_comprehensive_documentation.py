@@ -6,17 +6,14 @@ including code examples, API references, configuration examples, and coverage.
 """
 
 import json
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 import pytest
 
-# Add docs/tools to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "docs" / "tools"))
-from coverage_reporter import DocumentationCoverageReporter
-from validation import DocumentationValidator, ValidationStatus
+from docs.tools.coverage_reporter import DocumentationCoverageReporter
+from docs.tools.validation import DocumentationValidator, ValidationStatus
 
 
 class TestComprehensiveDocumentation(unittest.TestCase):
@@ -200,7 +197,7 @@ class TestComprehensiveDocumentation(unittest.TestCase):
     def test_api_documentation_completeness(self):
         """Test that API documentation exists for all major modules."""
         src_dir = self.project_root / "src"
-        api_docs_dir = self.docs_dir / "api"
+        api_docs_dir = self.docs_dir / "source" / "api"
 
         if not src_dir.exists():
             self.skipTest("Source directory not found")
@@ -210,13 +207,19 @@ class TestComprehensiveDocumentation(unittest.TestCase):
 
         missing_api_docs = []
 
-        for py_file in python_files:
-            # Calculate expected API doc path
-            relative_path = py_file.relative_to(src_dir)
-            expected_doc_path = api_docs_dir / relative_path.with_suffix(".md")
+        rst_files_content = []
+        for rst_file in api_docs_dir.glob("*.rst"):
+            rst_files_content.append(rst_file.read_text())
 
-            if not expected_doc_path.exists():
-                missing_api_docs.append(str(relative_path))
+        for py_file in python_files:
+            # Calculate expected module name
+            relative_path = py_file.relative_to(src_dir)
+            module_name = str(relative_path.with_suffix("")).replace("/", ".")
+
+            found = any(module_name in content for content in rst_files_content)
+
+            if not found:
+                missing_api_docs.append(module_name)
 
         # Allow some modules to not have API docs, but not too many
         missing_percentage = len(missing_api_docs) / len(python_files) if python_files else 0

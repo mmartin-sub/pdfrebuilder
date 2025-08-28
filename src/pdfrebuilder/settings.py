@@ -1,3 +1,5 @@
+import logging
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -50,6 +52,21 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def configure_logging(log_file=None, log_level=logging.INFO, log_format='%(asctime)s - %(levelname)s - %(message)s'):
+    """Configures logging for the application."""
+    handlers = [logging.StreamHandler()]
+    if log_file:
+        handlers.append(logging.FileHandler(log_file, encoding="utf-8"))
+
+    logging.basicConfig(
+        level=log_level,
+        format=log_format,
+        handlers=handlers,
+        force=True  # Force re-configuration
+    )
+
 
 # The 14 standard PDF fonts are guaranteed to be available with any PDF viewer/engine.
 # They do not need to be embedded in the PDF file.

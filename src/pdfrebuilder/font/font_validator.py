@@ -75,6 +75,12 @@ class FontValidationResult:
 
 class FontValidator:
     """Font validation system for document processing"""
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
     def __init__(self, fonts_dir: str | None = None):
         """Initialize the font validator
@@ -82,12 +88,16 @@ class FontValidator:
         Args:
             fonts_dir: Directory containing font files. If None, uses settings.
         """
+        if hasattr(self, '_initialized') and self._initialized and not fonts_dir:
+            return
+
         from pdfrebuilder.settings import settings
 
         self.fonts_dir = fonts_dir or settings.font_management.downloaded_fonts_dir or "downloaded_fonts"
         self.available_fonts: dict[str, str] = {}
         self.substitution_tracker: list[FontSubstitution] = []
         self._refresh_available_fonts()
+        self._initialized = True
 
     def _refresh_available_fonts(self) -> None:
         """Refresh the cache of available fonts"""
