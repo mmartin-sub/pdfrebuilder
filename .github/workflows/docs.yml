@@ -17,9 +17,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      # CORRECTED: Use the official action to install Hatch
       - name: Install Hatch
-        run: pip install hatch
+        uses: pypa/hatch@install
+
       - name: Build documentation
         run: hatch run docs:build
+
       - name: Check links
         run: hatch run docs:linkcheck
