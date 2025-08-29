@@ -7,7 +7,9 @@ import json
 import logging
 import sys
 
-from pdfrebuilder.engine.pdf_engine_selector import get_engine_selector, get_pdf_engine
+from pdfrebuilder.engine.engine_selector import get_pdf_engine_selector
+from pdfrebuilder.engine.pdf_engine_selector import get_pdf_engine
+from pdfrebuilder.engine.performance_metrics import get_performance_collector
 from pdfrebuilder.models.universal_idm import (
     BlendMode,
     BoundingBox,
@@ -91,7 +93,7 @@ def run_engine_info(args: argparse.Namespace) -> None:
 
     try:
         # Get engine selector
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
 
         # List available engines
         engines = selector.list_available_engines()
@@ -146,7 +148,7 @@ def run_pdf_generation(args: argparse.Namespace) -> None:
 
         # Generate PDF
         output_path = args.output or "reportlab_test_output.pdf"
-        engine.generate(document.to_dict(), output_path)
+        engine.render(document, output_path)
 
         print(f"PDF generated successfully: {output_path}")
 
@@ -165,8 +167,8 @@ def run_engine_comparison(args: argparse.Namespace) -> None:
     print("=== Engine Comparison ===")
 
     try:
-        selector = get_engine_selector()
-        comparison = selector.compare_engines("reportlab", "pymupdf")
+        collector = get_performance_collector()
+        comparison = collector.compare_engines("reportlab", "pymupdf")
 
         if "error" in comparison:
             print(f"Error comparing engines: {comparison['error']}")

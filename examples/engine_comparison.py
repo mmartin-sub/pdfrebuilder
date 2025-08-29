@@ -9,7 +9,7 @@ import time
 from typing import Any
 
 from pdfrebuilder.engine.document_parser import get_parser_for_file, parse_document
-from pdfrebuilder.settings import get_nested_config_value, set_nested_config_value
+from pdfrebuilder.settings import settings
 
 
 def compare_input_engines(file_path: str) -> dict[str, Any]:
@@ -32,7 +32,7 @@ def compare_input_engines(file_path: str) -> dict[str, Any]:
 
         try:
             # Set the engine
-            set_nested_config_value("engines.input.default", engine)
+            settings.engines.input.default = engine
 
             # Measure parsing time
             start_time = time.time()
@@ -70,7 +70,7 @@ def compare_output_engines(document, output_base_path: str) -> dict[str, Any]:
 
         try:
             # Set the engine
-            set_nested_config_value("engines.output.default", engine)
+            settings.engines.output.default = engine
 
             output_path = f"{output_base_path}_{engine}.pdf"
 
@@ -119,27 +119,27 @@ def demonstrate_engine_selection():
     print("\n2. Configuration-based Engine Selection:")
 
     # Show current defaults
-    input_default = get_nested_config_value("engines.input.default")
-    output_default = get_nested_config_value("engines.output.default")
+    input_default = settings.engines.input.default
+    output_default = settings.engines.output.default
     print(f"  Current input default: {input_default}")
     print(f"  Current output default: {output_default}")
 
     # Change defaults
-    set_nested_config_value("engines.input.default", "wand")
-    set_nested_config_value("engines.output.default", "pymupdf")
+    settings.engines.input.default = "wand"
+    settings.engines.output.default = "pymupdf"
 
-    new_input_default = get_nested_config_value("engines.input.default")
-    new_output_default = get_nested_config_value("engines.output.default")
+    new_input_default = settings.engines.input.default
+    new_output_default = settings.engines.output.default
     print(f"  New input default: {new_input_default}")
     print(f"  New output default: {new_output_default}")
 
     # 3. Engine-specific configuration
     print("\n3. Engine-specific Configuration:")
 
-    wand_config = get_nested_config_value("engines.input.wand")
+    wand_config = settings.engines.input.wand.model_dump()
     print(f"  Wand configuration: {wand_config}")
 
-    reportlab_config = get_nested_config_value("engines.output.reportlab")
+    reportlab_config = settings.engines.output.reportlab.model_dump()
     print(f"  ReportLab configuration: {reportlab_config}")
 
 

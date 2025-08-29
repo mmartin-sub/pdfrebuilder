@@ -122,71 +122,73 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
         logger.error("settings.override_config_path must be a string path")
         return False
 
-    with fitz.open() as debug_doc:
-        debug_doc: fitz.Document
-        element_count = 0
-        for source_page_idx, page_data in enumerate(pages):
-            if element_count >= 10:
-                break
-            logger.info(f"Generating debug pages for source page {source_page_idx} ...")
-            page_overrides = overrides.get("text_block_overrides", {}).get(str(source_page_idx), {})
-            page_size = page_data.get("size", (595, 842))
-            for layer in page_data.get("layers", []):
+    try:
+        with fitz.open() as debug_doc:
+            element_count = 0
+            for source_page_idx, page_data in enumerate(pages):
                 if element_count >= 10:
                     break
-                for element_idx, element in enumerate(layer.get("content", [])):
+                logger.info(f"Generating debug pages for source page {source_page_idx} ...")
+                page_overrides = overrides.get("text_block_overrides", {}).get(str(source_page_idx), {})
+                page_size = page_data.get("size", (595, 842))
+                for layer in page_data.get("layers", []):
                     if element_count >= 10:
                         break
-                    element_count += 1
-                    debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])
-                    effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, settings)
-                    debug_font_name = settings.debug.font_name
-                    debug_fontsize = settings.debug.fontsize
-                    wrap_width = settings.debug.text_wrap_width
-                    debug_text_unwrapped = (
-                        f"Source Page {source_page_idx} / Element Index {element_idx} (ID: {element.get('id', 'N/A')})\n"
-                        f"Type: {element.get('type', 'N/A')}\n\n"
-                        "--- JSON Source (compact) ---\n"
-                        f"{_create_summarized_json(element)}\n\n"
-                        "--- PyMuPDF Effective Call (compact) ---\n"
-                        f"{_create_summarized_json(effective_params)}"
-                    )
-                    final_text_to_render = _wrap_text(debug_text_unwrapped, width=wrap_width)
-                    debug_text_margin = 10
-                    page_width, page_height = (
-                        debug_page.rect.width,
-                        debug_page.rect.height,
-                    )
-                    rect_height = page_height / 3
-                    rect_y_start = page_height - rect_height - debug_text_margin
-                    text_rect = fitz.Rect(
-                        debug_text_margin,
-                        rect_y_start,
-                        page_width - debug_text_margin,
-                        page_height - debug_text_margin,
-                    )
+                    for element_idx, element in enumerate(layer.get("content", [])):
+                        if element_count >= 10:
+                            break
+                        element_count += 1
+                        debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])  # type: ignore[attr-defined]
+                        effective_params = _render_element(
+                            debug_page, element, source_page_idx, page_overrides, settings
+                        )
+                        debug_font_name = settings.debug.font_name
+                        debug_fontsize = settings.debug.fontsize
+                        wrap_width = settings.debug.text_wrap_width
+                        debug_text_unwrapped = (
+                            f"Source Page {source_page_idx} / Element Index {element_idx} (ID: {element.get('id', 'N/A')})\n"
+                            f"Type: {element.get('type', 'N/A')}\n\n"
+                            "--- JSON Source (compact) ---\n"
+                            f"{_create_summarized_json(element)}\n\n"
+                            "--- PyMuPDF Effective Call (compact) ---\n"
+                            f"{_create_summarized_json(effective_params)}"
+                        )
+                        final_text_to_render = _wrap_text(debug_text_unwrapped, width=wrap_width)
+                        debug_text_margin = 10
+                        page_width, page_height = (
+                            debug_page.rect.width,
+                            debug_page.rect.height,
+                        )
+                        rect_height = page_height / 3
+                        rect_y_start = page_height - rect_height - debug_text_margin
+                        text_rect = fitz.Rect(
+                            debug_text_margin,
+                            rect_y_start,
+                            page_width - debug_text_margin,
+                            page_height - debug_text_margin,
+                        )
 
-                    debug_page.draw_rect(
-                        text_rect,
-                        fill=(0.1, 0.1, 0.1),
-                        fill_opacity=0.8,
-                        overlay=True,
-                        width=0,
-                    )
-                    debug_page.insert_textbox(
-                        text_rect,
-                        final_text_to_render,
-                        fontsize=debug_fontsize,
-                        fontname=debug_font_name,
-                        color=(0.95, 0.95, 0.95),
-                        align=fitz.TEXT_ALIGN_LEFT,  # type: ignore  # fitz.TEXT_ALIGN_LEFT is a valid int constant, but mypy stubs may be incomplete
-                        overlay=True,
-                    )
-                    logger.debug(f"Debug page added for Element {element_idx}.")
-        try:
+                        debug_page.draw_rect(
+                            text_rect,
+                            fill=(0.1, 0.1, 0.1),
+                            fill_opacity=0.8,
+                            overlay=True,
+                            width=0,
+                        )
+                        debug_page.insert_textbox(
+                            text_rect,
+                            final_text_to_render,
+                            fontsize=debug_fontsize,
+                            fontname=debug_font_name,
+                            color=(0.95, 0.95, 0.95),
+                            align=fitz.TEXT_ALIGN_LEFT,  # type: ignore  # fitz.TEXT_ALIGN_LEFT is a valid int constant, but mypy stubs may be incomplete
+                            overlay=True,
+                        )
+                        logger.debug(f"Debug page added for Element {element_idx}.")
+
             debug_doc.save(output_debug_pdf_base, garbage=4, deflate=True)
             logger.info(f"Consolidated debug PDF saved to: {output_debug_pdf_base}")
             return True
-        except Exception as e:
-            logger.error(f"Failed to save the final PDF. Reason: {e}")
-            return False
+    except Exception as e:
+        logger.error(f"Failed to save the final PDF. Reason: {e}")
+        return False

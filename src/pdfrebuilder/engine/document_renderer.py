@@ -145,10 +145,10 @@ class PDFRenderer(DocumentRenderer):
                 # Create a pixmap with appropriate colorspace
                 if config.transparent_background and config.color_space == "RGBA":
                     # RGBA pixmap with transparent background
-                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=True)
+                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=True)  # type: ignore[attr-defined]
                 else:
                     # RGB pixmap with white background
-                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
+                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)  # type: ignore[attr-defined]
 
                 # Determine output format and file extension
                 if config.output_format == "png":

@@ -1095,7 +1095,7 @@ class FallbackFontValidator:
 
         # Create a temporary page for testing font registration
         temp_doc: fitz.Document = fitz.open()
-        temp_page = temp_doc.new_page()
+        temp_page = temp_doc.new_page()  # type: ignore[attr-defined]
 
         validation_results: dict[str, Any] = {
             "total_fonts_tested": 0,
@@ -2636,7 +2636,7 @@ def scan_available_fonts(font_dirs):
             try:
                 font = TTFont(font_path)
                 name_table = font["name"]
-                name = name_table.getBestFamilyName()
+                name = name_table.getBestFamilyName()  # type: ignore[attr-defined]
                 if name:
                     if name not in font_map or "manual" in font_path:
                         font_map[name] = font_path
@@ -2720,11 +2720,15 @@ def ensure_font_registered(page, font_name, verbose=True, text=None):
 
             _FONT_DOWNLOAD_ATTEMPTED.add(font_name)
             auto_fonts_dir = settings.font_management.downloaded_fonts_dir
-            downloaded = download_google_font(font_name, auto_fonts_dir)
-            print(".", end="", flush=True)
+            try:
+                downloaded = download_google_font(font_name, auto_fonts_dir)
+                print(".", end="", flush=True)
 
-            if not downloaded and verbose:
-                logger.warning(f"[font_utils] Google Fonts download failed for '{font_name}'")
+                if not downloaded and verbose:
+                    logger.warning(f"[font_utils] Google Fonts download failed for '{font_name}'")
+            except Exception as e:
+                if verbose:
+                    logger.warning(f"[font_utils] Google Fonts download failed for '{font_name}': {e}")
 
     # Use the enhanced registration system
     registration_result = register_font_with_validation(

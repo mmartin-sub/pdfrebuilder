@@ -70,9 +70,9 @@ def resolve_link_path(base_file: Path, link_url: str, docs_root: Path) -> Path:
     elif clean_url.startswith("/"):
         # Absolute path from docs root
         return docs_root / clean_url[1:]
-    else:
-        # Relative to current file directory
-        return base_file.parent / clean_url
+
+    # Relative to current file directory
+    return base_file.parent / clean_url
 
 
 def validate_links(docs_dir: Path) -> dict[str, list[str]]:

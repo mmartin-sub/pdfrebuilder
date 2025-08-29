@@ -10,6 +10,7 @@ is currently in development.
 import json
 import sys
 from pathlib import Path
+from typing import cast
 
 # Add the project root to Python path
 project_root = Path(__file__).parent.parent
@@ -18,6 +19,7 @@ sys.path.insert(0, str(project_root))
 # Import after path setup
 try:
     from pdfrebuilder.engine.extract_psd_content import extract_psd_content
+    from pdfrebuilder.models.universal_idm import TextElement
 
     PSD_SUPPORT_AVAILABLE = True
 except ImportError as e:
@@ -194,8 +196,8 @@ def example_advanced_psd_extraction():
 
             for i, canvas in enumerate(document.document_structure):
                 print(f"     Canvas {i + 1}:")
-                if hasattr(canvas, "canvas_size"):
-                    print(f"       Size: {canvas.canvas_size}")
+                if hasattr(canvas, "size"):
+                    print(f"       Size: {canvas.size}")
 
                 if hasattr(canvas, "layers"):
                     _analyze_layer_hierarchy(canvas.layers, indent="       ")
@@ -282,7 +284,7 @@ def example_psd_to_pdf_conversion():
             "rasterize_effects": True,  # Convert layer effects to raster images
         }
 
-        render_document(document, str(output_pdf), render_options)
+        render_document(document.to_dict(), str(output_pdf), None)
 
         print("✅ Conversion completed!")
         print(f"   Output PDF: {output_pdf}")
@@ -347,9 +349,10 @@ def example_psd_layer_manipulation():
                         # Example 3: Modify text content
                         if hasattr(layer, "content"):
                             for element in layer.content:
-                                if hasattr(element, "text") and element.text:
-                                    if not element.text.startswith("[MODIFIED]"):
-                                        element.text = f"[MODIFIED] {element.text}"
+                                if isinstance(element, TextElement):
+                                    text_element = cast(TextElement, element)
+                                    if text_element.text and not text_element.text.startswith("[MODIFIED]"):
+                                        text_element.text = f"[MODIFIED] {text_element.text}"
                                         modifications_made += 1
 
         print(f"   Made {modifications_made} modifications")

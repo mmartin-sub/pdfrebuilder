@@ -66,12 +66,12 @@ def check_pdfrebuilder_library():
     print("\n🔍 Checking PDFRebuilder library import...")
     try:
         # Try importing key modules
-        from pdfrebuilder.config import ConfigManager
+        from pdfrebuilder.settings import settings
 
         print("✅ PDFRebuilder library modules can be imported")
 
         # Test configuration system
-        ConfigManager()
+        _ = settings.engines
         print("✅ Configuration system is working")
 
         return True

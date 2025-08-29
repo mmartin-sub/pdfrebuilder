@@ -13,6 +13,8 @@ import time
 from pathlib import Path
 
 # Add src to path for imports
+from typing import Any
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # Import security utilities
@@ -179,7 +181,7 @@ class DocumentationTestRunner:
         try:
             validation_results = self.api_validator.validate_all_api_references()
 
-            results = {
+            results: dict[str, Any] = {
                 "total_references": len(validation_results),
                 "passed": sum(1 for r in validation_results if r.status == ValidationStatus.PASSED),
                 "failed": sum(1 for r in validation_results if r.status == ValidationStatus.FAILED),

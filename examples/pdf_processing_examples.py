@@ -17,6 +17,7 @@ sys.path.insert(0, str(project_root))
 # Import after path setup - this is necessary for the imports to work
 from pdfrebuilder.core.recreate_pdf_from_config import recreate_pdf_from_config
 from pdfrebuilder.engine.extract_pdf_content_fitz import extract_pdf_content
+from pdfrebuilder.models.universal_idm import TextElement
 from pdfrebuilder.tools import serialize_pdf_content_to_config
 
 
@@ -181,7 +182,7 @@ def example_advanced_pdf_extraction():
                             print(f"       Layer '{layer.layer_name}': {len(layer.content)} elements")
 
                             # Show element details
-                            text_elements = [e for e in layer.content if hasattr(e, "text")]
+                            text_elements = [e for e in layer.content if isinstance(e, TextElement)]
                             image_elements = [e for e in layer.content if hasattr(e, "image_file")]
                             drawing_elements = [e for e in layer.content if hasattr(e, "drawing_commands")]
 
@@ -189,11 +190,10 @@ def example_advanced_pdf_extraction():
                                 print(f"         Text elements: {len(text_elements)}")
                                 # Show first text element as example
                                 first_text = text_elements[0]
-                                if hasattr(first_text, "text"):
-                                    sample_text = (
-                                        first_text.text[:50] + "..." if len(first_text.text) > 50 else first_text.text
-                                    )
-                                    print(f"         Sample text: '{sample_text}'")
+                                sample_text = (
+                                    first_text.text[:50] + "..." if len(first_text.text) > 50 else first_text.text
+                                )
+                                print(f"         Sample text: '{sample_text}'")
 
                             if image_elements:
                                 print(f"         Image elements: {len(image_elements)}")
@@ -430,17 +430,17 @@ def example_pdf_analysis():
                                 analysis_results["total_elements"] += 1
 
                                 # Analyze by element type
-                                if hasattr(element, "text"):
+                                if isinstance(element, TextElement):
                                     analysis_results["text_elements"] += 1
                                     analysis_results["text_content_length"] += len(element.text)
 
                                     # Extract font information
-                                    if hasattr(element, "font_details") and element.font_details:
-                                        if hasattr(element.font_details, "name"):
+                                    if element.font_details:
+                                        if element.font_details.name:
                                             analysis_results["fonts_used"].add(element.font_details.name)
 
                                         # Extract color information
-                                        if hasattr(element.font_details, "color"):
+                                        if element.font_details.color:
                                             analysis_results["colors_used"].add(str(element.font_details.color))
 
                                 elif hasattr(element, "image_file"):

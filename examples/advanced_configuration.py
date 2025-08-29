@@ -8,12 +8,7 @@ import json
 import os
 from typing import Any
 
-from pdfrebuilder.settings import (
-    configure_output_directories,
-    get_config_value,
-    get_nested_config_value,
-    set_nested_config_value,
-)
+from pdfrebuilder.settings import settings
 
 
 def show_current_configuration():
@@ -23,34 +18,30 @@ def show_current_configuration():
 
     # Engine configurations
     print("Input Engines:")
-    input_engines = get_nested_config_value("engines.input", {})
-    for engine, config in input_engines.items():
+    for engine, config in settings.engines.input.model_dump().items():
         if engine != "default":
             print(f"  {engine}:")
             for key, value in config.items():
                 print(f"    {key}: {value}")
 
-    print(f"\nDefault Input Engine: {get_nested_config_value('engines.input.default')}")
+    print(f"\nDefault Input Engine: {settings.engines.input.default}")
 
     print("\nOutput Engines:")
-    output_engines = get_nested_config_value("engines.output", {})
-    for engine, config in output_engines.items():
+    for engine, config in settings.engines.output.model_dump().items():
         if engine != "default":
             print(f"  {engine}:")
             for key, value in config.items():
                 print(f"    {key}: {value}")
 
-    print(f"\nDefault Output Engine: {get_nested_config_value('engines.output.default')}")
+    print(f"\nDefault Output Engine: {settings.engines.output.default}")
 
     # Other important configurations
     print("\nFont Management:")
-    font_config = get_nested_config_value("font_management", {})
-    for key, value in font_config.items():
+    for key, value in settings.font_management.model_dump().items():
         print(f"  {key}: {value}")
 
     print("\nValidation Settings:")
-    validation_config = get_nested_config_value("validation", {})
-    for key, value in validation_config.items():
+    for key, value in settings.validation.model_dump().items():
         print(f"  {key}: {value}")
 
 
@@ -200,26 +191,10 @@ def apply_configuration(config: dict[str, Any]):
 
     print("\n=== Applying Configuration ===\n")
 
-    # Apply engine configurations
-    if "engines" in config:
-        for engine_type, engines in config["engines"].items():
-            for engine_name, engine_config in engines.items():
-                config_path = f"engines.{engine_type}.{engine_name}"
-                if isinstance(engine_config, dict):
-                    for key, value in engine_config.items():
-                        set_nested_config_value(f"{config_path}.{key}", value)
-                else:
-                    set_nested_config_value(config_path, engine_config)
-
-    # Apply processing configuration
-    if "processing" in config:
-        for key, value in config["processing"].items():
-            set_nested_config_value(f"processing.{key}", value)
-
-    # Apply validation configuration
-    if "validation" in config:
-        for key, value in config["validation"].items():
-            set_nested_config_value(f"validation.{key}", value)
+    for category, cat_config in config.items():
+        if hasattr(settings, category):
+            for key, value in cat_config.items():
+                setattr(getattr(settings, category), key, value)
 
     print("Configuration applied successfully!")
 
@@ -254,21 +229,19 @@ def demonstrate_output_directory_configuration():
 
     # Show current directories
     print("Current Output Directories:")
-    print(f"  Base: {get_config_value('test_output_dir')}")
-    print(f"  Reports: {get_config_value('reports_output_dir')}")
-    print(f"  Logs: {get_config_value('logs_output_dir')}")
+    print(f"  Base: {settings.test_framework.test_output_dir}")
+    print(f"  Reports: {settings.test_framework.test_reports_dir}")
+    print(f"  Logs: {settings.logging.debug_logs_dir}")
 
     # Configure custom directories
-    configure_output_directories(
-        base_dir="custom_output",
-        test_dir="custom_output/testing",
-        reports_dir="custom_output/reports",
-    )
+    settings.test_framework.test_output_dir = "custom_output/testing"
+    settings.test_framework.test_reports_dir = "custom_output/reports"
+    settings.logging.debug_logs_dir = "custom_output/logs"
 
     print("\nAfter Custom Configuration:")
-    print(f"  Base: {get_config_value('test_output_dir')}")
-    print(f"  Reports: {get_config_value('reports_output_dir')}")
-    print(f"  Logs: {get_config_value('logs_output_dir')}")
+    print(f"  Base: {settings.test_framework.test_output_dir}")
+    print(f"  Reports: {settings.test_framework.test_reports_dir}")
+    print(f"  Logs: {settings.logging.debug_logs_dir}")
 
 
 def demonstrate_font_configuration():
@@ -277,18 +250,18 @@ def demonstrate_font_configuration():
     print("\n=== Font Management Configuration ===\n")
 
     # Show current font configuration
-    font_config = get_nested_config_value("font_management")
+    font_config = settings.font_management.model_dump()
     print("Current Font Configuration:")
     for key, value in font_config.items():
         print(f"  {key}: {value}")
 
     # Modify font configuration
-    set_nested_config_value("font_management.enable_google_fonts", False)
-    set_nested_config_value("font_management.fallback_font", "Times-Roman")
+    settings.font_management.enable_google_fonts = False
+    settings.font_management.fallback_font = "Times-Roman"
 
     print("\nAfter Modifications:")
-    print(f"  Google Fonts: {get_nested_config_value('font_management.enable_google_fonts')}")
-    print(f"  Fallback Font: {get_nested_config_value('font_management.fallback_font')}")
+    print(f"  Google Fonts: {settings.font_management.enable_google_fonts}")
+    print(f"  Fallback Font: {settings.font_management.fallback_font}")
 
 
 def main():
@@ -316,9 +289,9 @@ def main():
     apply_configuration(high_perf_config)
 
     # Show the changes
-    print(f"\nNew default input engine: {get_nested_config_value('engines.input.default')}")
-    print(f"New default output engine: {get_nested_config_value('engines.output.default')}")
-    print(f"Parallel processing: {get_nested_config_value('processing.enable_parallel_processing')}")
+    print(f"\nNew default input engine: {settings.engines.input.default}")
+    print(f"New default output engine: {settings.engines.output.default}")
+    print(f"Parallel processing: {settings.processing.enable_parallel_processing}")
 
     # Demonstrate other configuration features
     demonstrate_output_directory_configuration()
@@ -333,7 +306,7 @@ def main():
     print("\nTo use a configuration:")
     print("  1. Load it with load_configuration_from_file()")
     print("  2. Apply it with apply_configuration()")
-    print("  3. Or modify settings directly with set_nested_config_value()")
+    print("  3. Or modify settings directly on the `settings` object.")
 
 
 if __name__ == "__main__":

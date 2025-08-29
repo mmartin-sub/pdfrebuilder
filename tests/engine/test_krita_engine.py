@@ -4,7 +4,14 @@ import zipfile
 
 import pytest
 
-wand = pytest.importorskip("wand", reason="ImageMagick (wand) not installed")
+try:
+    import wand
+    import wand.image
+
+    WAND_AVAILABLE = True
+except ImportError:
+    WAND_AVAILABLE = False
+
 
 from pdfrebuilder.engine.krita_engine import KritaInputEngine, KritaOutputEngine
 from pdfrebuilder.models.universal_idm import (
@@ -17,7 +24,7 @@ from pdfrebuilder.models.universal_idm import (
 from tests.config import cleanup_test_output, get_test_temp_dir
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def test_env():
     test_name = "test_krita_engine"
     temp_dir = get_test_temp_dir(test_name)
@@ -29,7 +36,8 @@ def test_env():
     cleanup_test_output(test_name)
 
 
-@pytest.fixture(scope="module")
+@pytest.mark.skipif(not WAND_AVAILABLE, reason="ImageMagick (wand) not installed")
+@pytest.fixture(scope="function")
 def sample_kra_file(test_env):
     temp_dir, _ = test_env
     kra_path = os.path.join(temp_dir, "sample.kra")
@@ -61,6 +69,7 @@ def sample_kra_file(test_env):
     return kra_path
 
 
+@pytest.mark.skipif(not WAND_AVAILABLE, reason="ImageMagick (wand) not installed")
 def test_krita_input_engine(sample_kra_file):
     """Test parsing a .kra file with KritaInputEngine."""
     engine = KritaInputEngine()
@@ -88,6 +97,7 @@ def test_krita_input_engine(sample_kra_file):
     assert image_element.original_format.upper() == "PNG"
 
 
+@pytest.mark.skipif(not WAND_AVAILABLE, reason="ImageMagick (wand) not installed")
 def test_krita_output_engine(test_env):
     """Test rendering a UniversalDocument to a .kra file."""
     temp_dir, output_dir = test_env
@@ -133,6 +143,7 @@ def test_krita_output_engine(test_env):
             assert layer_xml.attrib["src"] == "layer0.png"
 
 
+@pytest.mark.skipif(not WAND_AVAILABLE, reason="ImageMagick (wand) not installed")
 def test_e2e_krita_processing(sample_kra_file, test_env):
     """Test the full cycle of parsing and rendering a Krita file."""
     _, output_dir = test_env

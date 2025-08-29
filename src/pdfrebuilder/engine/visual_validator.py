@@ -170,7 +170,7 @@ class VisualValidator:
             zoom = self.rendering_dpi / 72.0  # 72 DPI is the PDF default
 
             # Create pixmap
-            pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+            pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))  # type: ignore[attr-defined]
 
             # Save pixmap as PNG
             pix.save(tmp_path)

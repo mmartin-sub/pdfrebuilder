@@ -176,7 +176,7 @@ class TestFontErrorClasses:
 class TestFontErrorReporter:
     """Test the FontErrorReporter class"""
 
-    def test_report_registration_error(self):
+    def test_report_registration_error(self, caplog):
         """Test reporting font registration errors"""
         reporter = FontErrorReporter()
         reporter.clear_errors()
@@ -186,12 +186,13 @@ class TestFontErrorReporter:
 
         reporter.report_registration_error("TestFont", error, context)
 
+        assert "Font registration failed" in caplog.text
         summary = reporter.generate_error_summary()
         assert summary is not None
         assert summary["registration_errors"] == 1
         assert summary["need_font_file_errors"] == 1
 
-    def test_report_validation_error(self):
+    def test_report_validation_error(self, caplog):
         """Test reporting font validation errors"""
         reporter = FontErrorReporter()
         reporter.clear_errors()
@@ -201,10 +202,11 @@ class TestFontErrorReporter:
 
         reporter.report_validation_error("/path/to/font.ttf", validation_errors, context)
 
+        assert "Font validation failed" in caplog.text
         summary = reporter.generate_error_summary()
         assert summary["validation_errors"] == 1
 
-    def test_generate_error_summary(self):
+    def test_generate_error_summary(self, caplog):
         """Test error summary generation"""
         reporter = FontErrorReporter()
         reporter.clear_errors()
@@ -214,6 +216,10 @@ class TestFontErrorReporter:
         reporter.report_validation_error("/path/font2.ttf", ["error2"], {})
         reporter.report_fallback_error("Font3", ["Arial"], Exception("error3"), {})
 
+        assert "Font registration failed" in caplog.text
+        assert "Font validation failed" in caplog.text
+        assert "Font fallback system failed" in caplog.text
+
         summary = reporter.generate_error_summary()
 
         assert summary["total_errors"] == 3
@@ -221,7 +227,7 @@ class TestFontErrorReporter:
         assert summary["validation_errors"] == 1
         assert summary["fallback_errors"] == 1
 
-    def test_actionable_guidance(self):
+    def test_actionable_guidance(self, caplog):
         """Test actionable guidance generation"""
         reporter = FontErrorReporter()
         reporter.clear_errors()
@@ -230,6 +236,7 @@ class TestFontErrorReporter:
         error = Exception("need font file or buffer")
         reporter.report_registration_error("TestFont", error, {})
 
+        assert "Font registration failed" in caplog.text
         guidance = reporter.get_actionable_guidance()
 
         assert len(guidance) > 0
@@ -250,7 +257,7 @@ class TestFallbackFontManager:
         assert fallback is not None
         assert fallback in manager.FALLBACK_FONTS
 
-    def test_select_fallback_font_all_fail(self, mock_page):
+    def test_select_fallback_font_all_fail(self, mock_page, caplog):
         """Test fallback selection when all fallbacks fail"""
         manager = FallbackFontManager()
 
@@ -258,6 +265,7 @@ class TestFallbackFontManager:
         with patch.object(manager, "validate_fallback_font", return_value=False):
             fallback = manager.select_fallback_font("NonexistentFont", "Sample text", mock_page)
 
+        assert "All fallback fonts failed" in caplog.text
         assert fallback is None
 
     def test_validate_fallback_font_standard_pdf(self, mock_page):
@@ -310,7 +318,7 @@ class TestFontRegistrationTracker:
         assert stats["successful_registrations"] == 1
         assert stats["success_rate"] == 1.0
 
-    def test_track_registration_attempt_failure(self):
+    def test_track_registration_attempt_failure(self, caplog):
         """Test tracking failed registration attempts"""
         tracker = FontRegistrationTracker()
         tracker.clear_tracking_data()
@@ -324,12 +332,13 @@ class TestFontRegistrationTracker:
 
         tracker.track_registration_attempt("TestFont", result)
 
+        assert "Font registration failed" in caplog.text
         stats = tracker.get_registration_statistics()
         assert stats["total_attempts"] == 1
         assert stats["failed_registrations"] == 1
         assert stats["success_rate"] == 0.0
 
-    def test_registration_statistics(self):
+    def test_registration_statistics(self, caplog):
         """Test registration statistics calculation"""
         tracker = FontRegistrationTracker()
         tracker.clear_tracking_data()
@@ -353,6 +362,7 @@ class TestFontRegistrationTracker:
         fail_result.is_critical_failure = lambda: True
         tracker.track_registration_attempt("Font2", fail_result)
 
+        assert "Font registration failed" in caplog.text
         stats = tracker.get_registration_statistics()
         assert stats["total_attempts"] == 2
         assert stats["successful_registrations"] == 1
@@ -427,7 +437,7 @@ class TestEnhancedFontRegistration:
         mock_register_font_with_validation.assert_called_once()
 
     @patch("pdfrebuilder.font.utils.register_font_with_validation")
-    def test_ensure_font_registered_critical_failure(self, mock_register, mock_page):
+    def test_ensure_font_registered_critical_failure(self, mock_register, mock_page, caplog):
         """Test ensure_font_registered with critical failure"""
         # Mock critical failure
         critical_result = FontRegistrationResult(
@@ -442,6 +452,7 @@ class TestEnhancedFontRegistration:
         # In a test environment, a critical failure should return a guaranteed
         # fallback font instead of raising an exception.
         result = ensure_font_registered(mock_page, "TestFont", verbose=False)
+        assert "Could not fetch CSS for TestFont" in caplog.text
         assert result is not None
         # We can't know the exact fallback, but it should be a string.
         assert isinstance(result, str)
@@ -474,7 +485,7 @@ class TestFontErrorIntegration:
         mock_register.assert_called_once()
 
     @patch("pdfrebuilder.font.utils.register_font_with_validation")
-    def test_render_text_critical_font_error(self, mock_register):
+    def test_render_text_critical_font_error(self, mock_register, caplog):
         """Test _render_text_with_fallback with critical font error"""
         import fitz
 
@@ -495,6 +506,8 @@ class TestFontErrorIntegration:
 
         with pytest.raises(FontRegistrationError):
             _render_text_with_fallback(mock_page, mock_rect, "Test text", "TestFont", 12, (0, 0, 0))
+
+        assert "Critical font registration failure" in caplog.text
 
 
 class TestFontSystemInitialization:

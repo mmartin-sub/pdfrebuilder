@@ -4,7 +4,6 @@ from wand.color import Color
 from wand.drawing import Drawing
 from wand.image import Image
 
-from pdfrebuilder.engine.document_renderer import DocumentRenderer
 from pdfrebuilder.models.universal_idm import (
     ImageElement,
     TextElement,
@@ -12,7 +11,7 @@ from pdfrebuilder.models.universal_idm import (
 )
 
 
-class WandImageOutputEngine(DocumentRenderer):
+class WandImageOutputEngine:
     """
     An output engine that renders a UniversalDocument to an image format using Wand.
     """

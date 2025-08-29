@@ -126,9 +126,9 @@ class FileCleanup:
 
         # Get dynamic directories from settings
         try:
-            from pdfrebuilder.settings import get_config_value
+            from pdfrebuilder.settings import settings
 
-            font_validation_demo_reports_dir = get_config_value("font_validation_demo_reports_dir")
+            font_validation_demo_reports_dir = settings.test_framework.test_reports_dir
             # Add the directory name to the never delete patterns
             self.never_delete_patterns = list(NEVER_DELETE)
             if font_validation_demo_reports_dir:

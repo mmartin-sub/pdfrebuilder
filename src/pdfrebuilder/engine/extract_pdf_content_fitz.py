@@ -279,7 +279,7 @@ def extract_pdf_content(pdf_path, extraction_flags=None):
 
         # Get raw content from the page
         raw_blocks = (
-            page.get_text("dict").get("blocks", [])
+            page.get_text("dict").get("blocks", [])  # type: ignore[attr-defined]
             if (extraction_flags.get("include_text", True) or extraction_flags.get("include_images", True))
             else []
         )
@@ -338,8 +338,8 @@ def extract_pdf_content(pdf_path, extraction_flags=None):
             for rect_draw in filled_rects:
                 if not rect_draw.get("used_for_background"):
                     bg_rect = fitz.Rect(rect_draw["rect"])
-                    intersection_area = (text_rect & bg_rect).get_area()
-                    if text_rect.contains(bg_rect) or intersection_area > (text_rect.get_area() * 0.8):
+                    intersection_area = (text_rect & bg_rect).get_area()  # type: ignore[attr-defined]
+                    if text_rect.contains(bg_rect) or intersection_area > (text_rect.get_area() * 0.8):  # type: ignore[attr-defined]
                         # Set background color for text
                         if rect_draw.get("fill"):
                             text_elem.background_color = Color.from_rgb_tuple(rect_draw["fill"])

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from docs.tools.api_validator import APIReference, APIReferenceValidator
+from docs.tools.api_validator import APIDefinition, APIReference, APIReferenceValidator
 from docs.tools.validation import ValidationStatus
 
 
@@ -66,25 +66,25 @@ def undocumented_function():
         assert "test_module" in self.validator._api_definitions
         module_def = self.validator._api_definitions["test_module"]
         assert module_def.definition_type == "module"
-        assert "Test module for API scanning" in module_def.docstring
+        assert module_def.docstring is not None and "Test module for API scanning" in module_def.docstring
 
         # Check class definition
         assert "test_module.TestClass" in self.validator._api_definitions
         class_def = self.validator._api_definitions["test_module.TestClass"]
         assert class_def.definition_type == "class"
-        assert "A test class" in class_def.docstring
+        assert class_def.docstring is not None and "A test class" in class_def.docstring
 
         # Check method definition
         assert "test_module.TestClass.test_method" in self.validator._api_definitions
         method_def = self.validator._api_definitions["test_module.TestClass.test_method"]
         assert method_def.definition_type == "method"
-        assert "A test method" in method_def.docstring
+        assert method_def.docstring is not None and "A test method" in method_def.docstring
 
         # Check function definition
         assert "test_module.test_function" in self.validator._api_definitions
         func_def = self.validator._api_definitions["test_module.test_function"]
         assert func_def.definition_type == "function"
-        assert "A test function" in func_def.docstring
+        assert func_def.docstring is not None and "A test function" in func_def.docstring
 
     def test_extract_api_references(self):
         """Test extracting API references from documentation."""
@@ -213,7 +213,7 @@ def example_function(param1: str, param2: int = 10) -> bool:
 
         tree = ast.parse(code)
         func_node = tree.body[0]
-
+        assert isinstance(func_node, ast.FunctionDef)
         signature = self.validator._get_function_signature(func_node)
 
         assert "example_function" in signature
@@ -331,10 +331,42 @@ value = function(obj.attribute)
         """Test finding partial matches for API references."""
         # Add some API definitions
         self.validator._api_definitions = {
-            "module.MyClass": None,
-            "module.MyClass.method": None,
-            "module.helper_function": None,
-            "other.module.function": None,
+            "module.MyClass": APIDefinition(
+                name="MyClass",
+                full_name="module.MyClass",
+                definition_type="class",
+                file_path="module.py",
+                line_number=1,
+                docstring="A test class.",
+                signature=None,
+            ),
+            "module.MyClass.method": APIDefinition(
+                name="method",
+                full_name="module.MyClass.method",
+                definition_type="method",
+                file_path="module.py",
+                line_number=2,
+                docstring="A test method.",
+                signature="method()",
+            ),
+            "module.helper_function": APIDefinition(
+                name="helper_function",
+                full_name="module.helper_function",
+                definition_type="function",
+                file_path="module.py",
+                line_number=3,
+                docstring="A helper function.",
+                signature="helper_function()",
+            ),
+            "other.module.function": APIDefinition(
+                name="function",
+                full_name="other.module.function",
+                definition_type="function",
+                file_path="other/module.py",
+                line_number=1,
+                docstring="Another function.",
+                signature="function()",
+            ),
         }
 
         # Test partial matching

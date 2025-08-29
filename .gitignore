@@ -160,3 +160,4 @@ pyproject.toml.backup
 
 # For act - local github actions
 .secrets
+tests/resources/visual-artifacts/

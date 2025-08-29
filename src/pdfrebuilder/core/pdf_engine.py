@@ -80,29 +80,28 @@ class FitzPDFEngine(PDFEngineBase):
         """
         Generates a PDF from universal JSON config.
         """
+        doc: fitz.Document = fitz.open()
         try:
-            with fitz.open() as doc:
-                doc: fitz.Document
-                tpl_doc = fitz.open(original_pdf_for_template) if original_pdf_for_template else None
-                for doc_unit_idx, doc_unit_data in enumerate(config.get("document_structure", [])):
-                    if doc_unit_data.get("type") != "page":
-                        continue
-                    page_data = doc_unit_data
-                    page_idx = page_data.get("page_number", doc_unit_idx)
-                    page = doc.new_page(width=page_data["size"][0], height=page_data["size"][1])
-                    page_bg_color = page_data.get("page_background_color")
-                    if page_bg_color is not None:
-                        page.draw_rect(page.rect, fill=page_bg_color)
-                    if tpl_doc and page_idx < tpl_doc.page_count:
-                        # The 'show_pdf_page' method is valid in PyMuPDF, but the library's type
-                        # stubs are incomplete, causing mypy/pyright to raise a false positive.
-                        page.show_pdf_page(page.rect, tpl_doc, page_idx)  # type: ignore[attr-defined]
-                    for layer_data in page_data.get("layers", []):
-                        for element in layer_data.get("content", []):
-                            _render_element(page, element, page_idx, {}, config)
-                doc.save(output_pdf_path)
-                if tpl_doc:
-                    tpl_doc.close()
+            tpl_doc = fitz.open(original_pdf_for_template) if original_pdf_for_template else None
+            for doc_unit_idx, doc_unit_data in enumerate(config.get("document_structure", [])):
+                if doc_unit_data.get("type") != "page":
+                    continue
+                page_data = doc_unit_data
+                page_idx = page_data.get("page_number", doc_unit_idx)
+                page = doc.new_page(width=page_data["size"][0], height=page_data["size"][1])  # type: ignore[attr-defined]
+                page_bg_color = page_data.get("page_background_color")
+                if page_bg_color is not None:
+                    page.draw_rect(page.rect, fill=page_bg_color)
+                if tpl_doc and page_idx < tpl_doc.page_count:
+                    # The 'show_pdf_page' method is valid in PyMuPDF, but the library's type
+                    # stubs are incomplete, causing mypy/pyright to raise a false positive.
+                    page.show_pdf_page(page.rect, tpl_doc, page_idx)  # type: ignore[attr-defined]
+                for layer_data in page_data.get("layers", []):
+                    for element in layer_data.get("content", []):
+                        _render_element(page, element, page_idx, {}, config)
+            doc.save(output_pdf_path)
+            if tpl_doc:
+                tpl_doc.close()
         except Exception as e:
             self.warn_unsupported("PDF generation", str(e))
             raise

@@ -114,7 +114,7 @@ class JSONComplianceFixer:
 
         return issue
 
-    def _fix_unquoted_properties(self, json_content: str) -> str:
+    def _fix_unquoted_properties(self, json_content: str) -> str | None:
         """Fix unquoted property names in JSON."""
         # Pattern to match unquoted property names
         pattern = r"(\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*):"
@@ -134,7 +134,7 @@ class JSONComplianceFixer:
         except json.JSONDecodeError:
             return None
 
-    def _fix_missing_commas(self, json_content: str) -> str:
+    def _fix_missing_commas(self, json_content: str) -> str | None:
         """Fix missing commas in JSON."""
         # Pattern to match object properties without trailing commas
         pattern = r'(\s*"[^"]+"\s*:\s*[^,}\]]+)(\s*)([}\]])'

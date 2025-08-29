@@ -7,7 +7,7 @@ import fitz
 import json5
 
 from pdfrebuilder.core.render import _render_element, json_serializer
-from pdfrebuilder.settings import CONFIG
+from pdfrebuilder.settings import settings
 
 UNFINDABLE_FONT_NAMES = {"Unnamed-T3"}
 
@@ -76,15 +76,15 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
     logger.info(f"Config statistics: pages={len(pages)}, layers={total_layers}, elements={total_elements}")
 
     overrides = {}
-    if os.path.exists(CONFIG["override_config_path"]):
+    if os.path.exists(settings.override_config_path):
         try:
-            with open(CONFIG["override_config_path"]) as f_override:
+            with open(settings.override_config_path) as f_override:
                 overrides = json5.load(f_override)
         except Exception as e:
-            logger.error(f"Error decoding overrides file '{CONFIG['override_config_path']}': {e}")
+            logger.error(f"Error decoding overrides file '{settings.override_config_path}': {e}")
             return
 
-    debug_doc = fitz.open()
+    debug_doc: fitz.Document = fitz.open()
 
     for source_page_idx, page_data in enumerate(pages):
         logger.info(f"Generating debug pages for source page {source_page_idx} ...")
@@ -93,12 +93,12 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
         # For each layer in the page
         for layer in page_data.get("layers", []):
             for element_idx, element in enumerate(layer.get("content", [])):
-                debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])
-                effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, CONFIG)
-                debug_font_name = CONFIG.get("debug_font_name", "cour")
-                debug_fontsize = CONFIG.get("debug_fontsize", 8)
-                debug_line_height = CONFIG.get("debug_line_height", 1.2)
-                wrap_width = CONFIG.get("debug_text_wrap_width", 100)
+                debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])  # type: ignore[attr-defined]
+                effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, settings)
+                debug_font_name = settings.debug.font_name
+                debug_fontsize = settings.debug.fontsize
+                debug_line_height = settings.debug.line_height
+                wrap_width = settings.debug.text_wrap_width
                 debug_text_unwrapped = (
                     f"Source Page {source_page_idx} / Element Index {element_idx} (ID: {element.get('id', 'N/A')})\n"
                     f"Type: {element.get('type', 'N/A')}\n\n"

@@ -52,6 +52,10 @@ The project is managed using `hatch`. All commands should be run through the `ha
   hatch run docs:build
   ```
 
+## File System Operations
+
+- When moving or renaming files, always use `git mv` to ensure the changes are tracked by git. Do not use `mv` or other system commands directly.
+
 ## Testing Instructions
 
 - All code changes must be accompanied by relevant tests.

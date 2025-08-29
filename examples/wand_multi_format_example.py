@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pdfrebuilder.engine.document_parser import WandParser
 from pdfrebuilder.engine.extract_wand_content import _detect_image_format, check_wand_availability, extract_wand_content
+from pdfrebuilder.models.universal_idm import CanvasUnit, ImageElement
 
 
 def create_test_images():
@@ -116,7 +117,7 @@ def main():
 
                         # Analyze structure
                         for i, unit in enumerate(document.document_structure):
-                            if hasattr(unit, "canvas_name"):
+                            if isinstance(unit, CanvasUnit):
                                 print(f"    - Canvas {i + 1}: {unit.canvas_name}")
                                 print(f"      - Size: {unit.size}")
                                 print(f"      - Layers: {len(unit.layers)}")
@@ -127,14 +128,10 @@ def main():
                                     print(f"          - Content elements: {len(layer.content)}")
 
                                     for k, element in enumerate(layer.content):
-                                        if hasattr(element, "get") and element.get("type") == "image":
-                                            print(
-                                                f"            - Image {k + 1}: {element.get('original_format', 'unknown')}"
-                                            )
-                                            print(f"              - File: {element.get('image_file', 'unknown')}")
-                                            print(
-                                                f"              - Has transparency: {element.get('has_transparency', False)}"
-                                            )
+                                        if isinstance(element, ImageElement):
+                                            print(f"            - Image {k + 1}: {element.original_format}")
+                                            print(f"              - File: {element.image_file}")
+                                            print(f"              - Has transparency: {element.has_transparency}")
 
                     except Exception as e:
                         print(f"    - Error processing: {e}")
@@ -144,8 +141,8 @@ def main():
         for image_path in test_images.values():
             try:
                 os.unlink(image_path)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"  Warning: Could not remove temp file {image_path}: {e}")
 
     # 4. Demonstrate multi-page TIFF detection (mock)
     print("\n4. Multi-page TIFF detection example:")

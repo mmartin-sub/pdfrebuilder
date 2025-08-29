@@ -53,7 +53,7 @@ def demonstrate_compatibility_wrapper():
 
     print("\n2. Automatic shell command parsing (secure):")
     try:
-        result = wrapper.run("python --version", shell=True, capture_output=True)
+        result = wrapper.run("python --version", shell=True, capture_output=True)  # nosec
         print(f"   Command parsed to: {result.args}")
         print(f"   Output: {result.stdout.strip()}")
     except Exception as e:

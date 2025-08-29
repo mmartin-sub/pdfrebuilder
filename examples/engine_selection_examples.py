@@ -12,7 +12,8 @@ import tempfile
 
 from pdfrebuilder.core.recreate_pdf_from_config import get_available_engines, recreate_pdf_from_config
 from pdfrebuilder.engine.config_loader import get_config_loader
-from pdfrebuilder.engine.pdf_engine_selector import get_engine_selector, get_pdf_engine
+from pdfrebuilder.engine.engine_selector import get_pdf_engine_selector
+from pdfrebuilder.engine.pdf_engine_selector import get_pdf_engine
 from pdfrebuilder.engine.performance_metrics import generate_performance_report, get_performance_collector
 
 
@@ -161,7 +162,7 @@ def example_2_configuration_based_selection():
 
         # Generate PDF using configuration
         try:
-            selector = get_engine_selector()
+            selector = get_pdf_engine_selector()
             engine = selector.get_default_engine(loaded_config)
 
             output_file = os.path.join(temp_dir, "example2_configured.pdf")

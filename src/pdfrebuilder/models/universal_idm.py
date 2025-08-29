@@ -210,9 +210,11 @@ class FontDetails:
         elif isinstance(color_val, list | tuple):
             if all(isinstance(c, int | float) for c in color_val):
                 if len(color_val) == 4:
-                    color_obj = Color.from_rgba_tuple(tuple(float(c) for c in color_val))
+                    color_obj = Color.from_rgba_tuple(
+                        (float(color_val[0]), float(color_val[1]), float(color_val[2]), float(color_val[3]))
+                    )
                 elif len(color_val) == 3:
-                    color_obj = Color.from_rgb_tuple(tuple(float(c) for c in color_val))
+                    color_obj = Color.from_rgb_tuple((float(color_val[0]), float(color_val[1]), float(color_val[2])))
 
         return cls(
             name=data.get("name", "Arial"),
@@ -730,6 +732,9 @@ class CanvasUnit(DocumentUnit):
         # Convert list to tuple if needed
         if isinstance(actual_size, list):
             actual_size = tuple(actual_size)
+
+        if not (isinstance(actual_size, tuple) and len(actual_size) == 2):
+            raise ValueError("Size must be a tuple of two floats")
 
         super().__init__(actual_size, background_color, layers)
         self.canvas_name = canvas_name

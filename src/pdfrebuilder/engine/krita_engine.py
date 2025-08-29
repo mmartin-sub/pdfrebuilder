@@ -1,18 +1,25 @@
 import importlib.util
 import logging
 import os
-import xml.etree.ElementTree as ET
 import zipfile
 from typing import Any
+from xml.etree.ElementTree import Element, SubElement, tostring  # nosec B405
+
+import defusedxml.ElementTree as defused_ET
 
 try:
     from wand.image import Image
+
     WAND_AVAILABLE = True
 except ImportError:
     WAND_AVAILABLE = False
 
-from pdfrebuilder.engine.document_parser import DocumentParser, DocumentParsingError
-from pdfrebuilder.engine.document_renderer import DocumentRenderer, RenderingError
+from pdfrebuilder.engine.document_parser import (
+    AssetManifest,
+    DocumentParser,
+    DocumentParsingError,
+)
+from pdfrebuilder.engine.document_renderer import RenderingError
 from pdfrebuilder.models.universal_idm import (
     BlendMode,
     BoundingBox,
@@ -33,7 +40,9 @@ def check_krita_availability() -> tuple[bool, dict[str, Any]]:
     .kra files are zip archives, so we just need standard libraries.
     """
     if not WAND_AVAILABLE:
-        return False, {"error": "Wand (ImageMagick) is not installed, which is required for image processing in Krita engine."}
+        return False, {
+            "error": "Wand (ImageMagick) is not installed, which is required for image processing in Krita engine."
+        }
     if importlib.util.find_spec("zipfile") and importlib.util.find_spec("xml.etree.ElementTree"):
         return True, {"status": "available"}
     else:
@@ -78,8 +87,10 @@ class KritaInputEngine(DocumentParser):
                     raise DocumentParsingError("Invalid .kra file: maindoc.xml not found.")
 
                 with kra_zip.open("maindoc.xml") as maindoc_file:
-                    tree = ET.parse(maindoc_file)
+                    tree = defused_ET.parse(maindoc_file)
                     root = tree.getroot()
+                    if root is None:
+                        raise DocumentParsingError("Invalid .kra file: maindoc.xml has no root element.")
 
                     doc_width = int(root.attrib.get("width", 0))
                     doc_height = int(root.attrib.get("height", 0))
@@ -104,7 +115,7 @@ class KritaInputEngine(DocumentParser):
 
     def _parse_layer(
         self,
-        layer_element: ET.Element,
+        layer_element: Element,
         kra_zip: zipfile.ZipFile,
         temp_dir: str,
         index: int,
@@ -128,12 +139,13 @@ class KritaInputEngine(DocumentParser):
 
         # Process the image with Wand
         with Image(filename=image_path) as img:
+            original_format = img.format.decode() if isinstance(img.format, bytes) else (img.format or "unknown")
             image_element = ImageElement(
                 id=f"image_{index}",
                 bbox=BoundingBox(0, 0, doc_width, doc_height),
                 image_file=image_path,
                 z_index=index,
-                original_format=img.format,
+                original_format=original_format,
                 dpi=int(img.resolution[0]) if img.resolution else 72,
                 color_space=img.colorspace,
                 has_transparency=img.alpha_channel,
@@ -160,13 +172,17 @@ class KritaInputEngine(DocumentParser):
         os.makedirs(temp_dir, exist_ok=True)
         return temp_dir
 
-    def extract_assets(self, file_path: str, output_dir: str):
+    def extract_assets(self, file_path: str, output_dir: str) -> "AssetManifest":
         """Extracts all assets from a .kra file."""
         # This can be implemented to extract all images without creating a UniversalDocument
-        pass
+        from pdfrebuilder.engine.document_parser import AssetManifest
+
+        manifest = AssetManifest()
+        logger.info(f"Asset extraction for Krita is handled during parsing: {file_path}")
+        return manifest
 
 
-class KritaOutputEngine(DocumentRenderer):
+class KritaOutputEngine:
     """
     Output engine for Krita (.kra) files.
 
@@ -204,13 +220,13 @@ class KritaOutputEngine(DocumentRenderer):
                 doc_width, doc_height = canvas.size
 
                 # Create maindoc.xml
-                root = ET.Element("DOC")
+                root = Element("DOC")
                 root.set("mimemajor", "2")
                 root.set("mimeminor", "8")
                 root.set("width", str(int(doc_width)))
                 root.set("height", str(int(doc_height)))
 
-                layers_element = ET.SubElement(root, "layers")
+                layers_element = SubElement(root, "layers")
 
                 for i, layer in enumerate(canvas.layers):
                     if not layer.content or not isinstance(layer.content[0], ImageElement):
@@ -221,7 +237,7 @@ class KritaOutputEngine(DocumentRenderer):
 
                     # Ensure the image is PNG, as it's standard for Krita layers
                     with Image(filename=image_path) as img:
-                        if img.format.lower() != "png":
+                        if img.format and img.format.lower() != "png":
                             # Convert to png if necessary
                             png_path = os.path.splitext(image_path)[0] + ".png"
                             img.format = "png"
@@ -231,7 +247,7 @@ class KritaOutputEngine(DocumentRenderer):
                     image_filename = f"layer{i}.png"
                     kra_zip.write(image_path, image_filename)
 
-                    ET.SubElement(
+                    SubElement(
                         layers_element,
                         "layer",
                         name=layer.layer_name,
@@ -241,7 +257,7 @@ class KritaOutputEngine(DocumentRenderer):
                     )
 
                 # Write maindoc.xml
-                xml_string = ET.tostring(root, encoding="unicode")
+                xml_string = tostring(root, encoding="unicode")
                 kra_zip.writestr("maindoc.xml", xml_string)
 
                 # Add mimetype file

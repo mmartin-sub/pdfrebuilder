@@ -16,8 +16,8 @@ import pytest
 
 from pdfrebuilder.core.recreate_pdf_from_config import recreate_pdf_from_config
 from pdfrebuilder.engine.engine_selector import get_pdf_engine_selector
-from pdfrebuilder.models.universal_idm import UniversalDocument
 from pdfrebuilder.engine.performance_metrics import generate_performance_report, get_performance_collector
+from pdfrebuilder.models.universal_idm import UniversalDocument
 
 
 class TestEngineBenchmarks:

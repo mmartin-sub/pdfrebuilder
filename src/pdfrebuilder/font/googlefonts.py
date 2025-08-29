@@ -7,6 +7,8 @@ import requests
 
 from pdfrebuilder.settings import settings
 
+logger = logging.getLogger(__name__)
+
 
 def download_google_font(
     font_family: str, dest_dir: str | None = None, retries: int = 3, delay: int = 1
@@ -41,22 +43,22 @@ def download_google_font(
             break  # Success
         except requests.exceptions.RequestException as e:
             last_exception = e
-            logging.debug(f"Attempt {attempt + 1}/{retries} failed to fetch CSS for {font_family}: {e}")
+            logger.debug(f"Attempt {attempt + 1}/{retries} failed to fetch CSS for {font_family}: {e}")
             if attempt < retries - 1:
                 time.sleep(delay)
             else:
-                logging.error(
+                logger.error(
                     f"Could not fetch CSS for {font_family} after {retries} attempts.",
                     exc_info=last_exception,
                 )
                 return None
 
-    if not css_content:
+    if css_content is None:
         return None
 
     font_urls = re.findall(r"url\((https://fonts.gstatic.com/s/.*?)\)", css_content)
     if not font_urls:
-        logging.warning(f"No font files found for '{font_family}' in the CSS response.")
+        logger.warning(f"No font files found for '{font_family}' in the CSS response.")
         return None
 
     downloaded_files: list[str] = []
@@ -69,16 +71,16 @@ def download_google_font(
                 r.raise_for_status()
                 with open(filename, "wb") as f:
                     f.write(r.content)
-                logging.info(f"Downloaded {url} to {filename}")
+                logger.info(f"Downloaded {url} to {filename}")
                 downloaded_files.append(filename)
                 break  # Success
             except (requests.exceptions.RequestException, OSError) as e:
                 last_exception = e
-                logging.debug(f"Attempt {attempt + 1}/{retries} failed to download {url}: {e}")
+                logger.debug(f"Attempt {attempt + 1}/{retries} failed to download {url}: {e}")
                 if attempt < retries - 1:
                     time.sleep(delay)
                 else:
-                    logging.error(
+                    logger.error(
                         f"Failed to download {url} after {retries} attempts.",
                         exc_info=last_exception,
                     )

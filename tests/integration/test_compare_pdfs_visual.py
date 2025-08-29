@@ -23,11 +23,13 @@ class TestComparePDFsVisual(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.temp_dir = tempfile.mkdtemp()
+        self.artifacts_dir = "tests/resources/visual-artifacts"
+        os.makedirs(self.artifacts_dir, exist_ok=True)
 
         # Create temporary test files
         self.original_pdf = os.path.join(self.temp_dir, "original.pdf")
         self.generated_pdf = os.path.join(self.temp_dir, "generated.pdf")
-        self.diff_image_base = os.path.join(self.temp_dir, "diff")
+        self.diff_image_base = os.path.join(self.artifacts_dir, "diff")
 
         # Create dummy PDF files
         with open(self.original_pdf, "w") as f:

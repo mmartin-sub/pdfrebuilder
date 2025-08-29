@@ -56,7 +56,7 @@ settings = Settings()
 
 def configure_logging(log_file=None, log_level=logging.INFO, log_format="%(asctime)s - %(levelname)s - %(message)s"):
     """Configures logging for the application."""
-    handlers = [logging.StreamHandler()]
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
     if log_file:
         handlers.append(logging.FileHandler(log_file, encoding="utf-8"))
 

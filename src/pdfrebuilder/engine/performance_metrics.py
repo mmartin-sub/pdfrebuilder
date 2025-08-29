@@ -57,7 +57,7 @@ class RenderingMetrics:
             "pages": self.page_count,
             "elements": self.element_count,
             "success": self.success,
-            "warnings_count": len(self.warnings),
+            "warnings_count": len(self.warnings) if self.warnings is not None else 0,
         }
 
 

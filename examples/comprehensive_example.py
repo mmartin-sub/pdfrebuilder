@@ -149,14 +149,14 @@ class ComprehensiveDemo:
             serialize_pdf_content_to_config(document, str(config_file))
 
             print("✅ Content extracted successfully")
-            print(f"   - Pages: {len(document.pages)}")
+            print(f"   - Pages: {len(document.get_pages())}")
             print(f"   - Config saved to: {config_file}")
 
             return {
                 "success": True,
                 "document": document,
                 "config_file": config_file,
-                "pages": len(document.pages),
+                "pages": len(document.get_pages()),
             }
 
         except Exception as e:
@@ -174,7 +174,7 @@ class ComprehensiveDemo:
 
             # Analyze text content
             total_text = ""
-            for page in document.pages:
+            for page in document.get_pages():
                 for element in page.elements:
                     if hasattr(element, "text") and element.text:
                         total_text += element.text + " "
@@ -184,11 +184,11 @@ class ComprehensiveDemo:
             char_count = len(total_text)
 
             analysis = {
-                "pages": len(document.pages),
-                "elements": sum(len(page.elements) for page in document.pages),
+                "pages": len(document.get_pages()),
+                "elements": sum(len(page.elements) for page in document.get_pages()),
                 "word_count": word_count,
                 "char_count": char_count,
-                "avg_words_per_page": (word_count / len(document.pages) if document.pages else 0),
+                "avg_words_per_page": (word_count / len(document.get_pages()) if document.get_pages() else 0),
                 "stats": stats,
             }
 
@@ -212,9 +212,9 @@ class ComprehensiveDemo:
 
             # Create a modified version of the document
             modified_document = UniversalDocument()
-            modified_document.pages = []
+            modified_document.document_structure = []
 
-            for _i, page in enumerate(document.pages):
+            for _i, page in enumerate(document.get_pages()):
                 modified_page = type(page)()  # Create new page of same type
                 modified_page.elements = []
 
@@ -240,7 +240,7 @@ class ComprehensiveDemo:
 
                     modified_page.elements.append(modified_element)
 
-                modified_document.pages.append(modified_page)
+                modified_document.document_structure.append(modified_page)
 
             # Save modified document to config
             modified_config_file = self.output_dir / "modified_config.json"

@@ -38,11 +38,19 @@ class BatchModifier:
 
     def __init__(self):
         self.modified_elements = 0
+        self.skipped_elements = 0
 
     def variable_substitution(self, document, variables: list[VariableSubstitution]):
         """Apply variable substitutions to a document."""
         # Simulate variable substitution
         self.modified_elements = len(variables)
+        return self
+
+    def batch_text_replacement(self, document, replacements, validate_fonts=False):
+        """Apply batch text replacements to a document."""
+        # Simulate text replacement
+        self.modified_elements = len(replacements)
+        self.skipped_elements = 0
         return self
 
 

@@ -87,7 +87,7 @@ class TestGenerateDebugPdfLayers:
 
         assert result is True
         mock_fitz_open.assert_called_once()
-        mock_doc.new_page.assert_called()
+        assert mock_doc.new_page.call_count == 2
         mock_doc.save.assert_called_once_with(self.output_path, garbage=4, deflate=True)
 
     def test_generate_debug_pdf_layers_file_not_found(self):

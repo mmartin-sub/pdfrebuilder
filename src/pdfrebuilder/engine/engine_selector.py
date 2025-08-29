@@ -2,7 +2,6 @@ import logging
 from typing import Any
 
 from pdfrebuilder.engine.document_parser import DocumentParser
-from pdfrebuilder.engine.document_renderer import DocumentRenderer
 from pdfrebuilder.engine.pdf_rendering_engine import (
     EngineInitializationError,
     EngineNotFoundError,
@@ -130,7 +129,9 @@ class PDFEngineSelector:
                 if fallback != default_engine and fallback in self.engines:
                     try:
                         return self.get_engine(fallback, config)
-                    except Exception:
+                    except Exception:  # nosec
+                        # This is safe because we are iterating through a known list of fallback engines.
+                        # If one fails, we simply try the next one.
                         continue
             raise
 
@@ -197,7 +198,7 @@ def get_input_engine(engine_name: str, config: dict | None = None) -> DocumentPa
     return selector.get_engine(engine_name, config)
 
 
-def get_output_engine(engine_name: str, config: dict | None = None) -> DocumentRenderer:
+def get_output_engine(engine_name: str, config: dict | None = None) -> Any:
     """Get an output engine instance."""
     selector = get_output_engine_selector()
     return selector.get_engine(engine_name, config)

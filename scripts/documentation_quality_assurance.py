@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from docs.tools.coverage_reporter import DocumentationCoverageReporter
-from docs.tools.validation import DocumentationValidator
+from docs.tools.validation import DocumentationValidator, ValidationStatus
 
 
 class DocumentationQualityAssurance:
@@ -134,11 +134,11 @@ class DocumentationQualityAssurance:
                     total_examples += len(results)
 
                     for result in results:
-                        if result.get("status") == "failed":
+                        if result.status == ValidationStatus.FAILED:
                             failed_examples.append(
                                 {
                                     "file": str(md_file),
-                                    "error": result.get("message", "Unknown error"),
+                                    "error": result.message or "Unknown error",
                                 }
                             )
 
@@ -169,9 +169,10 @@ class DocumentationQualityAssurance:
 
         try:
             # Import settings to get configuration options
-            from pdfrebuilder.settings import CONFIG
+            from pdfrebuilder.settings import settings
 
-            total_options = len(CONFIG)
+            config_dict = settings.model_dump()
+            total_options = len(config_dict)
 
             # Check if configuration reference exists
             config_file = self.docs_dir / "reference" / "configuration.md"
@@ -191,7 +192,7 @@ class DocumentationQualityAssurance:
             documented_options = 0
             missing_options = []
 
-            for key in CONFIG.keys():
+            for key in config_dict.keys():
                 if f"### {key}" in content or f"#### `{key}`" in content:
                     documented_options += 1
                 else:

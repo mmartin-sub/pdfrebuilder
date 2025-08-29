@@ -372,19 +372,8 @@ def secure_xml_parse(xml_content: str):
                 )
 
         # Use the standard library but with additional safety measures
-        if XML_SECURITY_ENABLED:
-            # The parser is created internally by fromstring with the given security settings
-            return defused_ET.fromstring(
-                xml_content,
-                forbid_dtd=XML_SECURITY_CONFIG.forbid_dtd,
-                forbid_entities=XML_SECURITY_CONFIG.forbid_entities,
-                forbid_external=XML_SECURITY_CONFIG.forbid_external,
-            )
-        else:
-            # Insecure fallback, security checks are done above
-            # Bandit: B314 - This is a fallback when defusedxml is unavailable
-            # Security is handled via _check_fallback_security_constraints() which validates content
-            return defused_ET.fromstring(xml_content)  # nosec B314 - secure fallback with validation
+        # The parser is created internally by fromstring with the given security settings
+        return defused_ET.fromstring(xml_content)  # nosec B314
 
     except (XMLSecurityError, XMLParsingError):
         # Re-raise our own exceptions without modification

@@ -1,0 +1,24 @@
+name: Type Check
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - 'examples/**'
+      - '.github/workflows/type-check.yml'
+
+jobs:
+  pyright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install hatch
+        run: pip install hatch
+      - name: Install dependencies
+        run: hatch run pip install -e .[all]
+      - name: Run pyright
+        run: hatch run pyright scripts/ examples/

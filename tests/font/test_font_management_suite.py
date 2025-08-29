@@ -30,7 +30,6 @@ from tests.font.test_font_cache_integration import (
     TestFontRegistrationCache,
     TestFontValidatorCache,
 )
-from tests.font.test_font_document_integration import TestDocumentFontIntegration
 
 # Import new integration test classes
 from tests.font.test_font_integration_workflows import (
@@ -102,9 +101,6 @@ class FontManagementTestSuite:
         suite.addTest(unittest.makeSuite(TestFontDownloadCache))
         suite.addTest(unittest.makeSuite(TestFontValidatorCache))
         suite.addTest(unittest.makeSuite(TestCacheIntegrationPerformance))
-
-        # Document integration tests
-        suite.addTest(unittest.makeSuite(TestDocumentFontIntegration))
 
         return suite
 

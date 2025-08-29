@@ -176,7 +176,7 @@ test = "pytest tests/test_documentation_validation.py tests/test_documentation_b
 workflow = ["docs:validate", "docs:test", "docs:build"]
 
 [tool.hatch.envs.default.scripts]
-check = ["lint-check", "format-check", "types-pyright", "security"]
+check = ["lint-check", "format-check", "types-pyright", "security:scan"]
 post-install = "dotenvx-postinstall"
 test = "pytest {args:--ignore=tests/wip tests/}"
 test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src {args:--ignore=tests/wip tests/}"
@@ -193,7 +193,7 @@ types-pyright = "pyright {args:.}"
 types-mypy = "mypy src"
 
 # --- Other checks ---
-"security:scan" = "bandit -c pyproject.toml ."
+"security:scan" = "bandit -r -c pyproject.toml ."
 "security:test" = "pytest tests/security/"
 "security:validate" = "python scripts/validate_bandit_config.py"
 "security:report" = "mkdir -p reports && bandit -f json -o reports/bandit_results.json -c pyproject.toml ."
@@ -233,6 +233,7 @@ allowed-confusables = ["ℹ"]
 known-first-party = ["pdfrebuilder"]
 
 [tool.ruff.lint.per-file-ignores]
+"src/pdfrebuilder/engine/krita_engine.py" = ["F401"]
 "tests/**/*.py" = [
     "B007",
     "B017",

@@ -77,12 +77,14 @@ class TestDocumentParser:
             parse_document(self.sample_pdf, {}, engine="fitz")
 
     @patch("pdfrebuilder.engine.document_parser.detect_file_format")
+    @patch("pdfrebuilder.engine.extract_wand_content.check_wand_availability")
     @patch("pdfrebuilder.engine.extract_wand_content.extract_wand_content")
-    def test_parse_document_wand_engine(self, mock_extract_wand, mock_detect_format):
+    def test_parse_document_wand_engine(self, mock_extract_wand, mock_check_wand, mock_detect_format):
         """Test parsing with Wand engine"""
         pytest.importorskip("wand", reason="Wand is not installed")
         # Mock file format detection to return a supported format
         mock_detect_format.return_value = "png"
+        mock_check_wand.return_value = (True, {})
 
         # Mock Wand parser
         mock_document = Mock()

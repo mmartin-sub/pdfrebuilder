@@ -1,7 +1,7 @@
 import argparse
 import json
 import shutil
-import subprocess
+import subprocess  # nosec B404
 import sys
 import tempfile
 import tomllib
@@ -20,7 +20,7 @@ def get_hatch_python_executable() -> str:
     """Gets the absolute path to the Python executable in the active Hatch environment."""
     print("--- Locating Hatch environment's Python executable ---")
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec
             ["hatch", "run", "which", "python"],
             capture_output=True,
             text=True,
@@ -57,7 +57,7 @@ def get_project_name() -> str:
 def get_all_project_dependencies() -> list[str]:
     """Gets a complete list of all project dependencies from Hatch, including all optional groups."""
     print("--- Getting all project dependencies from Hatch ---")
-    result = subprocess.run(
+    result = subprocess.run(  # nosec
         ["hatch", "dep", "show", "requirements", "--all"],
         capture_output=True,
         text=True,
@@ -101,16 +101,20 @@ for dist in metadata.distributions():
 print(json.dumps(packages, indent=2))
 """
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec
             [hatch_python, "-c", inspector_script],
             capture_output=True,
             text=True,
             check=True,
         )
         return json.loads(result.stdout)
-    except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
+    except subprocess.CalledProcessError as e:
         print("Error: The package inspector script failed.", file=sys.stderr)
-        print(f"Stderr: {e.stderr if hasattr(e, 'stderr') else str(e)}", file=sys.stderr)
+        print(f"Stderr: {e.stderr}", file=sys.stderr)
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print("Error: The package inspector script failed to decode JSON.", file=sys.stderr)
+        print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 
@@ -168,7 +172,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
 
         print(f"Processing '{pypi_name}'...")
         stub_package_name = f"types-{pypi_name}"
-        response = requests.get(f"https://pypi.org/pypi/{stub_package_name}/json")
+        response = requests.get(f"https://pypi.org/pypi/{stub_package_name}/json", timeout=10)
 
         if response.status_code == 200:
             if canonicalize_name(stub_package_name) in installed_packages:
@@ -224,7 +228,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
             with tempfile.TemporaryDirectory() as temp_dir_str:
                 temp_dir = Path(temp_dir_str)
                 try:
-                    subprocess.run(
+                    subprocess.run(  # nosec
                         [
                             hatch_python_executable,
                             "-m",
@@ -239,7 +243,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
                     pyright_executable = str(temp_dir / ".venv" / "bin" / "pyright")
 
                     print(f"  -> Installing '{pinned_spec}' and 'pyright' into temporary environment...")
-                    subprocess.run(
+                    subprocess.run(  # nosec
                         [pip_executable, "install", pinned_spec, "pyright"],
                         check=True,
                         capture_output=True,
@@ -248,7 +252,7 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
 
                     for import_name in import_names:
                         print(f"  -> Generating stub for import '{import_name}'...")
-                        subprocess.run(
+                        subprocess.run(  # nosec
                             [pyright_executable, "--createstub", import_name],
                             check=True,
                             capture_output=True,
@@ -266,10 +270,16 @@ def generate_stubs(dry_run: bool, only_packages: list[str] | None):
 
                         print(f"  -> Successfully generated stubs in '{STUBS_DIR}/'")
 
-                except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                    error_message = e.stderr.strip() if hasattr(e, "stderr") and e.stderr else str(e)
+                except subprocess.CalledProcessError as e:
+                    error_message = e.stderr.strip() if e.stderr else str(e)
                     print(
                         f"  -> ERROR: Failed to create stub for {pypi_name}. Reason: {error_message}",
+                        file=sys.stderr,
+                    )
+                    failed_libs.append(f"{pypi_name}")
+                except FileNotFoundError as e:
+                    print(
+                        f"  -> ERROR: Failed to create stub for {pypi_name}. Reason: {e}",
                         file=sys.stderr,
                     )
                     failed_libs.append(f"{pypi_name}")

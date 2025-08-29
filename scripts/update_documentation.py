@@ -41,7 +41,7 @@ class DocumentationUpdater:
             from docs.tools.api_generator import APIDocumentationGenerator
 
             generator = APIDocumentationGenerator()
-            generator.generate_all_documentation()
+            generator.generate_api_documentation()
 
             self.logger.info("API documentation updated successfully")
             return True
@@ -56,9 +56,9 @@ class DocumentationUpdater:
 
         try:
             # Import settings
-            from pdfrebuilder import settings
+            from pdfrebuilder.settings import settings
 
-            config_doc = self._generate_config_documentation(settings.CONFIG)
+            config_doc = self._generate_config_documentation(settings.model_dump())
 
             # Write to configuration reference file
             config_file = self.docs_dir / "reference" / "configuration.md"
@@ -153,15 +153,15 @@ class DocumentationUpdater:
     def _get_config_example(self, key: str, value) -> str | None:
         """Get example usage for configuration option."""
         if key == "STANDARD_PDF_FONTS" and isinstance(value, list):
-            return f"# Add custom font to standard fonts\nCONFIG['{key}'].append('CustomFont-Regular')"
+            return "# Add custom font to standard fonts\nsettings.standard_pdf_fonts.append('CustomFont-Regular')"
         elif key == "DEFAULT_FONT":
-            return f"# Change default font\nCONFIG['{key}'] = 'Times-Roman'"
+            return "# Change default font\nsettings.default_font = 'Times-Roman'"
         elif key.endswith("_DIR"):
-            return f"# Set custom directory\nCONFIG['{key}'] = '/path/to/custom/directory'"
+            return f"# Set custom directory\nsettings.{key.lower()} = '/path/to/custom/directory'"
         elif isinstance(value, bool):
-            return f"# Toggle setting\nCONFIG['{key}'] = {not value}"
+            return f"# Toggle setting\nsettings.{key.lower()} = {not value}"
         elif isinstance(value, int | float):
-            return f"# Adjust value\nCONFIG['{key}'] = {value * 2}"
+            return f"# Adjust value\nsettings.{key.lower()} = {value * 2}"
 
         return None
 

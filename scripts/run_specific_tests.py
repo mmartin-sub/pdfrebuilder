@@ -106,10 +106,13 @@ def run_e2e_tests():
     )
 
     # Create a mock request object for pytest fixtures
+    class MockConfig:
+        def getoption(self, name):
+            return None
+
     class MockRequest:
         def __init__(self):
-            self.config = type("obj", (object,), {})
-            self.config.getoption = lambda x: None
+            self.config = MockConfig()
 
     # Create a mock setup fixture
     def mock_setup_e2e_test():

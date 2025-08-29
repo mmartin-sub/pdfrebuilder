@@ -89,7 +89,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
                         doc_metadata[key] = str(value)
 
                 if doc_metadata:
-                    doc.set_metadata(doc_metadata)
+                    doc.set_metadata(doc_metadata)  # type: ignore[attr-defined]
 
             self._current_doc = doc
             return doc
@@ -106,7 +106,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
         """Add a new page to the document."""
         try:
             width, height = size
-            page = document.new_page(width=width, height=height)
+            page = document.new_page(width=width, height=height)  # type: ignore[attr-defined]
 
             # Set background color if provided
             if background_color is not None:

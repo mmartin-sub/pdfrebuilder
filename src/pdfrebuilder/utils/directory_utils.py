@@ -6,12 +6,13 @@ and validate directory permissions for file migrations.
 """
 
 import logging
+from collections.abc import Sequence
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
-def ensure_directories_exist(directories: list[str | Path]) -> None:
+def ensure_directories_exist(directories: Sequence[str | Path]) -> None:
     """
     Create directories if they don't exist.
 

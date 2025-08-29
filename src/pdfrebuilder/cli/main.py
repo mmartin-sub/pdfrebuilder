@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Annotated, Any
 
@@ -107,7 +108,7 @@ def _setup_environment(args: SimpleNamespace) -> Any:
     os.makedirs(auto_fonts_dir, exist_ok=True)
     os.makedirs(manual_fonts_dir, exist_ok=True)
 
-    console_print(f"Output directory: {settings.rebuilt_pdf.parent}", "config")
+    console_print(f"Output directory: {Path(settings.rebuilt_pdf).parent}", "config")
 
     return config
 
@@ -133,25 +134,15 @@ def _run_extract(args: SimpleNamespace, config: Any):
 
 
 def _run_generate(args: SimpleNamespace, config: Any):
-    from pdfrebuilder.engine.config_loader import load_engine_config
-    from pdfrebuilder.engine.pdf_engine_selector import get_pdf_engine
+    from pdfrebuilder.core.recreate_pdf_from_config import recreate_pdf_from_config
 
     console_print("Entering generate mode...", "info")
-    cli_args = {"output_engine": args.output_engine}
-    engine_config = load_engine_config(cli_args=cli_args)
-    engine_name = args.output_engine or engine_config.get("default_engine", "reportlab")
-
-    console_print(f"Using output engine: {engine_name}", "info")
-    engine = get_pdf_engine(engine_name, engine_config)
 
     if not os.path.exists(args.config):
         console_print(f"Config file not found: {args.config}", "error")
         raise typer.Exit(1)
 
-    with open(args.config) as f:
-        config_data = f.read()
-
-    engine.generate(config_data, args.output, args.input)
+    recreate_pdf_from_config(args.config, args.output, args.output_engine)
     console_print("PDF generation complete.", "success")
 
 
