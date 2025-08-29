@@ -124,12 +124,20 @@ def generate_debug_pdf_layers(config_path, output_debug_pdf_base):
 
     with fitz.open() as debug_doc:
         debug_doc: fitz.Document
+        element_count = 0
         for source_page_idx, page_data in enumerate(pages):
+            if element_count >= 10:
+                break
             logger.info(f"Generating debug pages for source page {source_page_idx} ...")
             page_overrides = overrides.get("text_block_overrides", {}).get(str(source_page_idx), {})
             page_size = page_data.get("size", (595, 842))
             for layer in page_data.get("layers", []):
+                if element_count >= 10:
+                    break
                 for element_idx, element in enumerate(layer.get("content", [])):
+                    if element_count >= 10:
+                        break
+                    element_count += 1
                     debug_page = debug_doc.new_page(width=page_size[0], height=page_size[1])
                     effective_params = _render_element(debug_page, element, source_page_idx, page_overrides, settings)
                     debug_font_name = settings.debug.font_name

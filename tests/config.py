@@ -26,7 +26,7 @@ class TestConfig:
         """Get the base output directory for all test outputs"""
         if self._output_dir is None:
             # Use the main settings test output directory or a default
-            self._output_dir = settings.test_framework.test_output_dir or "tests/output"
+            self._output_dir = settings.test_framework.test_output_dir or "tests/resources"
 
         # The 'or' above ensures _output_dir is a string, but we assert for type checker
         assert self._output_dir is not None

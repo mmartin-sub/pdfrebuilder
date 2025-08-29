@@ -331,7 +331,7 @@ document = UniversalDocument(
 
 # Generate PDF with ReportLab
 engine = get_pdf_engine("reportlab")
-engine.generate(document.to_dict(), "tests/output/test_reportlab.pdf")
+engine.generate(document.to_dict(), "tests/resources/test_reportlab.pdf")
 ```
 
 This example demonstrates the complete workflow from document creation to PDF generation using the ReportLab engine.

@@ -143,6 +143,8 @@ def compare_pdfs_visual(original_path, generated_path, diff_image_base_path, vis
         # TASK 3.3: Actionable diagnostic information (requirement 7.3)
         if not passed:
             logger.error("=== VALIDATION FAILED ===")
+            logger.error(f"  Original PDF: {original_path}")
+            logger.error(f"  Generated PDF: {generated_path}")
             logger.error(f"Average SSIM: {result.ssim_score:.4f}")
             logger.error(f"Threshold: {ssim_threshold:.4f}")
             logger.error(f"Difference: {ssim_threshold - result.ssim_score:.4f}")

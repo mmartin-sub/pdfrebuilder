@@ -62,7 +62,7 @@ class TestReportLabEngine:
         )
 
         try:
-            engine.generate(document.to_dict(), self.output_pdf_path)
+            engine.render(document, self.output_pdf_path)
             assert os.path.exists(self.output_pdf_path)
         except Exception as e:
             pytest.fail(f"Rendering failed with exception: {e}")
@@ -101,7 +101,7 @@ class TestReportLabEngine:
         )
 
         try:
-            engine.generate(document.to_dict(), self.output_pdf_path)
+            engine.render(document, self.output_pdf_path)
             assert os.path.exists(self.output_pdf_path)
         except Exception as e:
             pytest.fail(f"Rendering failed with exception: {e}")
@@ -135,7 +135,7 @@ class TestReportLabEngine:
         )
 
         try:
-            engine.generate(document.to_dict(), self.output_pdf_path)
+            engine.render(document, self.output_pdf_path)
             assert os.path.exists(self.output_pdf_path)
         except Exception as e:
             pytest.fail(f"Rendering failed with exception: {e}")
@@ -189,7 +189,7 @@ class TestReportLabEngine:
         )
 
         try:
-            engine.generate(document.to_dict(), self.output_pdf_path)
+            engine.render(document, self.output_pdf_path)
             assert os.path.exists(self.output_pdf_path)
         except Exception as e:
             pytest.fail(f"Rendering failed with exception: {e}")

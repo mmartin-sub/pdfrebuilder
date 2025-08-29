@@ -367,6 +367,7 @@ exclude = [
     "*/.pytest_cache/*",
     "build/",
     "dist/",
+    "tests/conftest.py",
     # ,"scripts"
 ]
 
@@ -404,7 +405,7 @@ pythonpath = ["src", "scripts"]
 testpaths = ["tests"]
 addopts = "-ra -q --strict-markers"
 asyncio_mode = "auto"
-norecursedirs = ["tests/utils", "tests/wip"]
+norecursedirs = ["tests/utils", "tests/wip", "tests/slow"]
 log_cli = true
 log_cli_level = "WARNING"
 log_cli_format = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"

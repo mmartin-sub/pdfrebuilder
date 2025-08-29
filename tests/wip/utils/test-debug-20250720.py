@@ -32,7 +32,7 @@ def create_test_pdf():
         )
 
         # Save the document
-        output_path = "tests/output/test_text_render.pdf"
+        output_path = "tests/resources/test_text_render.pdf"
         doc.save(output_path)
         print(f"Test PDF saved to {output_path}")
 

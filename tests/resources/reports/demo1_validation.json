@@ -1,0 +1,56 @@
+{
+  "document_name": "demo1",
+  "report_id": "report_20250828160558",
+  "results": [
+    {
+      "passed": false,
+      "ssim_score": 0.7962900665621839,
+      "threshold": 0.95,
+      "original_path": "tests/sample/demo1.pdf",
+      "generated_path": "tests/resources/matrix_demo1.pdf_reportlab.pdf",
+      "diff_image_path": null,
+      "details": {
+        "rendering_dpi": 300,
+        "comparison_engine": "opencv"
+      },
+      "failure_analysis": {
+        "failure_reason": "moderate_visual_difference",
+        "severity": "high",
+        "affected_areas": [],
+        "recommendations": [
+          "Check for element positioning discrepancies",
+          "Verify text content and formatting",
+          "Check image quality and resolution"
+        ]
+      },
+      "additional_metrics": {},
+      "timestamp": "2025-08-28T16:05:58.290136"
+    }
+  ],
+  "metadata": {
+    "original_path": "tests/sample/demo1.pdf",
+    "generated_path": "tests/resources/matrix_demo1.pdf_reportlab.pdf",
+    "timestamp": "2025-08-28T16:05:58.290136"
+  },
+  "timestamp": "2025-08-28T16:05:58.290417",
+  "overall_passed": false,
+  "result_count": 1,
+  "pass_count": 0,
+  "fail_count": 1,
+  "average_ssim": 0.7962900665621839,
+  "min_ssim": 0.7962900665621839,
+  "max_ssim": 0.7962900665621839,
+  "failure_summary": {
+    "failure_types": {
+      "moderate_visual_difference": 1
+    },
+    "severity_counts": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "low": 0
+    },
+    "most_common_failure": "moderate_visual_difference",
+    "highest_severity": "high"
+  }
+}

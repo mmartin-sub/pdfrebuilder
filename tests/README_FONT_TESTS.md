@@ -25,11 +25,11 @@ python -m tests.test_font_management_suite --output-dir /path/to/test/output
 
 ### Default Behavior
 
-- Default output directory: `tests/output/`
+- Default output directory: `tests/resources/`
 - Directory structure:
 
   ```
-  tests/output/
+  tests/resources/
   ├── temp/           # Temporary test files (organized by test name)
   ├── fonts/          # Downloaded and test font files
   └── reports/        # Test reports and logs
