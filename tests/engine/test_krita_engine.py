@@ -3,7 +3,8 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 import pytest
-from wand.image import Image
+
+wand = pytest.importorskip("wand", reason="ImageMagick (wand) not installed")
 
 from pdfrebuilder.engine.krita_engine import KritaInputEngine, KritaOutputEngine
 from pdfrebuilder.models.universal_idm import (
@@ -36,7 +37,7 @@ def sample_kra_file(test_env):
     with zipfile.ZipFile(kra_path, "w") as zf:
         # Create a dummy image file
         dummy_image_path = os.path.join(temp_dir, "layer0.png")
-        with Image(width=100, height=100, background="red") as img:
+        with wand.image.Image(width=100, height=100, background="red") as img:
             img.format = "png"
             img.save(filename=dummy_image_path)
 
@@ -98,7 +99,7 @@ def test_krita_output_engine(test_env):
 
     # Create a dummy image for the layer
     dummy_image_path = os.path.join(temp_dir, "source.jpg")
-    with Image(width=200, height=200, background="blue") as img:
+    with wand.image.Image(width=200, height=200, background="blue") as img:
         img.format = "jpeg"
         img.save(filename=dummy_image_path)
 

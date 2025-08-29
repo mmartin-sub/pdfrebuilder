@@ -80,6 +80,7 @@ class TestDocumentParser:
     @patch("pdfrebuilder.engine.extract_wand_content.extract_wand_content")
     def test_parse_document_wand_engine(self, mock_extract_wand, mock_detect_format):
         """Test parsing with Wand engine"""
+        pytest.importorskip("wand", reason="Wand is not installed")
         # Mock file format detection to return a supported format
         mock_detect_format.return_value = "png"
 

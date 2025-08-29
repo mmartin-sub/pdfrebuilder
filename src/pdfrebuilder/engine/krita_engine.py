@@ -5,7 +5,11 @@ import xml.etree.ElementTree as ET
 import zipfile
 from typing import Any
 
-from wand.image import Image
+try:
+    from wand.image import Image
+    WAND_AVAILABLE = True
+except ImportError:
+    WAND_AVAILABLE = False
 
 from pdfrebuilder.engine.document_parser import DocumentParser, DocumentParsingError
 from pdfrebuilder.engine.document_renderer import DocumentRenderer, RenderingError
@@ -28,6 +32,8 @@ def check_krita_availability() -> tuple[bool, dict[str, Any]]:
     Check if the necessary components for handling Krita files are available.
     .kra files are zip archives, so we just need standard libraries.
     """
+    if not WAND_AVAILABLE:
+        return False, {"error": "Wand (ImageMagick) is not installed, which is required for image processing in Krita engine."}
     if importlib.util.find_spec("zipfile") and importlib.util.find_spec("xml.etree.ElementTree"):
         return True, {"status": "available"}
     else:
@@ -172,7 +178,8 @@ class KritaOutputEngine(DocumentRenderer):
 
     def initialize(self, config: dict | None = None):
         """Initializes the Krita output engine."""
-        pass
+        if not WAND_AVAILABLE:
+            raise RenderingError("Wand (ImageMagick) is not installed, which is required for the Krita output engine.")
 
     def can_render(self, document: UniversalDocument) -> bool:
         """Checks if the document can be rendered as a .kra file."""
