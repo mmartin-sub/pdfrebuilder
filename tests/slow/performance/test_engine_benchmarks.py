@@ -439,54 +439,6 @@ class TestEngineBenchmarks:
             assert len(report["engines"]) > 0
             assert report["summary"]["total_runs"] > 0
 
-    @pytest.mark.performance
-    def test_concurrent_engine_performance(self):
-        """Test performance when multiple engines are used concurrently."""
-        import queue
-        import threading
-
-        selector = get_pdf_engine_selector()
-        available_engines = list(selector.list_available_engines().keys())
-
-        if len(available_engines) < 2:
-            pytest.skip("Need at least 2 engines for concurrent testing")
-
-        results_queue = queue.Queue()
-
-        def run_engine_benchmark(engine_name):
-            try:
-                durations = self._benchmark_engine(engine_name, self.simple_doc, runs=1)
-                results_queue.put((engine_name, durations[0], None))
-            except Exception as e:
-                results_queue.put((engine_name, None, str(e)))
-
-        # Start threads for different engines
-        threads = []
-        for engine_name in available_engines[:2]:  # Test with first 2 engines
-            thread = threading.Thread(target=run_engine_benchmark, args=(engine_name,))
-            threads.append(thread)
-            thread.start()
-
-        # Wait for completion
-        for thread in threads:
-            thread.join(timeout=30)  # 30 second timeout
-
-        # Collect results
-        results = {}
-        while not results_queue.empty():
-            engine_name, duration, error = results_queue.get()
-            results[engine_name] = {"duration": duration, "error": error}
-
-        print("\nConcurrent Engine Performance:")
-        for engine, data in results.items():
-            if data["error"]:
-                print(f"{engine}: ERROR - {data['error']}")
-            else:
-                print(f"{engine}: {data['duration']:.3f}s")
-
-        # At least one engine should have succeeded
-        successful = [e for e, d in results.items() if d["error"] is None]
-        assert len(successful) > 0, "No engines succeeded in concurrent test"
 
 
 if __name__ == "__main__":

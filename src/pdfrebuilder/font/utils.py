@@ -2723,8 +2723,15 @@ def ensure_font_registered(page, font_name, verbose=True, text=None):
                 downloaded = download_google_font(font_name, auto_fonts_dir)
                 print(".", end="", flush=True)
 
-                if not downloaded and verbose:
-                    logger.warning(f"[font_utils] Google Fonts download failed for '{font_name}'")
+                if not downloaded:
+                    if verbose:
+                        logger.warning(f"[font_utils] Google Fonts download failed for '{font_name}'")
+                    get_font_error_reporter().report_discovery_error(
+                        font_name=font_name,
+                        search_paths=[auto_fonts_dir],
+                        context={"reason": "Font not found locally and download failed"},
+                        verbose=verbose,
+                    )
             except Exception as e:
                 if verbose:
                     logger.warning(f"[font_utils] Google Fonts download failed for '{font_name}': {e}")
