@@ -180,6 +180,7 @@ check = ["lint-check", "format-check", "types-pyright", "security:scan"]
 post-install = "dotenvx-postinstall"
 test = "pytest {args:--ignore=tests/wip tests/}"
 test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src {args:--ignore=tests/wip tests/}"
+test-slow = "pytest tests/slow"
 
 # --- Formatting & Linting (Ruff) ---
 format = "ruff format {args:.}"
@@ -407,7 +408,7 @@ testpaths = ["tests"]
 addopts = "-ra -q --strict-markers"
 asyncio_mode = "auto"
 norecursedirs = ["tests/utils", "tests/wip", "tests/slow"]
-log_cli = true
+log_cli = false
 log_cli_level = "WARNING"
 log_cli_format = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"

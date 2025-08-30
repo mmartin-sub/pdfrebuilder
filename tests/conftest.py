@@ -341,6 +341,7 @@ def pytest_runtest_setup(item):
     # Clear font error tracking for each test
     _font_error_detector.font_errors.clear()
     _font_error_detector.critical_errors.clear()
+    get_font_error_reporter().clear_errors()
 
 
 def pytest_runtest_teardown(item, nextitem):

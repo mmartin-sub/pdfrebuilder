@@ -1686,7 +1686,6 @@ def _attempt_direct_font_registration(
         else:
             # Font file not found
             error_msg = f"Font file not found for '{font_name}'"
-
             return FontRegistrationResult(
                 success=False,
                 font_name=font_name,
