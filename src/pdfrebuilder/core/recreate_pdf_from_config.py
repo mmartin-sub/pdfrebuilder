@@ -56,8 +56,13 @@ def recreate_pdf_from_config(
                 engine = get_default_pdf_engine(engine_config)
                 logger.info(f"Using default engine: {engine.engine_name}")
 
+        # Create a UniversalDocument object from the config
+        from pdfrebuilder.models.universal_idm import UniversalDocument
+
+        document = UniversalDocument.from_dict(config)
+
         # Render the PDF
-        engine.render(config, output_pdf_path, original_pdf_for_template)
+        engine.render(document, output_pdf_path, original_pdf_for_template)
 
         logger.info(f"Successfully generated PDF: {output_pdf_path}")
 
@@ -92,9 +97,9 @@ def get_available_engines() -> dict[str, dict[str, Any]]:
         Dictionary containing information about available engines
     """
     try:
-        from pdfrebuilder.engine.pdf_engine_selector import get_engine_selector
+        from pdfrebuilder.engine.engine_selector import get_pdf_engine_selector
 
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
         return selector.list_available_engines()
     except Exception as e:
         logger.error(f"Error getting available engines: {e}")
@@ -113,9 +118,9 @@ def validate_engine_configuration(engine_name: str, config: dict[str, Any]) -> d
         Validation result dictionary
     """
     try:
-        from pdfrebuilder.engine.pdf_engine_selector import get_engine_selector
+        from pdfrebuilder.engine.engine_selector import get_pdf_engine_selector
 
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
         return selector.validate_engine_config(engine_name, config)
     except Exception as e:
         return {"valid": False, "error": str(e), "engine": engine_name}
@@ -133,9 +138,9 @@ def compare_engine_capabilities(engine1: str, engine2: str) -> dict[str, Any]:
         Comparison result dictionary
     """
     try:
-        from pdfrebuilder.engine.pdf_engine_selector import get_engine_selector
+        from pdfrebuilder.engine.engine_selector import get_pdf_engine_selector
 
-        selector = get_engine_selector()
+        selector = get_pdf_engine_selector()
         return selector.compare_engines(engine1, engine2)
     except Exception as e:
         return {"error": f"Could not compare engines: {e}"}

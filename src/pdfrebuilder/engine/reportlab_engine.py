@@ -326,11 +326,21 @@ class ReportLabEngine(PDFRenderingEngine):
             "ReportLab engine does not support PDF extraction. Use PyMuPDF engine for extraction."
         )
 
-    def render(self, document: UniversalDocument, output_path: str) -> None:
+    def render(
+        self,
+        document: UniversalDocument,
+        output_path: str,
+        original_pdf_for_template: str | None = None,
+    ) -> None:
         """Render a UniversalDocument to a PDF file using ReportLab."""
         from pdfrebuilder.engine.performance_metrics import measure_engine_performance
 
         with measure_engine_performance(self.engine_name, self.engine_version) as metrics:
+            if original_pdf_for_template:
+                logger.warning(
+                    f"The '{self.engine_name}' engine does not support using an original PDF as a template. "
+                    "The 'original_pdf_for_template' argument will be ignored."
+                )
             try:
                 # Get page size from the first page or use default
                 page_size = letter  # Default
@@ -454,11 +464,26 @@ class ReportLabEngine(PDFRenderingEngine):
     ) -> None:
         """Render a drawing element using ReportLab canvas."""
         try:
+            # Determine if we have stroke and fill
+            has_stroke = element.color is not None and element.width > 0
+            has_fill = element.fill is not None
+            elem_id = element.id or "N/A"
+
+            # Log decisions and warnings
+            if not has_stroke and not has_fill:
+                logger.warning(
+                    f"Vector element ID {elem_id} has neither stroke nor fill. Rendering as invisible shape."
+                )
+            elif not has_stroke:
+                logger.debug(f"Vector element ID {elem_id}: Skipping stroke due to null color or zero width.")
+            elif not has_fill:
+                logger.debug(f"Vector element ID {elem_id}: Skipping fill due to null color.")
+
             # Set drawing properties
-            if element.color:
+            if has_stroke:
                 color = self._convert_color(element.color)
                 c.setStrokeColor(color)
-            if element.fill:
+            if has_fill:
                 fill_color = self._convert_color(element.fill)
                 c.setFillColor(fill_color)
             c.setLineWidth(element.width)

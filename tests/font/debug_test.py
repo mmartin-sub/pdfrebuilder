@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from pdfrebuilder.font.utils import ensure_font_registered, get_font_error_reporter
+
 
 def test_debug_font_error_reporter():
     reporter = get_font_error_reporter()

@@ -440,6 +440,5 @@ class TestEngineBenchmarks:
             assert report["summary"]["total_runs"] > 0
 
 
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-m", "performance"])

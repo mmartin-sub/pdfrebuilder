@@ -129,13 +129,19 @@ class PDFRenderingEngine(ABC):
         """
 
     @abstractmethod
-    def render(self, document: "UniversalDocument", output_path: str) -> None:
+    def render(
+        self,
+        document: "UniversalDocument",
+        output_path: str,
+        original_pdf_for_template: str | None = None,
+    ) -> None:
         """
         Render a UniversalDocument to a file.
 
         Args:
             document: The UniversalDocument to render.
             output_path: The path to save the output file.
+            original_pdf_for_template: Optional path to an original PDF to use as a template.
 
         Raises:
             RenderingError: If rendering fails.
@@ -247,7 +253,7 @@ class PDFRenderingEngine(ABC):
         """Log engine initialization with version info at DEBUG level."""
         from pdfrebuilder.engine.engine_logger import EngineLogger
 
-        EngineLogger.log_engine_initialization(self.engine_name, self._config)
+        EngineLogger().log_engine_initialization(self.engine_name, self._config)
 
         # Log version information at DEBUG level
         version_info = self.get_version_info()

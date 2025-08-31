@@ -83,8 +83,7 @@ class EngineLogger:
         fallback_logger.warning(f"Engine fallback: {from_engine} -> {to_engine}")
         fallback_logger.warning(f"Fallback reason: {reason}")
 
-    @staticmethod
-    def log_engine_initialization(engine_name: str, config: dict[str, Any]) -> None:
+    def log_engine_initialization(self, engine_name: str, config: dict[str, Any]) -> None:
         """
         Log engine initialization at DEBUG level.
 

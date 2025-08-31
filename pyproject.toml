@@ -198,6 +198,9 @@ types-mypy = "mypy src"
 "security:test" = "pytest tests/security/"
 "security:validate" = "python scripts/validate_bandit_config.py"
 "security:report" = "mkdir -p reports && bandit -f json -o reports/bandit_results.json -c pyproject.toml ."
+"security:scan-json" = "bandit -r -f json -c pyproject.toml ."
+"security-scan" = "bandit -r -c pyproject.toml ."
+"security-config-validate" = "python scripts/validate_bandit_config.py"
 "security:all" = ["security:scan", "security:test", "security:validate"]
 dead-code = "vulture src tests"
 clean = "find . -type d -name '__pycache__' -exec rm -rf {} + && find . -type f -name '*.pyc' -delete && find . -type f -name '*.pyo' -delete && find . -type d -name '*.egg-info' -exec rm -rf {} + && rm -rf build/ && rm -rf dist/"
@@ -437,6 +440,9 @@ markers = [
 [tool.bandit]
 exclude_dirs = ["tests", ".venv"]
 skips = ["B101"]
+severity = "LOW"
+confidence = "LOW"
+recursive = true
 
 
 [tool.coverage.run]

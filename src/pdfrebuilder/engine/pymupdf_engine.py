@@ -428,13 +428,13 @@ class PyMuPDFEngine(PDFRenderingEngine):
 
         return extract_pdf_content(input_pdf_path)
 
-    def generate(
+    def render(
         self,
-        config: dict[str, Any],
-        output_pdf_path: str,
+        document: UniversalDocument,
+        output_path: str,
         original_pdf_for_template: str | None = None,
     ) -> None:
-        """Generate PDF from universal JSON config using PyMuPDF."""
+        """Render a UniversalDocument to a PDF file using PyMuPDF."""
         from pdfrebuilder.engine.performance_metrics import measure_engine_performance
 
         with measure_engine_performance(self.engine_name, self.engine_version) as metrics:
@@ -443,33 +443,33 @@ class PyMuPDFEngine(PDFRenderingEngine):
                 import fitz
 
                 # Create document
-                metadata = config.get("metadata", {})
-                document = self.create_document(metadata)
+                metadata = document.metadata.to_dict()
+                doc = self.create_document(metadata)
 
                 # Process document structure
-                document_structure = config.get("document_structure", [])
+                document_structure = document.document_structure
 
                 page_count = 0
                 element_count = 0
 
                 for doc_unit in document_structure:
-                    if doc_unit.get("type") != "page":
+                    if doc_unit.type != "page":
                         continue
 
                     page_count += 1
 
                     # Get page properties
-                    page_size = doc_unit.get("size", [612, 792])  # Default letter size
-                    background_color = doc_unit.get("page_background_color")
+                    page_size = doc_unit.size
+                    background_color = doc_unit.background_color
 
                     # Add page
-                    page = self.add_page(document, tuple(page_size), background_color)
+                    page = self.add_page(doc, tuple(page_size), background_color)
 
                     # Handle template overlay
                     if original_pdf_for_template and os.path.exists(original_pdf_for_template):
                         try:
                             template_doc = fitz.open(original_pdf_for_template)
-                            page_idx = doc_unit.get("page_number", 0)
+                            page_idx = doc_unit.page_number
                             if page_idx < template_doc.page_count:
                                 page.show_pdf_page(page.rect, template_doc, page_idx)
                             template_doc.close()
@@ -478,16 +478,16 @@ class PyMuPDFEngine(PDFRenderingEngine):
                             metrics["warnings"].append(f"Template error: {e}")
 
                     # Process layers
-                    layers = doc_unit.get("layers", [])
+                    layers = doc_unit.layers
                     for layer in layers:
-                        if not layer.get("visibility", True):
+                        if not layer.visibility:
                             continue
 
                         # Process layer content
-                        content = layer.get("content", [])
+                        content = layer.content
                         element_count += len(content)
                         for element in content:
-                            result = self.render_element(page, element, {})
+                            result = self.render_element(page, element.to_dict(), {})
                             if result.get("warnings"):
                                 metrics["warnings"].extend(result["warnings"])
 
@@ -496,7 +496,7 @@ class PyMuPDFEngine(PDFRenderingEngine):
                 metrics["element_count"] = element_count
 
                 # Finalize document
-                self.finalize_document(document, output_pdf_path)
+                self.finalize_document(doc, output_path)
 
             except Exception as e:
                 logger.error(f"Error generating PDF with PyMuPDF: {e}")

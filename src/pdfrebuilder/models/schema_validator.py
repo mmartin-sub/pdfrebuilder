@@ -45,8 +45,10 @@ class SchemaValidator:
 
         # Validate version
         if "version" in data:
-            if not validate_schema_version(data):
-                errors.append(f"Unsupported schema version: {data['version']}")
+            try:
+                validate_schema_version(data)
+            except ValueError as e:
+                errors.append(str(e))
 
         # Validate document structure
         if "document_structure" in data:

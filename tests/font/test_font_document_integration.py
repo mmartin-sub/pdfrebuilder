@@ -9,8 +9,9 @@ This module tests:
 """
 
 import os
-import pytest
 from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from pdfrebuilder.font.font_validator import FontValidator
 from pdfrebuilder.font.utils import (
@@ -65,25 +66,58 @@ def document_font_integration_test(request):
         "metadata": {"title": "Integration Test Document", "author": "Test Suite"},
         "document_structure": [
             {
-                "type": "page", "page_number": 0, "size": [612, 792],
-                "layers": [{
-                    "content": [
-                        {"type": "text", "id": "title_text", "text": "Document Title", "font_details": {"name": "Arial-Bold", "size": 24}},
-                        {"type": "text", "id": "body_text", "text": "This is the main body text.", "font_details": {"name": "Times-Roman", "size": 12}},
-                        {"type": "text", "id": "special_text", "text": "Special text with custom font", "font_details": {"name": "CustomFont", "size": 14}},
-                    ]
-                }]
+                "type": "page",
+                "page_number": 0,
+                "size": [612, 792],
+                "layers": [
+                    {
+                        "content": [
+                            {
+                                "type": "text",
+                                "id": "title_text",
+                                "text": "Document Title",
+                                "font_details": {"name": "Arial-Bold", "size": 24},
+                            },
+                            {
+                                "type": "text",
+                                "id": "body_text",
+                                "text": "This is the main body text.",
+                                "font_details": {"name": "Times-Roman", "size": 12},
+                            },
+                            {
+                                "type": "text",
+                                "id": "special_text",
+                                "text": "Special text with custom font",
+                                "font_details": {"name": "CustomFont", "size": 14},
+                            },
+                        ]
+                    }
+                ],
             },
             {
-                "type": "page", "page_number": 1, "size": [612, 792],
-                "layers": [{
-                    "content": [
-                        {"type": "text", "id": "page2_header", "text": "Page 2 Header", "font_details": {"name": "Helvetica", "size": 18}},
-                        {"type": "text", "id": "unicode_text", "text": "Unicode text: Héllo Wörld 世界 🌍", "font_details": {"name": "NotoSans", "size": 12}},
-                    ]
-                }]
-            }
-        ]
+                "type": "page",
+                "page_number": 1,
+                "size": [612, 792],
+                "layers": [
+                    {
+                        "content": [
+                            {
+                                "type": "text",
+                                "id": "page2_header",
+                                "text": "Page 2 Header",
+                                "font_details": {"name": "Helvetica", "size": 18},
+                            },
+                            {
+                                "type": "text",
+                                "id": "unicode_text",
+                                "text": "Unicode text: Héllo Wörld 世界 🌍",
+                                "font_details": {"name": "NotoSans", "size": 12},
+                            },
+                        ]
+                    }
+                ],
+            },
+        ],
     }
 
     # Yield the test setup
@@ -115,22 +149,31 @@ class TestDocumentFontIntegration:
         mock_pages = [Mock() for _ in range(2)]
 
         with patch("pdfrebuilder.font.utils.TTFont") as mock_ttfont:
+
             def create_mock_font(font_path):
                 mock_font = MagicMock()
                 font_name = os.path.basename(font_path).replace(".ttf", "").replace(".otf", "")
                 mock_name_table = Mock()
                 mock_name_table.names = [Mock(nameID=1, platformID=3, string=font_name.encode())]
                 mock_cmap_table = Mock()
-                char_map = {ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")}
+                char_map = {
+                    ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")
+                }
                 mock_cmap_table.cmap = char_map
                 mock_cmap_subtable = Mock()
                 mock_cmap_subtable.tables = [mock_cmap_table]
+
                 def getitem_side_effect(key):
-                    if key == "name": return mock_name_table
-                    elif key == "cmap": return mock_cmap_subtable
-                    else: return Mock()
+                    if key == "name":
+                        return mock_name_table
+                    elif key == "cmap":
+                        return mock_cmap_subtable
+                    else:
+                        return Mock()
+
                 mock_font.__getitem__.side_effect = getitem_side_effect
                 return mock_font
+
             mock_ttfont.side_effect = create_mock_font
 
             with (
@@ -160,7 +203,9 @@ class TestDocumentFontIntegration:
 
     @patch("pdfrebuilder.font.utils._find_font_file_for_name", return_value=None)
     @patch("pdfrebuilder.font.utils.download_google_font")
-    def test_document_with_google_fonts_integration(self, mock_download, mock_find_font, document_font_integration_test):
+    def test_document_with_google_fonts_integration(
+        self, mock_download, mock_find_font, document_font_integration_test
+    ):
         """Test document processing with Google Fonts integration"""
         test_name, temp_dir, test_fonts_dir, font_validator, document_config = document_font_integration_test
 
@@ -172,18 +217,30 @@ class TestDocumentFontIntegration:
                     f.write(b"OTTO\x00\x01\x00\x00" + b"\x00" * 100)
                 return [downloaded_file]
             return None
+
         mock_download.side_effect = download_side_effect
 
         google_fonts_config = {
             "version": "1.0",
-            "document_structure": [{
-                "type": "page", "page_number": 0,
-                "layers": [{"content": [
-                    {"type": "text", "text": "Text with Roboto", "font_details": {"name": "Roboto"}},
-                    {"type": "text", "text": "Text with Open Sans", "font_details": {"name": "OpenSans"}},
-                    {"type": "text", "text": "Text with unavailable font", "font_details": {"name": "UnavailableFont"}},
-                ]}]
-            }]
+            "document_structure": [
+                {
+                    "type": "page",
+                    "page_number": 0,
+                    "layers": [
+                        {
+                            "content": [
+                                {"type": "text", "text": "Text with Roboto", "font_details": {"name": "Roboto"}},
+                                {"type": "text", "text": "Text with Open Sans", "font_details": {"name": "OpenSans"}},
+                                {
+                                    "type": "text",
+                                    "text": "Text with unavailable font",
+                                    "font_details": {"name": "UnavailableFont"},
+                                },
+                            ]
+                        }
+                    ],
+                }
+            ],
         }
         mock_page = Mock()
 
@@ -221,15 +278,22 @@ class TestDocumentFontIntegration:
 
         unicode_config = {
             "version": "1.0",
-            "document_structure": [{
-                "type": "page", "page_number": 0,
-                "layers": [{"content": [
-                    {"type": "text", "text": "Basic Latin text", "font_details": {"name": "Arial"}},
-                    {"type": "text", "text": "Accented text: café", "font_details": {"name": "Arial"}},
-                    {"type": "text", "text": "Chinese text: 你好世界", "font_details": {"name": "Arial"}},
-                    {"type": "text", "text": "Emoji text: 🌍🚀💻", "font_details": {"name": "Arial"}},
-                ]}]
-            }]
+            "document_structure": [
+                {
+                    "type": "page",
+                    "page_number": 0,
+                    "layers": [
+                        {
+                            "content": [
+                                {"type": "text", "text": "Basic Latin text", "font_details": {"name": "Arial"}},
+                                {"type": "text", "text": "Accented text: café", "font_details": {"name": "Arial"}},
+                                {"type": "text", "text": "Chinese text: 你好世界", "font_details": {"name": "Arial"}},
+                                {"type": "text", "text": "Emoji text: 🌍🚀💻", "font_details": {"name": "Arial"}},
+                            ]
+                        }
+                    ],
+                }
+            ],
         }
         os.makedirs(test_fonts_dir, exist_ok=True)
         arial_path = os.path.join(test_fonts_dir, "Arial.ttf")
@@ -240,22 +304,31 @@ class TestDocumentFontIntegration:
             return "你好世界" not in text and "🌍🚀💻" not in text
 
         with patch("pdfrebuilder.font.utils.TTFont") as mock_ttfont:
+
             def create_mock_font(font_path):
                 mock_font = MagicMock()
                 font_name = os.path.basename(font_path).replace(".ttf", "").replace(".otf", "")
                 mock_name_table = Mock()
                 mock_name_table.names = [Mock(nameID=1, platformID=3, string=font_name.encode())]
                 mock_cmap_table = Mock()
-                char_map = {ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")}
+                char_map = {
+                    ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")
+                }
                 mock_cmap_table.cmap = char_map
                 mock_cmap_subtable = Mock()
                 mock_cmap_subtable.tables = [mock_cmap_table]
+
                 def getitem_side_effect(key):
-                    if key == "name": return mock_name_table
-                    elif key == "cmap": return mock_cmap_subtable
-                    else: return Mock()
+                    if key == "name":
+                        return mock_name_table
+                    elif key == "cmap":
+                        return mock_cmap_subtable
+                    else:
+                        return Mock()
+
                 mock_font.__getitem__.side_effect = getitem_side_effect
                 return mock_font
+
             mock_ttfont.side_effect = create_mock_font
 
             with patch("pdfrebuilder.font.font_validator.font_covers_text", side_effect=coverage_side_effect):
@@ -271,14 +344,25 @@ class TestDocumentFontIntegration:
 
         error_config = {
             "version": "1.0",
-            "document_structure": [{
-                "type": "page", "page_number": 0,
-                "layers": [{"content": [
-                    {"type": "text", "text": "Good text", "font_details": {"name": "helv"}},
-                    {"type": "text", "text": "Problematic text", "font_details": {"name": "ProblematicFont"}},
-                    {"type": "text", "text": "Unnamed T3 text", "font_details": {"name": "Unnamed-T3"}},
-                ]}]
-            }]
+            "document_structure": [
+                {
+                    "type": "page",
+                    "page_number": 0,
+                    "layers": [
+                        {
+                            "content": [
+                                {"type": "text", "text": "Good text", "font_details": {"name": "helv"}},
+                                {
+                                    "type": "text",
+                                    "text": "Problematic text",
+                                    "font_details": {"name": "ProblematicFont"},
+                                },
+                                {"type": "text", "text": "Unnamed T3 text", "font_details": {"name": "Unnamed-T3"}},
+                            ]
+                        }
+                    ],
+                }
+            ],
         }
         os.makedirs(test_fonts_dir, exist_ok=True)
         problematic_path = os.path.join(test_fonts_dir, "ProblematicFont.ttf")
@@ -286,28 +370,39 @@ class TestDocumentFontIntegration:
             f.write(b"OTTO\x00\x01\x00\x00" + b"\x00" * 100)
 
         mock_page = Mock()
+
         def insert_font_side_effect(fontfile=None, fontname=None):
             if fontname == "ProblematicFont":
                 raise Exception("Font loading error")
+
         mock_page.insert_font.side_effect = insert_font_side_effect
 
         with patch("pdfrebuilder.font.utils.TTFont") as mock_ttfont:
+
             def create_mock_font(font_path):
                 mock_font = MagicMock()
                 font_name = os.path.basename(font_path).replace(".ttf", "").replace(".otf", "")
                 mock_name_table = Mock()
                 mock_name_table.names = [Mock(nameID=1, platformID=3, string=font_name.encode())]
                 mock_cmap_table = Mock()
-                char_map = {ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")}
+                char_map = {
+                    ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")
+                }
                 mock_cmap_table.cmap = char_map
                 mock_cmap_subtable = Mock()
                 mock_cmap_subtable.tables = [mock_cmap_table]
+
                 def getitem_side_effect(key):
-                    if key == "name": return mock_name_table
-                    elif key == "cmap": return mock_cmap_subtable
-                    else: return Mock()
+                    if key == "name":
+                        return mock_name_table
+                    elif key == "cmap":
+                        return mock_cmap_subtable
+                    else:
+                        return Mock()
+
                 mock_font.__getitem__.side_effect = getitem_side_effect
                 return mock_font
+
             mock_ttfont.side_effect = create_mock_font
 
             with (
@@ -316,10 +411,12 @@ class TestDocumentFontIntegration:
                 patch("pdfrebuilder.font.utils.download_google_font", return_value=None),
                 patch("pdfrebuilder.font.utils._find_font_file_for_name") as mock_find,
             ):
+
                 def find_side_effect(font_name):
                     if font_name == "ProblematicFont":
                         return problematic_path
                     return None
+
                 mock_find.side_effect = find_side_effect
 
                 for doc_unit in error_config["document_structure"]:
@@ -335,7 +432,20 @@ class TestDocumentFontIntegration:
                                     assert result in ["helv", "Helvetica"]
 
         substitutions = font_validator.substitution_tracker
-        problematic_substitutions = [s for s in substitutions if any(keyword in s.reason.lower() for keyword in ["not supported", "no font covers", "font not found", "loading error", "font registration failed"])]
+        problematic_substitutions = [
+            s
+            for s in substitutions
+            if any(
+                keyword in s.reason.lower()
+                for keyword in [
+                    "not supported",
+                    "no font covers",
+                    "font not found",
+                    "loading error",
+                    "font registration failed",
+                ]
+            )
+        ]
         assert len(problematic_substitutions) > 0
         t3_substitutions = [s for s in substitutions if s.original_font == "Unnamed-T3"]
         assert len(t3_substitutions) == 1
@@ -346,6 +456,7 @@ class TestDocumentFontIntegration:
     def test_large_document_performance(self, document_font_integration_test):
         """Test font processing performance with large documents"""
         import time
+
         test_name, temp_dir, test_fonts_dir, font_validator, document_config = document_font_integration_test
 
         large_config = {"version": "1.0", "document_structure": []}
@@ -355,31 +466,50 @@ class TestDocumentFontIntegration:
 
         for page_num in range(50):
             page = {
-                "type": "page", "page_number": page_num,
-                "layers": [{"content": [
-                    {"type": "text", "id": f"text_{page_num}_{elem_num}", "text": f"Text on page {page_num}", "font_details": {"name": font_names[elem_num % len(font_names)]}}
-                    for elem_num in range(10)
-                ]}]
+                "type": "page",
+                "page_number": page_num,
+                "layers": [
+                    {
+                        "content": [
+                            {
+                                "type": "text",
+                                "id": f"text_{page_num}_{elem_num}",
+                                "text": f"Text on page {page_num}",
+                                "font_details": {"name": font_names[elem_num % len(font_names)]},
+                            }
+                            for elem_num in range(10)
+                        ]
+                    }
+                ],
             }
             large_config["document_structure"].append(page)
 
         with patch("pdfrebuilder.font.utils.TTFont") as mock_ttfont:
+
             def create_mock_font(font_path):
                 mock_font = MagicMock()
                 font_name = os.path.basename(font_path).replace(".ttf", "").replace(".otf", "")
                 mock_name_table = Mock()
                 mock_name_table.names = [Mock(nameID=1, platformID=3, string=font_name.encode())]
                 mock_cmap_table = Mock()
-                char_map = {ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")}
+                char_map = {
+                    ord(c): i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ")
+                }
                 mock_cmap_table.cmap = char_map
                 mock_cmap_subtable = Mock()
                 mock_cmap_subtable.tables = [mock_cmap_table]
+
                 def getitem_side_effect(key):
-                    if key == "name": return mock_name_table
-                    elif key == "cmap": return mock_cmap_subtable
-                    else: return Mock()
+                    if key == "name":
+                        return mock_name_table
+                    elif key == "cmap":
+                        return mock_cmap_subtable
+                    else:
+                        return Mock()
+
                 mock_font.__getitem__.side_effect = getitem_side_effect
                 return mock_font
+
             mock_ttfont.side_effect = create_mock_font
 
             start_time = time.time()
