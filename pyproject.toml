@@ -139,8 +139,52 @@ extend-exclude = [
 ]
 
 [tool.hatch.envs.default]
+dependencies = [
+  "rich>=13.7.0",
+  "fonttools[ufo,lxml,woff,unicode]>=4.59.1",
+  "requests>=2.32.5",
+  "typer>=0.16.1",
+  "defusedxml>=0.7.1",
+  "reportlab>=4.0.0",
+  "plumbum>=1.8.0",
+  "pydantic>=2.11.0",
+  "pydantic-settings>=2.0.0",
+  "platformdirs>=4.0.0",
+  "tomli>=2.0.0; python_version<'3.11'",
+  "tomli-w>=1.0.0",
+  "psutil>=7.0.0",
+  "PyMuPDF>=1.26",
+  "json5>=0.12.1",
+  "Pillow>=10.2.0",
+  "opencv-python>=4.11.0",
+  "pytesseract>=0.3.13",
+  "psd-tools>=1.10.9",
+  "numpy>=2.2",
+  "Wand>=0.6.13",
+  "scikit-image>=0.25.2",
+  "pytest>=8.4.1",
+  "pytest-cov>6.0.0",
+  "pytest-asyncio>=1.1.0",
+  "jsonschema>=4.25.1",
+  "ruff>=0.12.9",
+  "bandit",
+  "safety",
+  "detect-secrets",
+  "pre-commit>=3.0.0",
+  "toml",
+  "packaging",
+  "mypy>=1.17.1",
+  "vulture>=2.11",
+  "pyright",
+  "types-PyYAML",
+  "types-requests",
+  "types-beautifulsoup4",
+  "types-fpdf2",
+  "types-jinja2",
+  "types-toml",
+  "pytest-timeout",
+]
 dev-mode = true
-extras = ["all"]
 path = ".venv"
 installer = "uv"
 python = "3.12"
@@ -433,6 +477,7 @@ markers = [
     "ocr: marks tests requiring OCR support (pytesseract)",
     "optional_deps: marks tests requiring any optional dependencies",
     "slow: marks tests as slow",
+    "timeout: marks tests with a timeout",
 ]
 
 # --- BANDIT ---

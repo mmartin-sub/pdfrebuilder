@@ -58,8 +58,7 @@ def main(input_file, output_file, input_engine, output_engine):
             click.echo(f"...Loaded '{output_engine}'.")
             # Step 3: Render the document
             click.echo("\nStep 3: Rendering output document...")
-            output_dir = os.path.dirname(output_file)
-            renderer.render(input_file, output_dir)
+            renderer.render(doc, output_file)
         click.echo("...Rendering complete.")
 
         if os.path.exists(output_file):

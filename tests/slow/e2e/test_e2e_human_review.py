@@ -40,11 +40,11 @@ import pytest
 
 from pdfrebuilder.core.generate_debug_pdf_layers import generate_debug_pdf_layers
 from pdfrebuilder.engine.visual_validator import validate_documents
-from pdfrebuilder.pipeline import run_pipeline
+from pdfrebuilder.cli.main import _setup_environment, _run_extract, _run_generate
 from tests.config import get_unique_id
 
-from .test_e2e_pdf_pipeline import create_comprehensive_drawing_test_config
-from .test_e2e_pdf_regeneration import create_pdf_with_elements
+from tests.slow.e2e.test_e2e_pdf_pipeline import create_comprehensive_drawing_test_config
+from tests.slow.e2e.test_e2e_pdf_regeneration import create_pdf_with_elements
 
 # Suppress fontTools debug logging immediately
 logging.getLogger("fontTools").setLevel(logging.WARNING)
@@ -85,7 +85,12 @@ def run_pipeline_with_capture(args):
     sys.stdout = captured_output
 
     try:
-        run_pipeline(args)
+        config = _setup_environment(args)
+        if args.mode == "extract":
+            _run_extract(args, config)
+        elif args.mode == "generate":
+            _run_generate(args, config)
+
         output = captured_output.getvalue()
         if "❌" in output:
             raise AssertionError(f"Pipeline failed:\n{output}")

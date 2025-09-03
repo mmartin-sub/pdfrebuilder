@@ -98,10 +98,10 @@ import pytest
 
 from pdfrebuilder.core.generate_debug_pdf_layers import generate_debug_pdf_layers
 from pdfrebuilder.engine.visual_validator import validate_documents
-from pdfrebuilder.pipeline import run_pipeline
+from pdfrebuilder.cli.main import _setup_environment, _run_extract, _run_generate
 
 # Configure logging
-from pdfrebuilder.settings import configure_logging, get_config_value
+from pdfrebuilder.settings import configure_logging, settings
 
 # from pdfrebuilder.pdf_engine import FitzPDFEngine # This import is no longer needed
 from tests.config import get_test_output_path, get_unique_id
@@ -120,7 +120,7 @@ if not hasattr(logging, "TRACE"):
 
     logging.Logger.trace = trace
 
-TEST_OUTPUT_DIR = get_config_value("test_output_dir")
+TEST_OUTPUT_DIR = settings.test_framework.test_output_dir
 
 # Module-level unique ID for all steps in this test run
 UNIQUE_ID = get_unique_id()
@@ -333,7 +333,8 @@ def test_full_pdf_regeneration_pipeline(setup_e2e_test, request):
     sys.stdout = captured_output
 
     try:
-        run_pipeline(args_extract)
+        config = _setup_environment(args_extract)
+        _run_extract(args_extract, config)
         # Check if the pipeline reported any errors
         output = captured_output.getvalue()
         if "❌" in output:
@@ -379,7 +380,8 @@ def test_full_pdf_regeneration_pipeline(setup_e2e_test, request):
     sys.stdout = captured_output
 
     try:
-        run_pipeline(args_generate)
+        config = _setup_environment(args_generate)
+        _run_generate(args_generate, config)
         # Check if the pipeline reported any errors
         output = captured_output.getvalue()
         if "❌" in output:
@@ -425,7 +427,8 @@ def test_full_pdf_regeneration_pipeline(setup_e2e_test, request):
     sys.stdout = captured_output
 
     try:
-        run_pipeline(args_extract2)
+        config = _setup_environment(args_extract2)
+        _run_extract(args_extract2, config)
         # Check if the pipeline reported any errors
         output = captured_output.getvalue()
         if "❌" in output:
@@ -444,7 +447,7 @@ def test_full_pdf_regeneration_pipeline(setup_e2e_test, request):
     print("[E2E] Step D: Validating regenerated output against test input PDF...")
     try:
         result1 = validate_documents(test_input_pdf_path, output1_pdf_path)
-        ssim_digits = get_config_value("ssim_score_display_digits") or 4
+        ssim_digits = settings.validation.ssim_score_display_digits or 4
         print(f"[E2E] Step D: Regeneration SSIM score: {result1.ssim_score:.{ssim_digits}f}")
         if result1.ssim_score < 0.99:
             print(f"[E2E][WARNING] SSIM score is lower than expected: {result1.ssim_score:.{ssim_digits}f}")

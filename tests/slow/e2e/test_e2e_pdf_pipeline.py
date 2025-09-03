@@ -6,11 +6,11 @@ import tempfile
 
 import pytest
 
-from pdfrebuilder.settings import get_config_value
+from pdfrebuilder.settings import settings
 
 # Use configuration-based paths instead of hardcoded ones
 SAMPLE_DIR = os.path.join("tests", "sample")
-OUTPUT_DIR = get_config_value("test_output_dir")
+OUTPUT_DIR = settings.test_framework.test_output_dir
 DEBUG_DIR = os.path.join(OUTPUT_DIR, "debug")
 
 PDF_FILES = list(glob.glob(os.path.join(SAMPLE_DIR, "*.pdf")))
@@ -339,12 +339,11 @@ def test_e2e_comprehensive_drawing_commands():
 
         # Test the generate mode with our comprehensive configuration
         cmd = [
-            "python",
-            "main.py",
-            "--mode=generate",
+            "pdfrebuilder",
+            "--log-level=DEBUG",
+            "generate",
             f"--config={config_path}",
             f"--output={output_pdf}",
-            "--log-level=DEBUG",
         ]
 
         result = subprocess.run(cmd, capture_output=True, text=True)

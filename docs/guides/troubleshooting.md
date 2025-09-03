@@ -1076,3 +1076,55 @@ hatch run test
 - **Bibliography**: [fontTools documentation](https://fonttools.readthedocs.io/en/latest/)
 
 Remember: Most issues can be resolved by carefully reading error messages and checking the basics (file paths, permissions, environment setup).
+
+## Developer Notes
+
+This section contains important notes for developers contributing to the `pdf-rebuilder` project.
+
+### Dependency Installation with uv
+
+The preferred way to install all project dependencies, including optional ones for testing and development, is to use `uv sync`:
+
+```bash
+hatch shell
+uv sync --extra all
+```
+
+This is more reliable than relying on the default environment setup, which can sometimes have issues with `extras`.
+
+### ImageMagick Dependency for Wand
+
+The `wand` library, used for some image processing tasks, requires the ImageMagick system library to be installed. If you encounter an `ImportError: MagickWand shared library not found`, you need to install the development package for ImageMagick.
+
+On Debian-based systems (like Ubuntu), you can do this with:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y libmagickwand-dev
+```
+
+### Accessing Configuration Values
+
+The project uses a Pydantic `settings` object for configuration management. The old `get_config_value` and `get_nested_config_value` functions have been deprecated.
+
+To access configuration values, import the `settings` object from `pdfrebuilder.settings` and use attribute access. For example:
+
+```python
+from pdfrebuilder.settings import settings
+
+# Access a top-level setting
+log_level = settings.logging.level
+
+# Access a nested setting
+test_output_dir = settings.test_framework.test_output_dir
+```
+
+### Standardized `render` Method Signature
+
+All PDF rendering engines (subclasses of `PDFRenderingEngine`) now have a consistent signature for their `render` method:
+
+```python
+def render(self, document: UniversalDocument, output_path: str, original_pdf_for_template: str | None = None) -> None:
+```
+
+The method takes a `UniversalDocument` object as input, not a file path. If you are implementing a new rendering engine, or working with an existing one, make sure to adhere to this signature.
